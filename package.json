@@ -1,0 +1,17 @@
+{
+  "name": "whirlpool-learning",
+  "version": "1.0.0",
+  "description": "Whirlpool Learning Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "multer": "^1.4.5-lts.2",
+    "mysql2": "^3.14.0"
+  }
+}
