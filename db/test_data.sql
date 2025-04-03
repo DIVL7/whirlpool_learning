@@ -23,14 +23,6 @@ INSERT INTO courses (title, description, created_by, status) VALUES
 ('Dryer Maintenance', 'Essential maintenance procedures for dryers', 1, 'draft'),
 ('Dishwasher Installation', 'Step-by-step guide to proper dishwasher installation', 1, 'published');
 
--- Insert default categories
-INSERT INTO categories (name, slug) VALUES
-('Refrigerador', 'refrigerator'),
-('Lavadora', 'washing'),
-('Secadora', 'dryer'),
-('Lavavajillas', 'dishwasher'),
-('Otro', 'other');
-
 -- Insert modules for Refrigerator Repair Basics
 INSERT INTO modules (course_id, title, description, position) VALUES
 (1, 'Introduction to Refrigeration', 'Basic principles of refrigeration systems', 1),

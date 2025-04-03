@@ -7,7 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Ensure courses image directory exists
 const coursesImageDir = path.join(__dirname, 'images', 'courses');
@@ -60,10 +60,10 @@ app.use(session({
 
 // Database configuration
 const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'whirlpool_learning'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'whirlpool_learning'
 };
 
 // Create database connection pool
@@ -413,4 +413,9 @@ app.delete('/api/courses/:id', async (req, res) => {
         console.error('Error deleting course:', error);
         res.status(500).json({ error: 'Error al eliminar el curso' });
     }
+});
+
+// Make sure your app listens on the correct port
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
