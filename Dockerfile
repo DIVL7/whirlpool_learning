@@ -6,18 +6,14 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --production
 
 # Copy the rest of the application
 COPY . .
 
 # Set environment variables with placeholders
-ENV DB_HOST=database_host
-ENV DB_PORT=database_port
-ENV DB_USER=database_user
-ENV DB_PASSWORD=database_password
-ENV DB_NAME=database_name
-ENV DB_SSL=true
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Expose the port your app runs on
 EXPOSE 3000

@@ -420,3 +420,8 @@ app.delete('/api/courses/:id', async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar el curso' });
     }
 });
+
+// Health check endpoint for Coolify
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Service is running' });
+});
