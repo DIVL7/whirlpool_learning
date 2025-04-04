@@ -1,14 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2/promise');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const multer = require('multer');
 const path = require('path');
+const multer = require('multer');
 const fs = require('fs');
-require('dotenv').config(); // Cargar variables de entorno
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Ensure courses image directory exists
 const coursesImageDir = path.join(__dirname, 'images', 'courses');
@@ -59,30 +59,31 @@ app.use(session({
     cookie: { maxAge: 3600000 } // 1 hour
 }));
 
-// Database configuration
+// Database configuration for Aiven
 const dbConfig = {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT),
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    ssl: process.env.DB_SSL === 'true' ? {
-        rejectUnauthorized: true
-    } : false
+    ssl: {
+        // Disable certificate validation - only use in development
+        rejectUnauthorized: false
+    }
 };
 
-// Create a connection pool
+// Create database connection pool
 const pool = mysql.createPool(dbConfig);
 
-// Función para probar la conexión a la base de datos
+// Test database connection
 async function testDatabaseConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('Database connection successful');
+        console.log('Database connection to Aiven successful!');
         connection.release();
         return true;
     } catch (error) {
-        console.error('Database connection failed:', error);
+        console.error('Database connection error:', error);
         return false;
     }
 }
@@ -418,9 +419,4 @@ app.delete('/api/courses/:id', async (req, res) => {
         console.error('Error deleting course:', error);
         res.status(500).json({ error: 'Error al eliminar el curso' });
     }
-});
-
-// Make sure your app listens on the correct port
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
 });

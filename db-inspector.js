@@ -8,13 +8,16 @@ async function inspectDatabase() {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        ssl: process.env.DB_SSL === 'true' ? {
-            rejectUnauthorized: true
-        } : false
+        ssl: {
+            // Disable certificate validation - only use in development
+            rejectUnauthorized: false
+        }
     };
     
     try {
-        console.log('Connecting to Aiven database...');
+        console.log('Connecting to database...');
+        console.log(`Using host: ${process.env.DB_HOST}, database: ${process.env.DB_NAME}`);
+        
         const connection = await mysql.createConnection(dbConfig);
         console.log('Connection successful!');
         

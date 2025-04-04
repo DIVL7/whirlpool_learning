@@ -8,15 +8,18 @@ async function testDatabaseConnection() {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        ssl: process.env.DB_SSL === 'true' ? {
-            rejectUnauthorized: true
-        } : false
+        ssl: {
+            // Disable certificate validation - only use in development
+            rejectUnauthorized: false
+        }
     };
     
     try {
         console.log('Attempting to connect to Aiven database...');
+        console.log(`Using host: ${process.env.DB_HOST}, port: ${process.env.DB_PORT}, database: ${process.env.DB_NAME}`);
+        
         const connection = await mysql.createConnection(dbConfig);
-        console.log('Connection successful!');
+        console.log('Connection to Aiven successful!');
         
         console.log('Testing query to users table...');
         const [rows] = await connection.execute('SELECT * FROM users LIMIT 5');
