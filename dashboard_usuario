@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Usuario - Whirlpool</title>
+  <link rel="stylesheet" href="../css/admin-styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+        <h3>Plataforma Whirlpool</h3>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li class="active"><a href="#" onclick="showSection('cursos', event)"><i class="fas fa-book"></i> Cursos</a></li>
+          <li><a href="#" onclick="showSection('foro', event)"><i class="fas fa-comments"></i> Foro</a></li>
+          <li><a href="#" onclick="showSection('calificaciones', event)"><i class="fas fa-star"></i> Calificaciones</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-nav">
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar...">
+        </div>
+        <div class="user-info">
+          <div class="notifications">
+            <i class="far fa-bell"></i>
+            <span class="badge">3</span>
+          </div>
+          <div class="user-profile">
+            <img src="../images/admin-avatar.jpg" alt="Avatar">
+            <span>Usuario</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <p>Bienvenido a la Plataforma de Aprendizaje Whirlpool</p>
+        </div>
+
+        <!-- Sección de Cursos -->
+        <section id="cursos" class="section active">
+          <div class="card">
+            <h3>Cursos disponibles</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Curso</th><th>Estado</th><th>Acción</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Curso de ejemplo 1</td>
+                  <td><span class="badge status completed">Completado</span></td>
+                  <td><button class="btn-primary">Entrar</button></td>
+                </tr>
+                <tr>
+                  <td>Curso de ejemplo 2</td>
+                  <td><span class="badge status progress">En progreso</span></td>
+                  <td><button class="btn-primary">Entrar</button></td>
+                </tr>
+                <tr>
+                  <td>Curso de ejemplo 3</td>
+                  <td><span class="badge status not-started">No iniciado</span></td>
+                  <td><button class="btn-primary">Entrar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3>Progreso General</h3>
+            <canvas id="progresoPie" width="180" height="180"></canvas>
+          </div>
+        </section>
+
+        <!-- Sección de Calificaciones -->
+        <section id="calificaciones" class="section">
+          <div class="card">
+            <h3>Calificaciones por curso</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Curso</th><th>Calificación</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Curso de ejemplo 1</td><td>95%</td></tr>
+                <tr><td>Curso de ejemplo 2</td><td>80%</td></tr>
+                <tr><td>Curso de ejemplo 3</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Sección de Foro -->
+        <section id="foro" class="section">
+          <div class="card">
+            <h3>Foro</h3>
+            <table class="data-table">
+              <thead>
+                <tr><th>Tema</th><th>Calificación</th><th>Progreso</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tema de discusión 1</td><td>90</td><td>100%</td></tr>
+                <tr><td>Tema de ejemplo 2</td><td>85</td><td>100%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showSection(id, event) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+      if (event) event.target.closest('li').classList.add('active');
+    }
+
+    const ctx = document.getElementById('progresoPie').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completado', 'En progreso', 'No iniciado'],
+        datasets: [{
+          data: [25, 50, 25],
+          backgroundColor: ['#16a34a', '#eab308', '#6b7280'],
+          borderWidth: 0,
+          cutout: '70%'
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
