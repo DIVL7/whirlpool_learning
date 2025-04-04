@@ -1,15 +1,20 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 async function testDatabaseConnection() {
     const dbConfig = {
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'whirlpool_learning'
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        ssl: process.env.DB_SSL === 'true' ? {
+            rejectUnauthorized: true
+        } : false
     };
     
     try {
-        console.log('Attempting to connect to database...');
+        console.log('Attempting to connect to Aiven database...');
         const connection = await mysql.createConnection(dbConfig);
         console.log('Connection successful!');
         

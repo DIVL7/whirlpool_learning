@@ -2,9 +2,10 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const path = require('path');
 const multer = require('multer');
+const path = require('path');
 const fs = require('fs');
+require('dotenv').config(); // Cargar variables de entorno
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -60,24 +61,28 @@ app.use(session({
 
 // Database configuration
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'whirlpool_learning'
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: process.env.DB_SSL === 'true' ? {
+        rejectUnauthorized: true
+    } : false
 };
 
-// Create database connection pool
+// Create a connection pool
 const pool = mysql.createPool(dbConfig);
 
-// Test database connection
+// Función para probar la conexión a la base de datos
 async function testDatabaseConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('Database connection successful!');
+        console.log('Database connection successful');
         connection.release();
         return true;
     } catch (error) {
-        console.error('Database connection error:', error);
+        console.error('Database connection failed:', error);
         return false;
     }
 }
