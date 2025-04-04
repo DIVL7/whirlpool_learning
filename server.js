@@ -170,32 +170,6 @@ startServer();
 
 
 // API Routes
-// Course management endpoints
-app.post('/api/courses', async (req, res) => {
-    try {
-        // Check if user is logged in and is admin
-        if (!req.session.user || req.session.user.role !== 'admin') {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        
-        const { title, code, category, description, status } = req.body;
-        
-        // Insert new course
-        const [result] = await pool.execute(
-            'INSERT INTO courses (title, description, status, created_by) VALUES (?, ?, ?, ?)',
-            [title, description, status, req.session.user.user_id]
-        );
-        
-        res.status(201).json({ 
-            message: 'Course created successfully', 
-            courseId: result.insertId 
-        });
-    } catch (error) {
-        console.error('Error creating course:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 app.put('/api/courses', async (req, res) => {
     try {
         // Check if user is logged in and is admin
@@ -292,46 +266,6 @@ app.use((err, req, res, next) => {
     next();
 });
 
-// Create a new course with image upload
-app.post('/api/courses', (req, res, next) => {
-    upload.single('courseThumbnail')(req, res, function(err) {
-        if (err) {
-            console.error('Upload error:', err);
-            return res.status(400).json({ error: 'Error al subir la imagen: ' + err.message });
-        }
-        next();
-    });
-}, async (req, res) => {
-    try {
-        // Check if user is logged in and is admin
-        if (!req.session.user || req.session.user.role !== 'admin') {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        
-        const { title, description, status } = req.body;
-        let thumbnail = null;
-        
-        // If file was uploaded, save the filename
-        if (req.file) {
-            thumbnail = path.basename(req.file.path);
-        }
-        
-        // Insert new course
-        const [result] = await pool.query(
-            'INSERT INTO courses (title, description, status, thumbnail, created_by, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
-            [title, description, status, thumbnail, req.session.user.user_id || 1]
-        );
-        
-        res.status(201).json({ 
-            message: 'Curso creado exitosamente', 
-            courseId: result.insertId 
-        });
-    } catch (error) {
-        console.error('Error creating course:', error);
-        res.status(500).json({ error: 'Error al crear el curso: ' + error.message });
-    }
-});
-
 // Update an existing course with image upload
 app.put('/api/courses/:id', (req, res, next) => {
     upload.single('courseThumbnail')(req, res, function(err) {
@@ -424,4 +358,45 @@ app.delete('/api/courses/:id', async (req, res) => {
 // Health check endpoint for Coolify
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Service is running' });
+});
+
+// Find the course creation endpoint (around line 184)
+app.post('/api/courses', upload.single('thumbnail'), async (req, res) => {
+    try {
+        // Get the user ID from the session
+        const userId = req.session.user ? req.session.user.user_id : 1; // Default to 1 for testing if no session
+        
+        // Extract course data from request
+        const { title, description, status } = req.body;
+        
+        // Validate required fields
+        if (!title) {
+            return res.status(400).json({ error: 'Title is required' });
+        }
+        
+        // Handle the thumbnail - convert undefined to null
+        const thumbnail = req.file ? req.file.filename : null;
+        
+        // Convert any undefined values to null explicitly
+        const safeDescription = description || null;
+        const safeStatus = status || 'draft'; // Default to draft if not specified
+        
+        // Insert the course into the database with safe values
+        const [result] = await pool.execute(
+            'INSERT INTO courses (title, description, thumbnail, created_by, status) VALUES (?, ?, ?, ?, ?)',
+            [title, safeDescription, thumbnail, userId, safeStatus]
+        );
+        
+        res.status(201).json({
+            course_id: result.insertId,
+            title,
+            description: safeDescription,
+            thumbnail,
+            created_by: userId,
+            status: safeStatus
+        });
+    } catch (error) {
+        console.error('Error creating course:', error);
+        res.status(500).json({ error: 'Failed to create course' });
+    }
 });

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Whirlpool Learning Platform</title>
+    <link rel="stylesheet" href="../css/admin-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Panel de Administración</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
+                    </li>
+                    <li>
+                        <a href="users.html"><i class="fas fa-users"></i> Usuarios</a>
+                    </li>
+                    <li>
+                        <a href="reports.html"><i class="fas fa-chart-bar"></i> Reportes</a>
+                    </li>
+                    <li class="active">
+                        <a href="settings.html"><i class="fas fa-cog"></i> Configuración</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar...">
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/admin-avatar.jpg" alt="Admin Avatar">
+                        <span>Admin User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Settings Content -->
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Configuración</h1>
+                    <p>Administra la configuración de la plataforma</p>
+                </div>
+
+                <div class="settings-container">
+                    <!-- Settings Sidebar -->
+                    <div class="settings-sidebar">
+                        <div class="settings-nav">
+                            <div class="settings-nav-item active" data-target="general">
+                                <i class="fas fa-sliders-h"></i> General
+                            </div>
+                            <div class="settings-nav-item" data-target="appearance">
+                                <i class="fas fa-palette"></i> Apariencia
+                            </div>
+                            <div class="settings-nav-item" data-target="notifications">
+                                <i class="fas fa-bell"></i> Notificaciones
+                            </div>
+                            <div class="settings-nav-item" data-target="security">
+                                <i class="fas fa-shield-alt"></i> Seguridad
+                            </div>
+                            <div class="settings-nav-item" data-target="integrations">
+                                <i class="fas fa-plug"></i> Integraciones
+                            </div>
+                            <div class="settings-nav-item" data-target="backup">
+                                <i class="fas fa-database"></i> Respaldo
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Content -->
+                    <div class="settings-content">
+                        <!-- General Settings -->
+                        <div class="settings-section" id="general">
+                            <h3>Configuración General</h3>
+                            
+                            <div class="settings-form-group">
+                                <label for="siteName">Nombre de la Plataforma</label>
+                                <input type="text" id="siteName" value="Whirlpool Learning Platform">
+                                <p class="help-text">Este nombre aparecerá en el título de las páginas y en los correos electrónicos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="siteDescription">Descripción de la Plataforma</label>
+                                <textarea id="siteDescription">Plataforma de aprendizaje para técnicos de Whirlpool.</textarea>
+                                <p class="help-text">Una breve descripción de la plataforma.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="contactEmail">Correo Electrónico de Contacto</label>
+                                <input type="email" id="contactEmail" value="soporte@whirlpool.com">
+                                <p class="help-text">Este correo se utilizará para notificaciones del sistema y soporte.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Modo de Mantenimiento</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="maintenanceMode">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Cuando está activado, solo los administradores pueden acceder a la plataforma.</p>
+                            </div>
+                        </div>
+
+                        <!-- Appearance Settings -->
+                        <div class="settings-section" id="appearance" style="display: none;">
+                            <h3>Configuración de Apariencia</h3>
+                            
+                            <div class="settings-form-group">
+                                <label for="primaryColor">Color Primario</label>
+                                <input type="color" id="primaryColor" value="#0066cc">
+                                <p class="help-text">Color principal utilizado en toda la plataforma.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="secondaryColor">Color Secundario</label>
+                                <input type="color" id="secondaryColor" value="#28a745">
+                                <p class="help-text">Color secundario utilizado para acentos y botones alternativos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="logo">Logo de la Plataforma</label>
+                                <input type="file" id="logo" accept="image/*">
+                                <p class="help-text">Tamaño recomendado: 200x60 píxeles. Formatos: PNG, JPG, SVG.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="favicon">Favicon</label>
+                                <input type="file" id="favicon" accept="image/x-icon,image/png">
+                                <p class="help-text">Tamaño recomendado: 32x32 píxeles. Formatos: ICO, PNG.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Modo Oscuro</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="darkMode">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Habilitar opción de modo oscuro para los usuarios.</p>
+                            </div>
+                        </div>
+
+                        <!-- Notifications Settings -->
+                        <div class="settings-section" id="notifications" style="display: none;">
+                            <h3>Configuración de Notificaciones</h3>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Notificaciones por Correo</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="emailNotifications" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Enviar notificaciones por correo electrónico a los usuarios.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Notificaciones de Nuevos Cursos</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="newCourseNotifications" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Notificar a los usuarios cuando se publiquen nuevos cursos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Notificaciones de Certificaciones</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="certificationNotifications" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Notificar a los usuarios cuando obtengan una certificación.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Recordatorios de Cursos</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="courseReminders">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Enviar recordatorios a los usuarios sobre cursos incompletos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Security Settings -->
+                        <div class="settings-section" id="security" style="display: none;">
+                            <h3>Configuración de Seguridad</h3>
+                            
+                            <div class="settings-form-group">
+                                <label for="passwordPolicy">Política de Contraseñas</label>
+                                <select id="passwordPolicy">
+                                    <option value="basic">Básica (mínimo 8 caracteres)</option>
+                                    <option value="medium" selected>Media (8 caracteres, letras y números)</option>
+                                    <option value="strong">Fuerte (8 caracteres, mayúsculas, minúsculas, números y símbolos)</option>
+                                </select>
+                                <p class="help-text">Define los requisitos para las contraseñas de los usuarios.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="sessionTimeout">Tiempo de Inactividad (minutos)</label>
+                                <input type="number" id="sessionTimeout" value="30" min="5" max="120">
+                                <p class="help-text">Tiempo de inactividad antes de cerrar la sesión automáticamente.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Autenticación de Dos Factores</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="twoFactorAuth">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Requerir autenticación de dos factores para todos los usuarios.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Registro de Actividad</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="activityLogging" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Registrar la actividad de los usuarios en la plataforma.</p>
+                            </div>
+                        </div>
+
+                        <!-- Integrations Settings -->
+                        <div class="settings-section" id="integrations" style="display: none;">
+                            <h3>Configuración de Integraciones</h3>
+                            
+                            <div class="settings-form-group">
+                                <label for="googleAnalyticsId">ID de Google Analytics</label>
+                                <input type="text" id="googleAnalyticsId" placeholder="UA-XXXXXXXXX-X">
+                                <p class="help-text">ID de seguimiento para integrar Google Analytics.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="smtpServer">Servidor SMTP</label>
+                                <input type="text" id="smtpServer" value="smtp.whirlpool.com">
+                                <p class="help-text">Servidor para el envío de correos electrónicos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="smtpPort">Puerto SMTP</label>
+                                <input type="number" id="smtpPort" value="587">
+                                <p class="help-text">Puerto para la conexión SMTP.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="smtpUsername">Usuario SMTP</label>
+                                <input type="text" id="smtpUsername" value="notifications@whirlpool.com">
+                                <p class="help-text">Usuario para la autenticación SMTP.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="smtpPassword">Contraseña SMTP</label>
+                                <input type="password" id="smtpPassword" value="********">
+                                <p class="help-text">Contraseña para la autenticación SMTP.</p>
+                            </div>
+                        </div>
+
+                        <!-- Backup Settings -->
+                        <div class="settings-section" id="backup" style="display: none;">
+                            <h3>Configuración de Respaldo</h3>
+                            
+                            <div class="settings-form-group">
+                                <div class="toggle-group">
+                                    <span class="toggle-label">Respaldos Automáticos</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="autoBackups" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p class="help-text">Realizar respaldos automáticos de la base de datos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="backupFrequency">Frecuencia de Respaldo</label>
+                                <select id="backupFrequency">
+                                    <option value="daily">Diario</option>
+                                    <option value="weekly" selected>Semanal</option>
+                                    <option value="monthly">Mensual</option>
+                                </select>
+                                <p class="help-text">Frecuencia con la que se realizan los respaldos automáticos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="backupRetention">Retención de Respaldos (días)</label>
+                                <input type="number" id="backupRetention" value="30" min="1" max="365">
+                                <p class="help-text">Número de días que se conservan los respaldos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <button class="btn-primary" id="manualBackup">
+                                    <i class="fas fa-download"></i> Realizar Respaldo Manual
+                                </button>
+                                <p class="help-text">Crear un respaldo manual de la base de datos.</p>
+                            </div>
+                            
+                            <div class="settings-form-group">
+                                <label for="restoreBackup">Restaurar Respaldo</label>
+                                <input type="file" id="restoreBackup" accept=".sql,.zip">
+                                <p class="help-text">Selecciona un archivo de respaldo para restaurar.</p>
+                            </div>
+                        </div>
+
+                        <!-- Save Settings Button -->
+                        <div class="settings-actions">
+                            <button class="btn-secondary">Cancelar</button>
+                            <button class="btn-primary" id="saveSettings">Guardar Configuración</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/admin-settings.js"></script>
+</body>
+</html>

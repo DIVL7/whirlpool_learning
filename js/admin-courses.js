@@ -162,8 +162,6 @@ function displayFilteredCourses() {
 
 // Función para determinar la categoría de un curso
 function getCourseCategory(course) {
-    // Esta función extrae la categoría basada en el título del curso
-    // Puedes modificarla según la estructura de tus datos
     const title = course.title.toLowerCase();
     
     if (title.includes('refrigerator') || title.includes('refrigerador')) {
@@ -385,5 +383,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar los filtros
     initializeFilters();
     
-    // ... resto del código de inicialización ...
+    // Inicializar los botones del modal
+    initializeModalButtons();
+    
+    // Inicializar el formulario de cursos (solo una vez)
+    initializeCreateCourseForm();
 });
+
+// Eliminar cualquier duplicado de esta función en el archivo
+// Mantener solo una implementación de initializeCreateCourseForm
+function initializeCreateCourseForm() {
+    const courseForm = document.getElementById('courseForm');
+    
+    // Eliminar cualquier event listener existente para evitar duplicados
+    const newCourseForm = courseForm.cloneNode(true);
+    courseForm.parentNode.replaceChild(newCourseForm, courseForm);
+    
+    newCourseForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        // Verificar si es una edición o creación
+        const courseId = this.dataset.courseId;
+        const isEdit = !!courseId;
+        
+        // Asegurarse de que el título esté presente
+        if (!formData.get('title')) {
+            alert('El título del curso es obligatorio');
+            return;
+        }
+        
+        // Asegurarse de que todos los campos tengan valores definidos
+        if (!formData.get('description')) {
+            formData.set('description', ''); // Cadena vacía se convertirá a null en el servidor
+        }
+        
+        // Asegurarse de que el estado tenga un valor
+        if (!formData.get('status')) {
+            formData.set('status', 'draft'); // Por defecto es borrador
+        }
+        
+        // Configurar la URL y método según sea edición o creación
+        let url = '/api/courses';
+        let method = 'POST';
+        
+        if (isEdit) {
+            url = `/api/courses/${courseId}`;
+            method = 'PUT';
+        }
+        
+        // Enviar datos al servidor
+        fetch(url, {
+            method: method,
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Error al guardar el curso');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Cerrar modal
+            document.getElementById('courseModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // Recargar cursos
+            loadCoursesFromDatabase();
+            
+            // Mostrar mensaje de éxito
+            alert(data.message || 'Curso guardado exitosamente');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        });
+    });
+}
