@@ -1,110 +1,3 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Load courses from database
-    loadCoursesFromDatabase();
-    
-    // Initialize modal
-    const courseModal = document.getElementById('courseModal');
-    const closeModalBtn = document.querySelector('.close-modal');
-    const addCourseBtn = document.querySelector('.add-course-btn'); // Updated selector
-    
-    // Add course button
-    addCourseBtn.addEventListener('click', function() {
-        // Reset form
-        document.getElementById('courseForm').reset();
-        document.getElementById('courseForm').dataset.courseId = '';
-        
-        // Change modal title
-        document.querySelector('.modal-header h2').textContent = 'Agregar Nuevo Curso';
-        
-        // Show modal
-        courseModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    });
-    
-    // Close modal
-    closeModalBtn.addEventListener('click', function() {
-        courseModal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-    });
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === courseModal) {
-            courseModal.classList.remove('show');
-            document.body.style.overflow = 'auto';
-        }
-    });
-    
-    // Form submission
-    document.getElementById('courseForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const courseId = this.dataset.courseId;
-        const title = document.getElementById('courseTitle').value;
-        const description = document.getElementById('courseDescription').value;
-        const status = document.getElementById('courseStatus').value;
-        const thumbnailInput = document.getElementById('courseThumbnail');
-        
-        // Create FormData object to handle file uploads
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('description', description);
-        formData.append('status', status);
-        
-        // Add thumbnail file if selected
-        if (thumbnailInput.files.length > 0) {
-            formData.append('courseThumbnail', thumbnailInput.files[0]);
-        }
-        
-        // Determine if this is an update or create
-        const isUpdate = courseId ? true : false;
-        
-        // API endpoint and method
-        const url = isUpdate ? `/api/courses/${courseId}` : '/api/courses';
-        const method = isUpdate ? 'PUT' : 'POST';
-        
-        // Send request to server
-        fetch(url, {
-            method: method,
-            body: formData
-            // Don't set Content-Type header with FormData
-        })
-        .then(response => {
-            // Check if the response is JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json().then(data => {
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Error al guardar el curso');
-                    }
-                    return data;
-                });
-            } else {
-                // If not JSON, it's probably an error page
-                return response.text().then(text => {
-                    console.error('Received non-JSON response:', text);
-                    throw new Error('El servidor devolvió una respuesta inesperada');
-                });
-            }
-        })
-        .then(data => {
-            // Close modal
-            document.getElementById('courseModal').classList.remove('show');
-            document.body.style.overflow = 'auto';
-            
-            // Reload courses
-            loadCoursesFromDatabase();
-            
-            // Show success message
-            alert(data.message || 'Curso guardado exitosamente');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error: ' + error.message);
-        });
-    });
-});
-
 // Function to load courses from database
 // Variables globales para almacenar los cursos y los filtros actuales
 let allCourses = [];
@@ -162,8 +55,6 @@ function displayFilteredCourses() {
 
 // Función para determinar la categoría de un curso
 function getCourseCategory(course) {
-    // Esta función extrae la categoría basada en el título del curso
-    // Puedes modificarla según la estructura de tus datos
     const title = course.title.toLowerCase();
     
     if (title.includes('refrigerator') || title.includes('refrigerador')) {
@@ -350,6 +241,9 @@ function initializeActionButtons() {
     });
     
     // Botones de eliminar
+    // Agregando la función initializeModalButtons
+    
+    // Veo que necesitas agregar la función `initializeModalButtons()` que se está llamando en el evento DOMContentLoaded pero no está definida en el archivo. Aquí está la implementación:
     const deleteButtons = document.querySelectorAll('.delete-btn');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -375,15 +269,136 @@ function initializeActionButtons() {
             }
         });
     });
-}
-
-// Inicializar la página cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar los cursos iniciales
-    loadCoursesFromDatabase();
+    }
     
-    // Inicializar los filtros
-    initializeFilters();
+    // Función para inicializar los botones del modal
+    function initializeModalButtons() {
+        // Botón para cerrar el modal
+        const closeButtons = document.querySelectorAll('.close-modal, .cancel-btn');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('courseModal').classList.remove('show');
+                document.body.style.overflow = 'auto';
+            });
+        });
     
-    // ... resto del código de inicialización ...
-});
+        // Botón para abrir el modal de nuevo curso
+        const addCourseBtn = document.querySelector('.add-course-btn');
+        addCourseBtn.addEventListener('click', function() {
+            // Resetear el formulario
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseForm').removeAttribute('data-course-id');
+            
+            // Cambiar el título del modal
+            document.querySelector('#courseModal .modal-header h2').textContent = 'Añadir Nuevo Curso';
+            
+            // Eliminar la vista previa de la imagen si existe
+            const thumbnailPreview = document.getElementById('thumbnailPreview');
+            if (thumbnailPreview) {
+                thumbnailPreview.remove();
+            }
+            
+            // Mostrar el modal
+            document.getElementById('courseModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        // Cerrar modal cuando se hace clic fuera
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('courseModal');
+            if (event.target === modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        });
+    }
+    
+    // Inicializar la página cuando el DOM esté cargado
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cargar los cursos iniciales
+        loadCoursesFromDatabase();
+    
+        // Inicializar los filtros
+        initializeFilters();
+    
+        // Inicializar los botones del modal
+        initializeModalButtons();
+    
+        // Inicializar el formulario de cursos (solo una vez)
+        initializeCreateCourseForm();
+    });
+    
+    // Eliminar cualquier duplicado de esta función en el archivo
+    // Mantener solo una implementación de initializeCreateCourseForm
+    function initializeCreateCourseForm() {
+        const courseForm = document.getElementById('courseForm');
+        
+        // Eliminar cualquier event listener existente para evitar duplicados
+        const newCourseForm = courseForm.cloneNode(true);
+        courseForm.parentNode.replaceChild(newCourseForm, courseForm);
+        
+        newCourseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obtener datos del formulario
+            const formData = new FormData(this);
+            
+            // Verificar si es una edición o creación
+            const courseId = this.dataset.courseId;
+            const isEdit = !!courseId;
+            
+            // Asegurarse de que el título esté presente
+            if (!formData.get('title')) {
+                alert('El título del curso es obligatorio');
+                return;
+            }
+            
+            // Asegurarse de que todos los campos tengan valores definidos
+            if (!formData.get('description')) {
+                formData.set('description', ''); // Cadena vacía se convertirá a null en el servidor
+            }
+            
+            // Asegurarse de que el estado tenga un valor
+            if (!formData.get('status')) {
+                formData.set('status', 'draft'); // Por defecto es borrador
+            }
+            
+            // Configurar la URL y método según sea edición o creación
+            let url = '/api/courses';
+            let method = 'POST';
+            
+            if (isEdit) {
+                url = `/api/courses/${courseId}`;
+                method = 'PUT';
+            }
+            
+            // Enviar datos al servidor
+            fetch(url, {
+                method: method,
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error al guardar el curso');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Cerrar modal
+                document.getElementById('courseModal').classList.remove('show');
+                document.body.style.overflow = 'auto';
+                
+                // Recargar cursos
+                loadCoursesFromDatabase();
+                
+                // Mostrar mensaje de éxito
+                alert(data.message || 'Curso guardado exitosamente');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            });
+        });
+    }

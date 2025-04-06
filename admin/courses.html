@@ -142,39 +142,35 @@
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Check that your form fields have the correct names -->
                 <form id="courseForm" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label for="courseTitle">Título del Curso</label>
-                        <input type="text" id="courseTitle" name="courseTitle" required>
+                        <label for="courseTitle">Título</label>
+                        <input type="text" id="courseTitle" name="title" required>
                     </div>
                     <div class="form-group">
                         <label for="courseDescription">Descripción</label>
-                        <textarea id="courseDescription" name="courseDescription" rows="4" required></textarea>
+                        <textarea id="courseDescription" name="description"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="courseThumbnail">Imagen de Portada</label>
-                        <input type="file" id="courseThumbnail" name="courseThumbnail" accept="image/*">
-                        <small class="form-text text-muted">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
+                        <label for="courseThumbnail">Imagen</label>
+                        <input type="file" id="courseThumbnail" name="thumbnail" accept="image/*">
                     </div>
                     <div class="form-group">
                         <label for="courseStatus">Estado</label>
-                        <select id="courseStatus" name="courseStatus" required>
+                        <select id="courseStatus" name="status" required>
                             <option value="draft">Borrador</option>
                             <option value="published">Publicado</option>
                             <option value="archived">Archivado</option>
                         </select>
                     </div>
+                    <!-- Añadir botones de acción al formulario -->
                     <div class="form-actions">
-                        <button type="button" class="btn-secondary close-modal">Cancelar</button>
-                        <button type="submit" class="btn-primary">Guardar Curso</button>
+                        <button type="button" class="btn-secondary cancel-btn">Cancelar</button>
+                        <button type="submit" class="btn-primary save-btn">Guardar Curso</button>
                     </div>
                 </form>
             </div>
-            <!-- Remove the duplicate footer buttons since we already have them in the form -->
-            <!-- <div class="modal-footer">
-                <button class="btn-secondary cancel-btn">Cancelar</button>
-                <button class="btn-primary save-btn">Guardar Curso</button>
-            </div> -->
         </div>
     </div>
 
