@@ -11,10 +11,6 @@
     --gray-color: #6c757d;
     --light-gray-color: #e9ecef;
     --sidebar-width: 250px;
-    --blue-color: #0066cc;
-    --green-color: #28a745;
-    --orange-color: #ff6b00;
-    --red-color: #dc3545;
     --purple-color: #6f42c1;
 }
 
@@ -842,19 +838,6 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 4px;
     background-color: var(--white-color);
     color: var(--dark-color);
-}
-
-.table-container {
-    background-color: var(--white-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
 }
 
 .data-table th,

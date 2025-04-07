@@ -162,25 +162,6 @@ nav ul {
     text-shadow: none; /* Remove text shadow as it's not needed on light background */
 }
 
-nav ul {
-    display: flex;
-}
-
-.btn-login {
-    background-color: transparent;
-    color: var(--white-color);
-    padding: 8px 20px;
-    border: 2px solid var(--white-color);
-    border-radius: 50px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.btn-login:hover {
-    background-color: var(--white-color);
-    color: var(--primary-color);
-}
-
 /* Features Section */
 .features {
     background-color: var(--white-color);
