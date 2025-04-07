@@ -6,6 +6,56 @@ let currentFilters = {
     status: 'all'
 };
 
+// Función para mostrar notificaciones
+function showNotification(message, type = 'success', duration = 3000) {
+    const container = document.getElementById('notification-container');
+    
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // Icono según el tipo de notificación
+    let icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    if (type === 'warning') icon = 'exclamation-triangle';
+    if (type === 'info') icon = 'info-circle';
+    
+    // Contenido de la notificación
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${icon}"></i>
+            <p>${message}</p>
+        </div>
+        <button class="notification-close">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Añadir al contenedor
+    container.appendChild(notification);
+    
+    // Configurar botón de cierre
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            container.removeChild(notification);
+        }, 300);
+    });
+    
+    // Auto-cerrar después de la duración especificada
+    setTimeout(() => {
+        if (notification.parentNode === container) {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (notification.parentNode === container) {
+                    container.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, duration);
+}
+
 // Función para cargar los cursos desde la base de datos
 function loadCoursesFromDatabase() {
     fetch('/api/courses')
@@ -97,13 +147,18 @@ function updateCoursesTable(courses) {
         if (course.status === 'published') statusText = 'Publicado';
         else if (course.status === 'archived') statusText = 'Archivado';
         
+        // Add timestamp to image URL to prevent caching
+        const imageUrl = course.thumbnail ? 
+            `../images/courses/${course.thumbnail}?t=${new Date().getTime()}` : 
+            '../images/courses/default-course.jpg';
+        
         row.innerHTML = `
             <td>
                 <input type="checkbox" class="row-checkbox">
             </td>
             <td>
                 <div class="course-info">
-                    <img src="../images/courses/${course.thumbnail || 'default-course.jpg'}" alt="Course Thumbnail">
+                    <img src="${imageUrl}" alt="Course Thumbnail">
                     <div>
                         <h4>${course.title}</h4>
                         <span class="course-creator">${course.creator_name || 'Admin'}</span>
@@ -235,8 +290,8 @@ function initializeActionButtons() {
     viewButtons.forEach(button => {
         button.addEventListener('click', function() {
             const courseId = this.closest('tr').dataset.courseId;
-            // Implementar la vista detallada del curso
-            alert(`Ver detalles del curso ID: ${courseId}`);
+            // Redirigir a la página de módulos del curso
+            window.location.href = `course-modules.html?id=${courseId}`;
         });
     });
     
@@ -258,13 +313,13 @@ function initializeActionButtons() {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    alert(data.message || 'Curso eliminado exitosamente');
+                    showNotification(data.message || 'Curso eliminado exitosamente', 'success');
                     // Recargar la lista de cursos
                     loadCoursesFromDatabase();
                 })
                 .catch(error => {
                     console.error('Error deleting course:', error);
-                    alert('Error al eliminar el curso');
+                    showNotification('Error al eliminar el curso', 'error');
                 });
             }
         });
@@ -273,8 +328,8 @@ function initializeActionButtons() {
     
     // Función para inicializar los botones del modal
     function initializeModalButtons() {
-        // Botón para cerrar el modal
-        const closeButtons = document.querySelectorAll('.close-modal, .cancel-btn');
+        // Botón para cerrar el modal (solo el botón X, ya no el de cancelar)
+        const closeButtons = document.querySelectorAll('.close-modal');
         closeButtons.forEach(button => {
             button.addEventListener('click', function() {
                 document.getElementById('courseModal').classList.remove('show');
@@ -330,6 +385,7 @@ function initializeActionButtons() {
     
     // Eliminar cualquier duplicado de esta función en el archivo
     // Mantener solo una implementación de initializeCreateCourseForm
+    // ...
     function initializeCreateCourseForm() {
         const courseForm = document.getElementById('courseForm');
         
@@ -343,24 +399,17 @@ function initializeActionButtons() {
             // Obtener datos del formulario
             const formData = new FormData(this);
             
+            // Log form data for debugging
+            console.log('Form data keys:', [...formData.keys()]);
+            
             // Verificar si es una edición o creación
             const courseId = this.dataset.courseId;
             const isEdit = !!courseId;
             
             // Asegurarse de que el título esté presente
             if (!formData.get('title')) {
-                alert('El título del curso es obligatorio');
+                showNotification('El título del curso es obligatorio', 'error');
                 return;
-            }
-            
-            // Asegurarse de que todos los campos tengan valores definidos
-            if (!formData.get('description')) {
-                formData.set('description', ''); // Cadena vacía se convertirá a null en el servidor
-            }
-            
-            // Asegurarse de que el estado tenga un valor
-            if (!formData.get('status')) {
-                formData.set('status', 'draft'); // Por defecto es borrador
             }
             
             // Configurar la URL y método según sea edición o creación
@@ -372,33 +421,56 @@ function initializeActionButtons() {
                 method = 'PUT';
             }
             
+            // Mostrar indicador de carga
+            const saveButton = this.querySelector('.save-btn');
+            const originalText = saveButton.textContent;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            saveButton.disabled = true;
+            
             // Enviar datos al servidor
             fetch(url, {
                 method: method,
                 body: formData
             })
             .then(response => {
+                // Improved error handling
                 if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.error || 'Error al guardar el curso');
-                    });
+                    // Check content type to handle different error formats
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Error al guardar el curso');
+                        });
+                    } else {
+                        // If not JSON, get text and throw a generic error
+                        return response.text().then(text => {
+                            console.error('Server response:', text);
+                            throw new Error('Error al guardar el curso. Por favor, inténtalo de nuevo.');
+                        });
+                    }
                 }
                 return response.json();
             })
             .then(data => {
-                // Cerrar modal
-                document.getElementById('courseModal').classList.remove('show');
+                // Mostrar notificación de éxito
+                showNotification(isEdit ? 'Curso actualizado correctamente' : 'Curso creado correctamente', 'success');
+                
+                // Cerrar el modal correctamente
+                const modal = document.getElementById('courseModal');
+                modal.classList.remove('show');
                 document.body.style.overflow = 'auto';
                 
-                // Recargar cursos
+                // Actualizar la tabla de cursos sin recargar la página
                 loadCoursesFromDatabase();
-                
-                // Mostrar mensaje de éxito
-                alert(data.message || 'Curso guardado exitosamente');
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error: ' + error.message);
+                showNotification(error.message || 'Error al guardar el curso', 'error');
+            })
+            .finally(() => {
+                // Restaurar el botón de guardar
+                saveButton.innerHTML = originalText;
+                saveButton.disabled = false;
             });
         });
     }

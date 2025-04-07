@@ -22,6 +22,10 @@
                     </li>
                     <li class="active">
                         <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
+                        <ul class="submenu">
+                            <li class="active"><a href="courses.html"><i class="fas fa-list"></i> Listado</a></li>
+                            <li><a href="course-modules.html"><i class="fas fa-book-open"></i> Módulos</a></li>
+                        </ul>
                     </li>
                     <li>
                         <a href="users.html"><i class="fas fa-users"></i> Usuarios</a>
@@ -132,6 +136,9 @@
         </main>
     </div>
 
+    <!-- Sistema de notificaciones -->
+    <div id="notification-container" class="notification-container"></div>
+
     <!-- Add/Edit Course Modal -->
     <div class="modal" id="courseModal">
         <div class="modal-content">
@@ -153,7 +160,7 @@
                         <textarea id="courseDescription" name="description"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="courseThumbnail">Imagen</label>
+                        <label for="courseThumbnail">Imagen del Curso</label>
                         <input type="file" id="courseThumbnail" name="thumbnail" accept="image/*">
                     </div>
                     <div class="form-group">
@@ -164,9 +171,10 @@
                             <option value="archived">Archivado</option>
                         </select>
                     </div>
+                    <!-- Removing the action buttons that were incorrectly placed here -->
+                    
                     <!-- Añadir botones de acción al formulario -->
                     <div class="form-actions">
-                        <button type="button" class="btn-secondary cancel-btn">Cancelar</button>
                         <button type="submit" class="btn-primary save-btn">Guardar Curso</button>
                     </div>
                 </form>

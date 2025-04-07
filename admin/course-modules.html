@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulos del Curso - Whirlpool Learning Platform</title>
+    <link rel="stylesheet" href="../css/admin-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Panel de Administración</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    </li>
+                    <li class="active">
+                        <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
+                        <ul class="submenu">
+                            <li><a href="courses.html"><i class="fas fa-list"></i> Listado</a></li>
+                            <li class="active"><a href="course-modules.html"><i class="fas fa-book-open"></i> Módulos</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="users.html"><i class="fas fa-users"></i> Usuarios</a>
+                    </li>
+                    <li>
+                        <a href="reports.html"><i class="fas fa-chart-bar"></i> Reportes</a>
+                    </li>
+                    <li>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Configuración</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar...">
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/admin-avatar.jpg" alt="Admin Avatar">
+                        <span>Admin User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Course Modules Content -->
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1 id="course-title">Módulos del Curso</h1>
+                    <p id="course-description">Administra los módulos y contenidos de este curso</p>
+                </div>
+
+                <div class="course-modules-container">
+                    <!-- Course Info Card -->
+                    <div class="card course-info-card">
+                        <div class="course-header">
+                            <div class="course-thumbnail">
+                                <img id="course-image" src="../images/courses/default-course.jpg" alt="Imagen del curso">
+                            </div>
+                            <div class="course-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-users"></i>
+                                    <span id="enrolled-count">0</span> estudiantes
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-book"></i>
+                                    <span id="module-count">0</span> módulos
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="course-duration">0</span> horas
+                                </div>
+                            </div>
+                        </div>
+                        <div class="course-actions">
+                            <button class="btn-primary" id="edit-course-btn">
+                                <i class="fas fa-edit"></i> Editar Curso
+                            </button>
+                            <button class="btn-secondary" id="preview-course-btn">
+                                <i class="fas fa-eye"></i> Vista Previa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modules Section -->
+                    <div class="modules-section">
+                        <div class="section-header">
+                            <h2>Módulos</h2>
+                            <button class="btn-primary" id="add-module-btn">
+                                <i class="fas fa-plus"></i> Nuevo Módulo
+                            </button>
+                        </div>
+
+                        <!-- Modules List -->
+                        <div class="modules-list" id="modules-container">
+                            <!-- Modules will be loaded dynamically -->
+                            <div class="empty-state">
+                                <i class="fas fa-book-open"></i>
+                                <p>No hay módulos disponibles para este curso</p>
+                                <button class="btn-primary" id="create-first-module">
+                                    Crear primer módulo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Module Modal -->
+    <div class="modal" id="module-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="module-modal-title">Añadir Nuevo Módulo</h2>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="module-form">
+                    <div class="form-group">
+                        <label for="module-title">Título del Módulo</label>
+                        <input type="text" id="module-title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="module-description">Descripción</label>
+                        <textarea id="module-description" name="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="module-position">Posición</label>
+                        <input type="number" id="module-position" name="position" min="1" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancel-module">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="save-module">Guardar Módulo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Modal -->
+    <div class="modal" id="content-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="content-modal-title">Añadir Nuevo Contenido</h2>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="content-form">
+                    <div class="form-group">
+                        <label for="content-title">Título del Contenido</label>
+                        <input type="text" id="content-title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="content-type">Tipo de Contenido</label>
+                        <select id="content-type" name="content_type_id" required>
+                            <option value="">Seleccionar tipo</option>
+                            <option value="1">Video</option>
+                            <option value="2">Texto</option>
+                            <option value="3">PDF</option>
+                            <option value="4">Imagen</option>
+                            <option value="5">Interactivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="content-data-container">
+                        <!-- This will be dynamically updated based on content type -->
+                        <label for="content-data">Contenido</label>
+                        <textarea id="content-data" name="content_data" rows="5"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="content-position">Posición</label>
+                        <input type="number" id="content-position" name="position" min="1" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancel-content">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="save-content">Guardar Contenido</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this before the closing body tag -->
+    <script src="../js/admin-sidebar.js"></script>
+    <script src="../js/admin-modules.js"></script>
+</body>
+</html>

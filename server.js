@@ -17,6 +17,7 @@ if (!fs.existsSync(coursesImageDir)) {
 }
 
 // Configure multer for file uploads
+// Find the multer configuration for course image uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, coursesImageDir);
@@ -29,21 +30,51 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter to only accept images
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Solo se permiten archivos de imagen'), false);
-    }
-};
-
-const upload = multer({ 
+// Make sure the multer configuration is using the correct field name
+const upload = multer({
     storage: storage,
-    fileFilter: fileFilter,
+    fileFilter: function(req, file, cb) {
+        // Accept images only
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+            return cb(new Error('Solo se permiten archivos de imagen.'), false);
+        }
+        cb(null, true);
+    },
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB limit
     }
+}).single('thumbnail'); // This should match the name attribute in your HTML form
+
+// Then update your course creation route
+app.post('/api/courses', (req, res) => {
+    upload(req, res, function(err) {
+        if (err instanceof multer.MulterError) {
+            // A Multer error occurred when uploading
+            return res.status(400).json({ error: `Error al subir la imagen: ${err.message}` });
+        } else if (err) {
+            // An unknown error occurred
+            return res.status(400).json({ error: `Error al subir la imagen: ${err.message}` });
+        }
+        
+        // Process the rest of your request here
+        // req.file contains the uploaded file info
+        // req.body contains the text fields
+        
+        // Rest of your code...
+    });
+});
+
+// Similarly update your course update route
+app.put('/api/courses/:id', (req, res) => {
+    upload(req, res, function(err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({ error: `Error al subir la imagen: ${err.message}` });
+        } else if (err) {
+            return res.status(400).json({ error: `Error al subir la imagen: ${err.message}` });
+        }
+        
+        // Rest of your code...
+    });
 });
 
 // Middleware
