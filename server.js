@@ -15,20 +15,17 @@ if (!fs.existsSync(coursesImageDir)) {
     fs.mkdirSync(coursesImageDir, { recursive: true });
 }
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, coursesImageDir);
     },
     filename: function (req, file, cb) {
-        // Create unique filename with original extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
         cb(null, 'course-' + uniqueSuffix + ext);
     }
 });
 
-// Configuración completa de multer en un solo objeto
 const upload = multer({ 
     storage: storage,
     fileFilter: function(req, file, cb) {
@@ -77,7 +74,7 @@ const pool = mysql.createPool(dbConfig);
 async function testDatabaseConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('Database connection to Aiven successful!');
+        console.log('Database connection successful!');
         connection.release();
         return true;
     } catch (error) {
@@ -151,11 +148,8 @@ app.get('/api/logout', (req, res) => {
     res.json({ success: true });
 });
 
-// Reemplaza la función startServer (alrededor de la línea 130)
-// Start server
 async function startServer() {
     try {
-        // Test database connection
         const dbConnected = await testDatabaseConnection();
         
         if (!dbConnected) {
@@ -164,7 +158,7 @@ async function startServer() {
         
         // Start server regardless of database connection
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running at http://0.0.0.0:${PORT}`);
+            console.log(`Server running at http://localhost:${PORT}`);
             console.log(`Database connection status: ${dbConnected ? 'Connected' : 'Not connected'}`);
         });
     } catch (error) {
@@ -176,34 +170,9 @@ async function startServer() {
 
 startServer();
 
-
-// API Routes
-app.put('/api/courses', async (req, res) => {
-    try {
-        // Check if user is logged in and is admin
-        if (!req.session.user || req.session.user.role !== 'admin') {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        
-        const { course_id, title, description, status } = req.body;
-        
-        // Update course
-        await pool.execute(
-            'UPDATE courses SET title = ?, description = ?, status = ?, updated_at = NOW() WHERE course_id = ?',
-            [title, description, status, course_id]
-        );
-        
-        res.json({ message: 'Course updated successfully' });
-    } catch (error) {
-        console.error('Error updating course:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // API Routes for Courses
 app.get('/api/courses', async (req, res) => {
     try {
-        // Query to get all courses with additional information
         const [courses] = await pool.query(`
             SELECT c.course_id, c.title, c.description, c.thumbnail, 
                    c.created_by, c.created_at, c.updated_at, c.status,
@@ -213,7 +182,6 @@ app.get('/api/courses', async (req, res) => {
             ORDER BY c.updated_at DESC
         `);
         
-        // Get creator names for each course
         for (let course of courses) {
             const [creator] = await pool.query(`
                 SELECT CONCAT(first_name, ' ', last_name) as creator_name 
@@ -253,25 +221,6 @@ app.get('/api/courses/:id', async (req, res) => {
         console.error('Error fetching course:', error);
         res.status(500).json({ error: 'Error al cargar el curso' });
     }
-});
-
-// Error handling middleware for multer
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading
-        console.error('Multer error:', err);
-        return res.status(400).json({ 
-            error: 'Error al subir la imagen: ' + err.message,
-            field: err.field
-        });
-    } else if (err) {
-        // An unknown error occurred
-        console.error('Unknown error:', err);
-        return res.status(500).json({ 
-            error: 'Error del servidor: ' + err.message 
-        });
-    }
-    next();
 });
 
 // Update an existing course with image upload
@@ -363,12 +312,10 @@ app.delete('/api/courses/:id', async (req, res) => {
     }
 });
 
-// Health check endpoint for Coolify
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Service is running' });
 });
 
-// Find the course creation endpoint (around line 184)
 app.post('/api/courses', upload.single('thumbnail'), async (req, res) => {
     try {
         // Get the user ID from the session
@@ -379,7 +326,7 @@ app.post('/api/courses', upload.single('thumbnail'), async (req, res) => {
         
         // Validate required fields
         if (!title) {
-            return res.status(400).json({ error: 'Title is required' });
+            return res.status(400).json({ error: 'El título es obligatorio' });
         }
         
         // Handle the thumbnail - convert undefined to null
@@ -405,6 +352,25 @@ app.post('/api/courses', upload.single('thumbnail'), async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating course:', error);
-        res.status(500).json({ error: 'Failed to create course' });
+        res.status(500).json({ error: 'Error al crear el curso' });
     }
+});
+
+// Error handling middleware for multer
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        // A Multer error occurred when uploading
+        console.error('Multer error:', err);
+        return res.status(400).json({ 
+            error: 'Error al subir la imagen: ' + err.message,
+            field: err.field
+        });
+    } else if (err) {
+        // An unknown error occurred
+        console.error('Unknown error:', err);
+        return res.status(500).json({ 
+            error: 'Error del servidor: ' + err.message 
+        });
+    }
+    next();
 });

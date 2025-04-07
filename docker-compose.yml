@@ -8,13 +8,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      # Comenta estas líneas si no tienes una base de datos configurada
-      DB_HOST=${DB_HOST}
-      DB_PORT=${DB_PORT}
-      DB_USER=${DB_USER}
-      DB_PASSWORD=${DB_PASSWORD}
-      DB_NAME=${DB_NAME}
-      DB_SSL=${DB_SSL}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSL=${DB_SSL}
     restart: unless-stopped
     # Healthcheck simplificado que siempre pasa
     healthcheck:
