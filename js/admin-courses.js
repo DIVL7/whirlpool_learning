@@ -1,5 +1,3 @@
-// Function to load courses from database
-// Variables globales para almacenar los cursos y los filtros actuales
 let allCourses = [];
 let currentFilters = {
     category: 'all',
@@ -209,6 +207,17 @@ function initializeFilters() {
     });
 }
 
+// Función para cerrar un modal
+function closeModal(modalElement) {
+    modalElement.classList.remove('show');
+    setTimeout(() => {
+        if (modalElement.id === 'deleteConfirmModal') {
+            document.body.removeChild(modalElement);
+        }
+        document.body.style.overflow = 'auto';
+    }, 300);
+}
+
 // Inicializar los botones de acción (editar, ver, eliminar)
 function initializeActionButtons() {
     // Botones de editar
@@ -217,7 +226,7 @@ function initializeActionButtons() {
         button.addEventListener('click', function() {
             const row = this.closest('tr');
             const courseId = row.dataset.courseId;
-            const title = row.querySelector('.course-info h4').textContent;
+            const title = row.querySelector('.course-info div h4').textContent;
             
             // Resetear el formulario
             document.getElementById('courseForm').reset();
@@ -296,181 +305,284 @@ function initializeActionButtons() {
     });
     
     // Botones de eliminar
-    // Agregando la función initializeModalButtons
-    
-    // Veo que necesitas agregar la función `initializeModalButtons()` que se está llamando en el evento DOMContentLoaded pero no está definida en el archivo. Aquí está la implementación:
     const deleteButtons = document.querySelectorAll('.delete-btn');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
             const row = this.closest('tr');
             const courseId = row.dataset.courseId;
-            const courseTitle = row.querySelector('.course-info h4').textContent;
             
-            if (confirm(`¿Estás seguro de que deseas eliminar el curso "${courseTitle}"?`)) {
-                // Eliminar el curso
-                fetch(`/api/courses/${courseId}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    showNotification(data.message || 'Curso eliminado exitosamente', 'success');
-                    // Recargar la lista de cursos
-                    loadCoursesFromDatabase();
-                })
-                .catch(error => {
-                    console.error('Error deleting course:', error);
-                    showNotification('Error al eliminar el curso', 'error');
-                });
-            }
+            // Mostrar modal de confirmación de eliminación
+            showDeleteConfirmationModal(this);
         });
     });
-    }
+}
+
+// Función para mostrar el modal de confirmación de eliminación
+function showDeleteConfirmationModal(deleteButton) {
+    const row = deleteButton.closest('tr');
+    const courseId = row.dataset.courseId;
+    const courseTitle = row.querySelector('.course-info div h4').textContent;
     
-    // Función para inicializar los botones del modal
-    function initializeModalButtons() {
-        // Botón para cerrar el modal (solo el botón X, ya no el de cancelar)
-        const closeButtons = document.querySelectorAll('.close-modal');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('courseModal').classList.remove('show');
-                document.body.style.overflow = 'auto';
+    // Mostrar modal de confirmación
+    const confirmModal = document.createElement('div');
+    confirmModal.className = 'modal';
+    confirmModal.id = 'deleteConfirmModal';
+    confirmModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar Eliminación</h2>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el curso "${courseTitle}"?</p>
+                <p class="warning-text"><i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cancelar</button>
+                <button class="btn-danger confirm-delete">Eliminar</button>
+            </div>
+        </div>
+    `;
+    
+    // Añadir el modal al DOM
+    document.body.appendChild(confirmModal);
+    
+    // Mostrar el modal
+    setTimeout(() => {
+        confirmModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }, 10);
+    
+    // Configurar botones del modal
+    const closeButtons = confirmModal.querySelectorAll('.close-modal');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', () => closeModal(confirmModal));
+    });
+    
+    // Configurar botón de confirmación
+    const confirmButton = confirmModal.querySelector('.confirm-delete');
+    confirmButton.addEventListener('click', () => {
+        deleteCourse(courseId, confirmModal);
+    });
+    
+    // Cerrar modal al hacer clic fuera
+    confirmModal.addEventListener('click', function(event) {
+        if (event.target === confirmModal) {
+            closeModal(confirmModal);
+        }
+    });
+}
+
+// Función para eliminar un curso
+function deleteCourse(courseId, confirmModal) {
+    // Mostrar indicador de carga en el botón
+    const confirmButton = confirmModal.querySelector('.confirm-delete');
+    confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+    confirmButton.disabled = true;
+
+    // Obtener el token de autenticación (si existe)
+    const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    
+    // Configurar los headers para la solicitud
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    // Añadir el token de autenticación si existe
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    // Eliminar el curso
+    fetch(`/api/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: headers,
+        credentials: 'include' // Incluir cookies en la solicitud
+    })
+    .then(response => {
+        if (!response.ok) {
+            // Si la respuesta no es OK, intentamos obtener el mensaje de error
+            return response.json().then(data => {
+                throw new Error(data.message || `Error ${response.status}: ${response.statusText}`);
+            }).catch(err => {
+                // Si no podemos parsear como JSON, usamos el status text
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
             });
-        });
-    
-        // Botón para abrir el modal de nuevo curso
-        const addCourseBtn = document.querySelector('.add-course-btn');
-        addCourseBtn.addEventListener('click', function() {
-            // Resetear el formulario
-            document.getElementById('courseForm').reset();
-            document.getElementById('courseForm').removeAttribute('data-course-id');
-            
-            // Cambiar el título del modal
-            document.querySelector('#courseModal .modal-header h2').textContent = 'Añadir Nuevo Curso';
-            
-            // Eliminar la vista previa de la imagen si existe
-            const thumbnailPreview = document.getElementById('thumbnailPreview');
-            if (thumbnailPreview) {
-                thumbnailPreview.remove();
-            }
-            
-            // Mostrar el modal
-            document.getElementById('courseModal').classList.add('show');
-            document.body.style.overflow = 'hidden';
-        });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Cerrar el modal
+        closeModal(confirmModal);
         
-        // Cerrar modal cuando se hace clic fuera
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('courseModal');
-            if (event.target === modal) {
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-            }
-        });
-    }
-    
-    // Inicializar la página cuando el DOM esté cargado
-    document.addEventListener('DOMContentLoaded', function() {
-        // Cargar los cursos iniciales
+        // Mostrar notificación de éxito
+        showNotification(data.message || 'Curso eliminado exitosamente', 'success');
+        
+        // Recargar la lista de cursos
         loadCoursesFromDatabase();
-    
-        // Inicializar los filtros
-        initializeFilters();
-    
-        // Inicializar los botones del modal
-        initializeModalButtons();
-    
-        // Inicializar el formulario de cursos (solo una vez)
-        initializeCreateCourseForm();
+        
+        // Log para depuración
+        console.log('Curso eliminado:', courseId, data);
+    })
+    .catch(error => {
+        console.error('Error deleting course:', error);
+        
+        // Mostrar mensaje de error más descriptivo
+        let errorMessage = error.message;
+        if (error.message.includes('401')) {
+            errorMessage = 'No tienes permisos para eliminar este curso. Por favor, inicia sesión nuevamente.';
+        }
+        
+        showNotification(`Error al eliminar el curso: ${errorMessage}`, 'error');
+        
+        // Restaurar el botón
+        confirmButton.innerHTML = 'Eliminar';
+        confirmButton.disabled = false;
+    });
+}
+
+// Función para inicializar los botones del modal
+function initializeModalButtons() {
+    // Botón para cerrar el modal (solo el botón X, ya no el de cancelar)
+    const closeButtons = document.querySelectorAll('.close-modal');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            closeModal(document.getElementById('courseModal'));
+        });
+    });
+
+    // Botón para abrir el modal de nuevo curso
+    const addCourseBtn = document.querySelector('.add-course-btn');
+    addCourseBtn.addEventListener('click', function() {
+        // Resetear el formulario
+        document.getElementById('courseForm').reset();
+        document.getElementById('courseForm').removeAttribute('data-course-id');
+        
+        // Cambiar el título del modal
+        document.querySelector('#courseModal .modal-header h2').textContent = 'Añadir Nuevo Curso';
+        
+        // Eliminar la vista previa de la imagen si existe
+        const thumbnailPreview = document.getElementById('thumbnailPreview');
+        if (thumbnailPreview) {
+            thumbnailPreview.remove();
+        }
+        
+        // Mostrar el modal
+        document.getElementById('courseModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
     });
     
-    // Eliminar cualquier duplicado de esta función en el archivo
-    // Mantener solo una implementación de initializeCreateCourseForm
-    // ...
-    function initializeCreateCourseForm() {
-        const courseForm = document.getElementById('courseForm');
+    // Cerrar modal cuando se hace clic fuera
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('courseModal');
+        if (event.target === modal) {
+            closeModal(modal);
+        }
+    });
+}
+
+// Inicializar la página cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar los cursos iniciales
+    loadCoursesFromDatabase();
+
+    // Inicializar los filtros
+    initializeFilters();
+
+    // Inicializar los botones del modal
+    initializeModalButtons();
+
+    // Inicializar el formulario de cursos
+    initializeCreateCourseForm();
+});
+
+function initializeCreateCourseForm() {
+    const courseForm = document.getElementById('courseForm');
+    
+    // Eliminar cualquier event listener existente para evitar duplicados
+    const newCourseForm = courseForm.cloneNode(true);
+    courseForm.parentNode.replaceChild(newCourseForm, courseForm);
+    
+    newCourseForm.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Eliminar cualquier event listener existente para evitar duplicados
-        const newCourseForm = courseForm.cloneNode(true);
-        courseForm.parentNode.replaceChild(newCourseForm, courseForm);
+        // Obtener datos del formulario
+        const formData = new FormData(this);
         
-        newCourseForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Obtener datos del formulario
-            const formData = new FormData(this);
-            
-            // Log form data for debugging
-            console.log('Form data keys:', [...formData.keys()]);
-            
-            // Verificar si es una edición o creación
-            const courseId = this.dataset.courseId;
-            const isEdit = !!courseId;
-            
-            // Asegurarse de que el título esté presente
-            if (!formData.get('title')) {
-                showNotification('El título del curso es obligatorio', 'error');
-                return;
-            }
-            
-            // Configurar la URL y método según sea edición o creación
-            let url = '/api/courses';
-            let method = 'POST';
-            
-            if (isEdit) {
-                url = `/api/courses/${courseId}`;
-                method = 'PUT';
-            }
-            
-            // Mostrar indicador de carga
-            const saveButton = this.querySelector('.save-btn');
-            const originalText = saveButton.textContent;
-            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-            saveButton.disabled = true;
-            
-            // Enviar datos al servidor
-            fetch(url, {
-                method: method,
-                body: formData
-            })
-            .then(response => {
-                // Improved error handling
-                if (!response.ok) {
-                    // Check content type to handle different error formats
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json().then(data => {
-                            throw new Error(data.error || 'Error al guardar el curso');
-                        });
-                    } else {
-                        // If not JSON, get text and throw a generic error
-                        return response.text().then(text => {
-                            console.error('Server response:', text);
-                            throw new Error('Error al guardar el curso. Por favor, inténtalo de nuevo.');
-                        });
-                    }
+        // Log form data for debugging
+        console.log('Form data keys:', [...formData.keys()]);
+        
+        // Verificar si es una edición o creación
+        const courseId = this.dataset.courseId;
+        const isEdit = !!courseId;
+        
+        // Asegurarse de que el título esté presente
+        if (!formData.get('title')) {
+            showNotification('El título del curso es obligatorio', 'error');
+            return;
+        }
+        
+        // Configurar la URL y método según sea edición o creación
+        let url = '/api/courses';
+        let method = 'POST';
+        
+        if (isEdit) {
+            url = `/api/courses/${courseId}`;
+            method = 'PUT';
+        }
+        
+        // Mostrar indicador de carga
+        const saveButton = this.querySelector('.save-btn');
+        const originalText = saveButton.textContent;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        saveButton.disabled = true;
+        
+        // Enviar datos al servidor
+        fetch(url, {
+            method: method,
+            body: formData
+        })
+        .then(response => {
+            // Improved error handling
+            if (!response.ok) {
+                // Check content type to handle different error formats
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error al guardar el curso');
+                    });
+                } else {
+                    // If not JSON, get text and throw a generic error
+                    return response.text().then(text => {
+                        console.error('Server response:', text);
+                        throw new Error('Error al guardar el curso. Por favor, inténtalo de nuevo.');
+                    });
                 }
-                return response.json();
-            })
-            .then(data => {
-                // Mostrar notificación de éxito
-                showNotification(isEdit ? 'Curso actualizado correctamente' : 'Curso creado correctamente', 'success');
-                
-                // Cerrar el modal correctamente
-                const modal = document.getElementById('courseModal');
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-                
-                // Actualizar la tabla de cursos sin recargar la página
-                loadCoursesFromDatabase();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification(error.message || 'Error al guardar el curso', 'error');
-            })
-            .finally(() => {
-                // Restaurar el botón de guardar
-                saveButton.innerHTML = originalText;
-                saveButton.disabled = false;
-            });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Mostrar notificación de éxito
+            showNotification(isEdit ? 'Curso actualizado correctamente' : 'Curso creado correctamente', 'success');
+            
+            // Cerrar el modal correctamente
+            const modal = document.getElementById('courseModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // Actualizar la tabla de cursos sin recargar la página
+            loadCoursesFromDatabase();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification(error.message || 'Error al guardar el curso', 'error');
+        })
+        .finally(() => {
+            // Restaurar el botón de guardar
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
         });
-    }
+    });
+}
