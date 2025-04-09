@@ -1,282 +1,386 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize settings navigation
-    initSettingsNav();
+    // Load settings
+    loadSettings();
     
-    // Initialize save settings button
-    document.getElementById('saveSettings').addEventListener('click', saveSettings);
+    // Set up event listeners
+    document.getElementById('save-general-settings').addEventListener('click', function() {
+        saveGeneralSettings();
+    });
     
-    // Initialize manual backup button
-    document.getElementById('manualBackup').addEventListener('click', performManualBackup);
+    document.getElementById('save-email-settings').addEventListener('click', function() {
+        saveEmailSettings();
+    });
     
-    // Initialize toggle switches with saved values (if any)
-    initializeFormValues();
+    document.getElementById('save-notification-settings').addEventListener('click', function() {
+        saveNotificationSettings();
+    });
+    
+    document.getElementById('save-security-settings').addEventListener('click', function() {
+        saveSecuritySettings();
+    });
+    
+    document.getElementById('test-email-connection').addEventListener('click', function() {
+        testEmailConnection();
+    });
+    
+    document.getElementById('clear-cache').addEventListener('click', function() {
+        clearCache();
+    });
+    
+    // Theme switcher
+    document.getElementById('theme-selector').addEventListener('change', function() {
+        changeTheme(this.value);
+    });
+    
+    // Language selector
+    document.getElementById('language-selector').addEventListener('change', function() {
+        changeLanguage(this.value);
+    });
 });
 
-/**
- * Initialize settings navigation
- */
-function initSettingsNav() {
-    const navItems = document.querySelectorAll('.settings-nav-item');
-    const sections = document.querySelectorAll('.settings-section');
-    
-    navItems.forEach(item => {
-        item.addEventListener('click', function() {
-            // Remove active class from all nav items
-            navItems.forEach(navItem => navItem.classList.remove('active'));
-            
-            // Add active class to clicked nav item
-            this.classList.add('active');
-            
-            // Hide all sections
-            sections.forEach(section => section.style.display = 'none');
-            
-            // Show the target section
-            const targetSection = document.getElementById(this.dataset.target);
-            if (targetSection) {
-                targetSection.style.display = 'block';
-            }
-        });
-    });
-}
-
-/**
- * Initialize form values from localStorage or default values
- */
-function initializeFormValues() {
-    // Load saved settings from localStorage if available
-    const savedSettings = JSON.parse(localStorage.getItem('whirlpoolSettings')) || {};
-    
-    // General settings
-    if (savedSettings.general) {
-        document.getElementById('siteName').value = savedSettings.general.siteName || 'Whirlpool Learning Platform';
-        document.getElementById('siteDescription').value = savedSettings.general.siteDescription || 'Plataforma de aprendizaje para técnicos de Whirlpool.';
-        document.getElementById('contactEmail').value = savedSettings.general.contactEmail || 'soporte@whirlpool.com';
-        document.getElementById('maintenanceMode').checked = savedSettings.general.maintenanceMode || false;
-    }
-    
-    // Appearance settings
-    if (savedSettings.appearance) {
-        document.getElementById('primaryColor').value = savedSettings.appearance.primaryColor || '#0066cc';
-        document.getElementById('secondaryColor').value = savedSettings.appearance.secondaryColor || '#28a745';
-        document.getElementById('darkMode').checked = savedSettings.appearance.darkMode || false;
-    }
-    
-    // Notifications settings
-    if (savedSettings.notifications) {
-        document.getElementById('emailNotifications').checked = savedSettings.notifications.emailNotifications !== false;
-        document.getElementById('newCourseNotifications').checked = savedSettings.notifications.newCourseNotifications !== false;
-        document.getElementById('certificationNotifications').checked = savedSettings.notifications.certificationNotifications !== false;
-        document.getElementById('courseReminders').checked = savedSettings.notifications.courseReminders || false;
-    }
-    
-    // Security settings
-    if (savedSettings.security) {
-        document.getElementById('passwordPolicy').value = savedSettings.security.passwordPolicy || 'medium';
-        document.getElementById('sessionTimeout').value = savedSettings.security.sessionTimeout || 30;
-        document.getElementById('twoFactorAuth').checked = savedSettings.security.twoFactorAuth || false;
-        document.getElementById('activityLogging').checked = savedSettings.security.activityLogging !== false;
-    }
-    
-    // Integrations settings
-    if (savedSettings.integrations) {
-        document.getElementById('googleAnalyticsId').value = savedSettings.integrations.googleAnalyticsId || '';
-        document.getElementById('smtpServer').value = savedSettings.integrations.smtpServer || 'smtp.whirlpool.com';
-        document.getElementById('smtpPort').value = savedSettings.integrations.smtpPort || 587;
-        document.getElementById('smtpUsername').value = savedSettings.integrations.smtpUsername || 'notifications@whirlpool.com';
-        // We don't restore the password for security reasons
-    }
-    
-    // Backup settings
-    if (savedSettings.backup) {
-        document.getElementById('autoBackups').checked = savedSettings.backup.autoBackups !== false;
-        document.getElementById('backupFrequency').value = savedSettings.backup.backupFrequency || 'weekly';
-        document.getElementById('backupRetention').value = savedSettings.backup.backupRetention || 30;
-    }
-}
-
-/**
- * Save settings to localStorage and simulate API call
- */
-function saveSettings() {
-    // Show loading state
-    const saveButton = document.getElementById('saveSettings');
-    const originalText = saveButton.textContent;
-    saveButton.textContent = 'Guardando...';
-    saveButton.disabled = true;
-    
-    // Collect settings from form
-    const settings = {
-        general: {
-            siteName: document.getElementById('siteName').value,
-            siteDescription: document.getElementById('siteDescription').value,
-            contactEmail: document.getElementById('contactEmail').value,
-            maintenanceMode: document.getElementById('maintenanceMode').checked
-        },
-        appearance: {
-            primaryColor: document.getElementById('primaryColor').value,
-            secondaryColor: document.getElementById('secondaryColor').value,
-            darkMode: document.getElementById('darkMode').checked
-        },
-        notifications: {
-            emailNotifications: document.getElementById('emailNotifications').checked,
-            newCourseNotifications: document.getElementById('newCourseNotifications').checked,
-            certificationNotifications: document.getElementById('certificationNotifications').checked,
-            courseReminders: document.getElementById('courseReminders').checked
-        },
-        security: {
-            passwordPolicy: document.getElementById('passwordPolicy').value,
-            sessionTimeout: document.getElementById('sessionTimeout').value,
-            twoFactorAuth: document.getElementById('twoFactorAuth').checked,
-            activityLogging: document.getElementById('activityLogging').checked
-        },
-        integrations: {
-            googleAnalyticsId: document.getElementById('googleAnalyticsId').value,
-            smtpServer: document.getElementById('smtpServer').value,
-            smtpPort: document.getElementById('smtpPort').value,
-            smtpUsername: document.getElementById('smtpUsername').value,
-            // We don't save the password in localStorage for security reasons
-        },
-        backup: {
-            autoBackups: document.getElementById('autoBackups').checked,
-            backupFrequency: document.getElementById('backupFrequency').value,
-            backupRetention: document.getElementById('backupRetention').value
+// Load settings from server
+async function loadSettings() {
+    try {
+        const response = await fetch('/api/settings');
+        if (!response.ok) {
+            throw new Error('Error al cargar la configuración');
         }
-    };
-    
-    // Save to localStorage (in a real app, this would be an API call)
-    localStorage.setItem('whirlpoolSettings', JSON.stringify(settings));
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Show success message
-        showNotification('Configuración guardada correctamente', 'success');
         
-        // Reset button state
-        saveButton.textContent = originalText;
-        saveButton.disabled = false;
+        const settings = await response.json();
         
-        // Apply some settings immediately (in a real app)
-        applySettings(settings);
-    }, 1000);
+        // Populate general settings
+        document.getElementById('site-name').value = settings.general.siteName || '';
+        document.getElementById('site-description').value = settings.general.siteDescription || '';
+        document.getElementById('admin-email').value = settings.general.adminEmail || '';
+        document.getElementById('theme-selector').value = settings.general.theme || 'light';
+        document.getElementById('language-selector').value = settings.general.language || 'es';
+        
+        // Populate email settings
+        document.getElementById('smtp-host').value = settings.email.smtpHost || '';
+        document.getElementById('smtp-port').value = settings.email.smtpPort || '';
+        document.getElementById('smtp-user').value = settings.email.smtpUser || '';
+        document.getElementById('smtp-password').value = settings.email.smtpPassword ? '********' : '';
+        document.getElementById('smtp-encryption').value = settings.email.smtpEncryption || 'tls';
+        document.getElementById('from-email').value = settings.email.fromEmail || '';
+        document.getElementById('from-name').value = settings.email.fromName || '';
+        
+        // Populate notification settings
+        document.getElementById('enable-email-notifications').checked = settings.notifications.enableEmailNotifications || false;
+        document.getElementById('enable-browser-notifications').checked = settings.notifications.enableBrowserNotifications || false;
+        document.getElementById('notify-new-user').checked = settings.notifications.notifyNewUser || false;
+        document.getElementById('notify-course-completion').checked = settings.notifications.notifyCourseCompletion || false;
+        
+        // Populate security settings
+        document.getElementById('session-timeout').value = settings.security.sessionTimeout || 30;
+        document.getElementById('max-login-attempts').value = settings.security.maxLoginAttempts || 5;
+        document.getElementById('password-expiry-days').value = settings.security.passwordExpiryDays || 90;
+        document.getElementById('enable-2fa').checked = settings.security.enable2FA || false;
+        
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        showError('Error al cargar la configuración. Por favor, inténtalo de nuevo.');
+    }
 }
 
-/**
- * Apply settings to the UI
- */
-function applySettings(settings) {
-    // Apply primary color
-    if (settings.appearance && settings.appearance.primaryColor) {
-        document.documentElement.style.setProperty('--primary-color', settings.appearance.primaryColor);
+// Save general settings
+async function saveGeneralSettings() {
+    try {
+        const generalSettings = {
+            siteName: document.getElementById('site-name').value,
+            siteDescription: document.getElementById('site-description').value,
+            adminEmail: document.getElementById('admin-email').value,
+            theme: document.getElementById('theme-selector').value,
+            language: document.getElementById('language-selector').value
+        };
+        
+        const response = await fetch('/api/settings/general', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(generalSettings)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar la configuración general');
+        }
+        
+        showSuccess('Configuración general guardada correctamente');
+        
+    } catch (error) {
+        console.error('Error saving general settings:', error);
+        showError('Error al guardar la configuración general. Por favor, inténtalo de nuevo.');
     }
-    
-    // Apply secondary color (green color in the CSS)
-    if (settings.appearance && settings.appearance.secondaryColor) {
-        document.documentElement.style.setProperty('--green-color', settings.appearance.secondaryColor);
+}
+
+// Save email settings
+async function saveEmailSettings() {
+    try {
+        const emailSettings = {
+            smtpHost: document.getElementById('smtp-host').value,
+            smtpPort: document.getElementById('smtp-port').value,
+            smtpUser: document.getElementById('smtp-user').value,
+            smtpEncryption: document.getElementById('smtp-encryption').value,
+            fromEmail: document.getElementById('from-email').value,
+            fromName: document.getElementById('from-name').value
+        };
+        
+        // Only include password if it's changed (not ********)
+        const password = document.getElementById('smtp-password').value;
+        if (password && password !== '********') {
+            emailSettings.smtpPassword = password;
+        }
+        
+        const response = await fetch('/api/settings/email', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailSettings)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar la configuración de correo');
+        }
+        
+        showSuccess('Configuración de correo guardada correctamente');
+        
+    } catch (error) {
+        console.error('Error saving email settings:', error);
+        showError('Error al guardar la configuración de correo. Por favor, inténtalo de nuevo.');
     }
+}
+
+// Save notification settings
+async function saveNotificationSettings() {
+    try {
+        const notificationSettings = {
+            enableEmailNotifications: document.getElementById('enable-email-notifications').checked,
+            enableBrowserNotifications: document.getElementById('enable-browser-notifications').checked,
+            notifyNewUser: document.getElementById('notify-new-user').checked,
+            notifyCourseCompletion: document.getElementById('notify-course-completion').checked
+        };
+        
+        const response = await fetch('/api/settings/notifications', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(notificationSettings)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar la configuración de notificaciones');
+        }
+        
+        showSuccess('Configuración de notificaciones guardada correctamente');
+        
+    } catch (error) {
+        console.error('Error saving notification settings:', error);
+        showError('Error al guardar la configuración de notificaciones. Por favor, inténtalo de nuevo.');
+    }
+}
+
+// Save security settings
+async function saveSecuritySettings() {
+    try {
+        const securitySettings = {
+            sessionTimeout: parseInt(document.getElementById('session-timeout').value),
+            maxLoginAttempts: parseInt(document.getElementById('max-login-attempts').value),
+            passwordExpiryDays: parseInt(document.getElementById('password-expiry-days').value),
+            enable2FA: document.getElementById('enable-2fa').checked
+        };
+        
+        const response = await fetch('/api/settings/security', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(securitySettings)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar la configuración de seguridad');
+        }
+        
+        showSuccess('Configuración de seguridad guardada correctamente');
+        
+    } catch (error) {
+        console.error('Error saving security settings:', error);
+        showError('Error al guardar la configuración de seguridad. Por favor, inténtalo de nuevo.');
+    }
+}
+
+// Test email connection
+async function testEmailConnection() {
+    try {
+        // Show loading state
+        const button = document.getElementById('test-email-connection');
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Probando...';
+        
+        const emailSettings = {
+            smtpHost: document.getElementById('smtp-host').value,
+            smtpPort: document.getElementById('smtp-port').value,
+            smtpUser: document.getElementById('smtp-user').value,
+            smtpEncryption: document.getElementById('smtp-encryption').value,
+            fromEmail: document.getElementById('from-email').value,
+            fromName: document.getElementById('from-name').value
+        };
+        
+        // Only include password if it's provided
+        const password = document.getElementById('smtp-password').value;
+        if (password && password !== '********') {
+            emailSettings.smtpPassword = password;
+        }
+        
+        const response = await fetch('/api/settings/test-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailSettings)
+        });
+        
+        // Reset button state
+        button.disabled = false;
+        button.textContent = originalText;
+        
+        if (!response.ok) {
+            throw new Error('Error al probar la conexión de correo');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccess('Conexión de correo exitosa. Se ha enviado un correo de prueba.');
+        } else {
+            showError(`Error en la conexión de correo: ${result.message}`);
+        }
+        
+    } catch (error) {
+        console.error('Error testing email connection:', error);
+        
+        // Reset button state
+        const button = document.getElementById('test-email-connection');
+        button.disabled = false;
+        button.textContent = 'Probar Conexión';
+        
+        showError('Error al probar la conexión de correo. Por favor, verifica la configuración.');
+    }
+}
+
+// Clear application cache
+async function clearCache() {
+    try {
+        // Show loading state
+        const button = document.getElementById('clear-cache');
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpiando...';
+        
+        const response = await fetch('/api/settings/clear-cache', {
+            method: 'POST'
+        });
+        
+        // Reset button state
+        button.disabled = false;
+        button.textContent = originalText;
+        
+        if (!response.ok) {
+            throw new Error('Error al limpiar la caché');
+        }
+        
+        showSuccess('Caché limpiada correctamente');
+        
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        
+        // Reset button state
+        const button = document.getElementById('clear-cache');
+        button.disabled = false;
+        button.textContent = 'Limpiar Caché';
+        
+        showError('Error al limpiar la caché. Por favor, inténtalo de nuevo.');
+    }
+}
+
+// Change theme
+function changeTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
     
-    // Apply dark mode if enabled
-    if (settings.appearance && settings.appearance.darkMode) {
-        document.body.classList.add('dark-mode');
+    // Update favicon based on theme
+    const favicon = document.getElementById('favicon');
+    if (theme === 'dark') {
+        favicon.href = '/images/favicon-dark.png';
     } else {
-        document.body.classList.remove('dark-mode');
+        favicon.href = '/images/favicon.png';
     }
 }
 
-/**
- * Perform manual backup
- */
-function performManualBackup() {
-    // Show loading state
-    const backupButton = document.getElementById('manualBackup');
-    const originalText = backupButton.textContent;
-    backupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Respaldando...';
-    backupButton.disabled = true;
-    
-    // Simulate backup process
-    setTimeout(() => {
-        // Create a dummy backup file (in a real app, this would be a real backup)
-        const date = new Date().toISOString().slice(0, 10);
-        const filename = `whirlpool_backup_${date}.sql`;
-        
-        // Show success message
-        showNotification('Respaldo creado correctamente', 'success');
-        
-        // Reset button state
-        backupButton.innerHTML = originalText;
-        backupButton.disabled = false;
-        
-        // Simulate download (in a real app)
-        simulateDownload(filename);
-    }, 2000);
+// Change language
+function changeLanguage(language) {
+    localStorage.setItem('language', language);
+    // In a real application, this would reload the page or update UI text
+    // For now, we'll just show a message
+    showSuccess(`Idioma cambiado a: ${language === 'es' ? 'Español' : 'English'}`);
 }
 
-/**
- * Simulate file download
- */
-function simulateDownload(filename) {
-    // Create a dummy text content
-    const content = `-- Whirlpool Learning Platform Backup\n-- Date: ${new Date().toISOString()}\n\n-- This is a simulated backup file for demonstration purposes.`;
-    
-    // Create a blob and download link
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Cleanup
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 0);
-}
-
-/**
- * Show notification
- */
-function showNotification(message, type = 'info') {
-    // Check if notification container exists, if not create it
-    let notificationContainer = document.querySelector('.notification-container');
-    if (!notificationContainer) {
-        notificationContainer = document.createElement('div');
-        notificationContainer.className = 'notification-container';
-        document.body.appendChild(notificationContainer);
-    }
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="notification-close">&times;</button>
+// Show success message
+function showSuccess(message) {
+    const successContainer = document.createElement('div');
+    successContainer.className = 'success-message';
+    successContainer.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
     `;
     
-    // Add to container
-    notificationContainer.appendChild(notification);
+    // Remove any existing success messages
+    const existingSuccess = document.querySelector('.success-message');
+    if (existingSuccess) {
+        existingSuccess.remove();
+    }
     
-    // Add close button functionality
-    notification.querySelector('.notification-close').addEventListener('click', () => {
-        notification.classList.add('fade-out');
-        setTimeout(() => {
-            notificationContainer.removeChild(notification);
-        }, 300);
-    });
+    // Insert success at the top of the content
+    const contentContainer = document.querySelector('.dashboard-content');
+    contentContainer.insertBefore(successContainer, contentContainer.firstChild);
     
-    // Auto remove after 5 seconds
+    // Auto-remove after 5 seconds
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.classList.add('fade-out');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notificationContainer.removeChild(notification);
-                }
-            }, 300);
-        }
+        successContainer.classList.add('fade-out');
+        setTimeout(() => {
+            successContainer.remove();
+        }, 500);
     }, 5000);
 }
+
+// Show error message
+// Eliminar la función showError existente (líneas 360-385)
+// function showError(message) {
+//     const errorContainer = document.createElement('div');
+//     errorContainer.className = 'error-message';
+//     errorContainer.innerHTML = `
+//         <i class="fas fa-exclamation-circle"></i>
+//         <span>${message}</span>
+//     `;
+//     
+//     // Remove any existing error messages
+//     const existingError = document.querySelector('.error-message');
+//     if (existingError) {
+//         existingError.remove();
+//     }
+//     
+//     // Insert error at the top of the content
+//     const contentContainer = document.querySelector('.dashboard-content');
+//     contentContainer.insertBefore(errorContainer, contentContainer.firstChild);
+//     
+//     // Auto-remove after 5 seconds
+//     setTimeout(() => {
+//         errorContainer.classList.add('fade-out');
+//         setTimeout(() => {
+//             errorContainer.remove();
+//         }, 500);
+//     }, 5000);
+// }

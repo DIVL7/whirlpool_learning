@@ -6,107 +6,102 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!courseId) {
         showCourseSelectionView();
     } else {
-        // Si hay ID de curso, cargar los detalles del curso
         loadCourseDetails(courseId);
         loadModules(courseId);
         setupEventListeners(courseId);
     }
 });
 
-// Error display function
-function showError(message) {
-    const container = document.querySelector('.dashboard-content');
-    container.innerHTML = `
-        <div class="error-message">
-            <i class="fas fa-exclamation-circle"></i>
-            <p>${message}</p>
-            <a href="courses.html" class="btn-primary">Volver a Cursos</a>
-        </div>
-    `;
-}
-
 // Load course details
 async function loadCourseDetails(courseId) {
     try {
+        // Verify if courseId is valid
+        if (!courseId) {
+            throw new Error('ID de curso no válido');
+        }
+        
+        // Using standardized endpoint
         const response = await fetch(`/api/courses/${courseId}`);
         if (!response.ok) {
-            throw new Error('No se pudo cargar la información del curso');
+            throw new Error('Error al cargar los detalles del curso');
         }
         
         const course = await response.json();
         
-        // Update course information
+        // Update course details in the UI
         document.getElementById('course-title').textContent = course.title;
-        document.getElementById('course-description').textContent = course.description;
+        document.getElementById('course-description').textContent = course.description || 'Sin descripción';
         
+        // Update course thumbnail if available
+        const thumbnailContainer = document.getElementById('course-thumbnail');
         if (course.image_url) {
-            document.getElementById('course-image').src = course.image_url;
+            thumbnailContainer.innerHTML = `<img src="${course.image_url}" alt="${course.title}">`;
+        } else {
+            thumbnailContainer.innerHTML = `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`;
         }
         
-        document.getElementById('enrolled-count').textContent = course.enrolled_count || 0;
+        // Update course metadata
         document.getElementById('module-count').textContent = course.module_count || 0;
-        document.getElementById('course-duration').textContent = course.duration || 0;
+        document.getElementById('content-count').textContent = course.content_count || 0;
         
         // Update page title
-        document.title = `${course.title} - Módulos | Whirlpool Learning Platform`;
+        document.title = `${course.title} - Módulos | Whirlpool Learning`;
         
     } catch (error) {
         console.error('Error loading course details:', error);
-        showError('Error al cargar los detalles del curso');
+        showError(`Error al cargar los detalles del curso: ${error.message}`);
     }
 }
 
 // Load modules for the course
 async function loadModules(courseId) {
     try {
+        // Using standardized endpoint
         const response = await fetch(`/api/courses/${courseId}/modules`);
         if (!response.ok) {
             throw new Error('No se pudieron cargar los módulos');
         }
         
         const modules = await response.json();
-        const modulesContainer = document.getElementById('modules-container');
         
-        // Clear container
+        const modulesContainer = document.getElementById('modules-container');
         modulesContainer.innerHTML = '';
         
         if (modules.length === 0) {
-            // Show empty state
             modulesContainer.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-book-open"></i>
-                    <p>No hay módulos disponibles para este curso</p>
-                    <button class="btn-primary" id="create-first-module">
-                        Crear primer módulo
+                    <i class="fas fa-cubes"></i>
+                    <p>Este curso no tiene módulos</p>
+                    <button id="add-first-module" class="btn-primary">
+                        <i class="fas fa-plus"></i> Añadir primer módulo
                     </button>
                 </div>
             `;
             
-            document.getElementById('create-first-module').addEventListener('click', function() {
+            // Add event listener to the "add first module" button
+            document.getElementById('add-first-module').addEventListener('click', function() {
                 openModuleModal(courseId);
             });
+        } else {
+            // Sort modules by position
+            modules.sort((a, b) => a.position - b.position);
             
-            return;
+            // Create module cards
+            modules.forEach(module => {
+                const moduleCard = createModuleCard(module, courseId);
+                modulesContainer.appendChild(moduleCard);
+            });
         }
-        
-        // Sort modules by position
-        modules.sort((a, b) => a.position - b.position);
-        
-        // Create module cards
-        modules.forEach(module => {
-            const moduleCard = createModuleCard(module, courseId);
-            modulesContainer.appendChild(moduleCard);
-        });
         
     } catch (error) {
         console.error('Error loading modules:', error);
-        const modulesContainer = document.getElementById('modules-container');
-        modulesContainer.innerHTML = `
+        document.getElementById('modules-container').innerHTML = `
             <div class="error-state">
                 <i class="fas fa-exclamation-triangle"></i>
                 <p>Error al cargar los módulos</p>
-                <button class="btn-primary" id="retry-load-modules">
-                    Reintentar
+                <p class="error-message">${error.message}</p>
+                <button id="retry-load-modules" class="btn-primary">
+                    <i class="fas fa-sync"></i> Reintentar
                 </button>
             </div>
         `;
@@ -127,26 +122,28 @@ function createModuleCard(module, courseId) {
     const moduleHeader = document.createElement('div');
     moduleHeader.className = 'module-header';
     
-    // Module title and expand button
+    // Title container with position and title
     const titleContainer = document.createElement('div');
     titleContainer.className = 'module-title-container';
+    
     titleContainer.innerHTML = `
-        <span class="module-position">${module.position}</span>
+        <div class="module-position">${module.position}</div>
         <h3 class="module-title">${module.title}</h3>
-        <button class="btn-icon toggle-module">
+        <button class="btn-icon toggle-module" title="Expandir/Colapsar">
             <i class="fas fa-chevron-down"></i>
         </button>
     `;
     
-    // Module actions
+    // Actions container with buttons
     const actionsContainer = document.createElement('div');
     actionsContainer.className = 'module-actions';
+    
     actionsContainer.innerHTML = `
-        <button class="btn-icon edit-module" title="Editar módulo">
-            <i class="fas fa-edit"></i>
-        </button>
         <button class="btn-icon add-content" title="Añadir contenido">
             <i class="fas fa-plus"></i>
+        </button>
+        <button class="btn-icon edit-module" title="Editar módulo">
+            <i class="fas fa-edit"></i>
         </button>
         <button class="btn-icon delete-module" title="Eliminar módulo">
             <i class="fas fa-trash-alt"></i>
@@ -275,9 +272,9 @@ function setupEventListeners(courseId) {
         openModuleModal(courseId);
     });
     
-    // Edit course button
-    document.getElementById('edit-course-btn').addEventListener('click', function() {
-        window.location.href = `edit-course.html?id=${courseId}`;
+    // Back button
+    document.getElementById('back-to-modules-btn').addEventListener('click', function() {
+        window.location.href = 'course-modules.html';
     });
     
     // Preview course button
@@ -338,7 +335,8 @@ function openModuleModal(courseId, module = null) {
     }
     
     form.dataset.courseId = courseId;
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 // Open content modal for adding or editing
@@ -481,7 +479,7 @@ async function saveModule(courseId) {
     };
     
     try {
-        const url = isEdit ? `/api/modules/${moduleId}` : '/api/modules';
+        const url = isEdit ? `/api/courses/modules/${moduleId}` : '/api/courses/modules';
         const method = isEdit ? 'PUT' : 'POST';
         
         const response = await fetch(url, {
@@ -535,7 +533,7 @@ async function saveContent() {
             formData.append('data', JSON.stringify(contentData));
             
             try {
-                const url = isEdit ? `/api/contents/${contentId}` : '/api/contents';
+                const url = isEdit ? `/api/courses/modules/contents/${contentId}` : '/api/courses/modules/contents';
                 const response = await fetch(url, {
                     method: isEdit ? 'PUT' : 'POST',
                     body: formData
@@ -561,7 +559,7 @@ async function saveContent() {
         contentData.content_data = contentDataElement.value;
         
         try {
-            const url = isEdit ? `/api/contents/${contentId}` : '/api/contents';
+            const url = isEdit ? `/api/courses/modules/contents/${contentId}` : '/api/courses/modules/contents';
             const method = isEdit ? 'PUT' : 'POST';
             
             const response = await fetch(url, {
@@ -590,7 +588,7 @@ async function saveContent() {
 // Delete module
 async function deleteModule(moduleId, courseId) {
     try {
-        const response = await fetch(`/api/modules/${moduleId}`, {
+        const response = await fetch(`/api/courses/modules/${moduleId}`, {
             method: 'DELETE'
         });
         
@@ -611,7 +609,7 @@ async function deleteModule(moduleId, courseId) {
 // Delete content
 async function deleteContent(contentId, moduleId) {
     try {
-        const response = await fetch(`/api/contents/${contentId}`, {
+        const response = await fetch(`/api/courses/modules/contents/${contentId}`, {
             method: 'DELETE'
         });
         
@@ -849,38 +847,19 @@ document.head.insertAdjacentHTML('beforeend', `
 </style>
 `);
 
-
-// Al principio del archivo, después de las declaraciones iniciales
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Obtener el ID del curso de la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('id');
-    
-    if (!courseId) {
-        // Si no hay ID de curso, mostrar la selección de cursos
-        showCourseSelectionView();
-    } else {
-        // Si hay ID de curso, cargar los detalles del curso
-        loadCourseDetails(courseId);
-        loadModules(courseId);
-        setupEventListeners(courseId);
-    }
-});
-
-// Añadir esta nueva función para mostrar la vista de selección de cursos
+// Function to show course selection view
 function showCourseSelectionView() {
-    // Ocultar la vista de módulos
+    // Hide modules view
     document.querySelector('.course-modules-container').style.display = 'none';
     
-    // Actualizar el título y descripción
+    // Update title and description
     document.querySelector('.page-header h1').textContent = 'Seleccionar Curso';
     document.querySelector('.page-header p').textContent = 'Selecciona un curso para administrar sus módulos';
     
-    // Crear contenedor para la selección de cursos
+    // Create container for course selection
     const mainContent = document.querySelector('.dashboard-content');
     
-    // Crear el elemento de selección de cursos si no existe
+    // Create course selection element if it doesn't exist
     if (!document.getElementById('course-selection-container')) {
         const courseSelectionContainer = document.createElement('div');
         courseSelectionContainer.id = 'course-selection-container';
@@ -899,13 +878,14 @@ function showCourseSelectionView() {
         
         mainContent.appendChild(courseSelectionContainer);
         
-        // Cargar los cursos disponibles
+        // Load available courses
         loadAvailableCourses();
     }
 }
 
-// Función para cargar los cursos disponibles
+// Function to load available courses
 function loadAvailableCourses() {
+    // Using standardized endpoint
     fetch('/api/courses')
         .then(response => {
             if (!response.ok) {
@@ -927,45 +907,83 @@ function loadAvailableCourses() {
                         </a>
                     </div>
                 `;
-                return;
-            }
-            
-            // Crear tarjetas para cada curso
-            courses.forEach(course => {
-                const courseCard = document.createElement('div');
-                courseCard.className = 'course-card';
-                courseCard.innerHTML = `
-                    <div class="course-thumbnail">
-                        <img src="../images/courses/${course.thumbnail || 'default-course.jpg'}" alt="${course.title}">
-                    </div>
-                    <div class="course-info">
-                        <h4>${course.title}</h4>
-                        <p>${course.description || 'Sin descripción'}</p>
-                        <div class="course-meta">
-                            <span><i class="fas fa-book"></i> ${course.module_count || 0} módulos</span>
-                            <span><i class="fas fa-users"></i> ${course.student_count || 0} estudiantes</span>
+            } else {
+                courses.forEach(course => {
+                    const courseCard = document.createElement('div');
+                    courseCard.className = 'course-card';
+                    
+                    courseCard.innerHTML = `
+                        <div class="course-thumbnail">
+                            ${course.image_url 
+                                ? `<img src="${course.image_url}" alt="${course.title}">`
+                                : `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`
+                            }
                         </div>
-                    </div>
-                    <div class="course-actions">
-                        <a href="course-modules.html?id=${course.course_id}" class="btn-primary">
-                            <i class="fas fa-cog"></i> Administrar Módulos
-                        </a>
-                    </div>
-                `;
-                coursesGrid.appendChild(courseCard);
-            });
+                        <h3 class="course-title">${course.title}</h3>
+                        <p class="course-description">${course.description || 'Sin descripción'}</p>
+                        <div class="course-meta">
+                                                        <span class="meta-item">
+                                <i class="fas fa-cubes"></i> ${course.module_count || 0} módulos
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-file-alt"></i> ${course.content_count || 0} contenidos
+                            </span>
+                        </div>
+                        <div class="course-actions">
+                            <a href="course-modules.html?id=${course.course_id}" class="btn-primary">
+                                <i class="fas fa-cubes"></i> Administrar Módulos
+                            </a>
+                        </div>
+                    `;
+                    
+                    coursesGrid.appendChild(courseCard);
+                });
+            }
         })
         .catch(error => {
             console.error('Error:', error);
-            const coursesGrid = document.getElementById('courses-grid');
-            coursesGrid.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <p>Error al cargar los cursos: ${error.message}</p>
-                    <button class="btn-primary" onclick="loadAvailableCourses()">
+            document.getElementById('courses-grid').innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error al cargar los cursos</p>
+                    <p class="error-message">${error.message}</p>
+                    <button id="retry-load-courses" class="btn-primary">
                         <i class="fas fa-sync"></i> Reintentar
                     </button>
                 </div>
             `;
+            
+            document.getElementById('retry-load-courses').addEventListener('click', function() {
+                loadAvailableCourses();
+            });
         });
 }
+
+// Error display function
+// Eliminar la función showError existente (líneas 963-988)
+// function showError(message) {
+//     const errorContainer = document.createElement('div');
+//     errorContainer.className = 'error-message';
+//     errorContainer.innerHTML = `
+//         <i class="fas fa-exclamation-circle"></i>
+//         <span>${message}</span>
+//     `;
+//     
+//     // Remove any existing error messages
+//     const existingError = document.querySelector('.error-message');
+//     if (existingError) {
+//         existingError.remove();
+//     }
+//     
+//     // Insert error at the top of the content
+//     const contentContainer = document.querySelector('.dashboard-content');
+//     contentContainer.insertBefore(errorContainer, contentContainer.firstChild);
+//     
+//     // Auto-remove after 5 seconds
+//     setTimeout(() => {
+//         errorContainer.classList.add('fade-out');
+//         setTimeout(() => {
+//             errorContainer.remove();
+//         }, 500);
+//     }, 5000);
+// }

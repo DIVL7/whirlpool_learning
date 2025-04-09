@@ -6,6 +6,8 @@
     <title>Gestión de Cursos - Whirlpool Learning Platform</title>
     <link rel="stylesheet" href="../css/admin-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Agrega esta línea en la sección head de tu HTML -->
+    <link rel="stylesheet" href="../css/components/notifications.css">
 </head>
 <body>
     <div class="admin-container">
@@ -74,13 +76,13 @@
                 <!-- Course Actions -->
                 <div class="action-bar">
                     <div class="filters">
-                        <select id="categoryFilter">
-                            <option value="all">Todas las Categorías</option>
-                            <option value="refrigerator">Refrigerador</option>
-                            <option value="washing">Lavadora</option>
-                            <option value="dryer">Secadora</option>
-                            <option value="dishwasher">Lavavajillas</option>
-                        </select>
+                        <div class="filter-group">
+                            <label for="categoryFilter">Categoría:</label>
+                            <select id="categoryFilter">
+                                <option value="all">Todas las Categorías</option>
+                                <!-- Las categorías se cargarán dinámicamente -->
+                            </select>
+                        </div>
                         <select id="statusFilter">
                             <option value="all">Todos los Estados</option>
                             <option value="published">Publicado</option>
@@ -160,21 +162,32 @@
                         <textarea id="courseDescription" name="description"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="courseThumbnail">Imagen del Curso</label>
-                        <input type="file" id="courseThumbnail" name="thumbnail" accept="image/*">
+                        <label for="courseCategory">Categoría</label>
+                        <select id="courseCategory" name="category_id">
+                            <option value="">Seleccionar categoría</option>
+                            <!-- Las categorías se cargarán dinámicamente -->
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="courseStatus">Estado</label>
-                        <select id="courseStatus" name="status" required>
+                        <select id="courseStatus" name="status">
                             <option value="draft">Borrador</option>
                             <option value="published">Publicado</option>
                             <option value="archived">Archivado</option>
                         </select>
                     </div>
-                    <!-- Removing the action buttons that were incorrectly placed here -->
+                    <div class="form-group">
+                        <label for="courseThumbnail">Imagen del curso</label>
+                        <input type="file" id="courseThumbnail" name="thumbnail" accept="image/*">
+                        <!-- Add thumbnail preview container -->
+                        <div id="thumbnail-preview" class="thumbnail-preview" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Eliminamos la sección duplicada de Estado y la sección de Visibilidad -->
                     
                     <!-- Añadir botones de acción al formulario -->
                     <div class="form-actions">
+                        <button type="button" class="btn-secondary close-modal">Cancelar</button>
                         <button type="submit" class="btn-primary save-btn">Guardar Curso</button>
                     </div>
                 </form>
@@ -182,6 +195,28 @@
         </div>
     </div>
 
-    <script src="../js/admin-courses.js"></script>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteCourseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar Eliminación</h2>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el curso <span id="deleteCourseTitle">Título del Curso</span>?</p>
+                <p class="warning-text">Esta acción no se puede deshacer y eliminará todos los módulos y contenidos asociados.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cancelar</button>
+                <button class="btn-danger" id="confirmDeleteCourse">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asegúrate de que utils.js se cargue antes que admin-courses.js -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/admin-courses.js"></script>
 </body>
 </html>

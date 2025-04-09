@@ -8,6 +8,14 @@ INSERT INTO users (username, password, email, first_name, last_name, role) VALUE
 ('tech3', 'password', 'tech3@whirlpool.com', 'Robert', 'Johnson', 'technician'),
 ('tech4', 'password', 'tech4@whirlpool.com', 'Maria', 'Garcia', 'technician');
 
+-- Insertar categorías predeterminadas
+INSERT INTO course_categories (name, description) VALUES 
+('Refrigerador', 'Cursos relacionados con la reparación y mantenimiento de refrigeradores'),
+('Lavadora', 'Cursos relacionados con la reparación y mantenimiento de lavadoras'),
+('Secadora', 'Cursos relacionados con la reparación y mantenimiento de secadoras'),
+('Lavavajillas', 'Cursos relacionados con la reparación y mantenimiento de lavavajillas'),
+('General', 'Cursos de conocimiento general sobre electrodomésticos');
+
 -- Insert content types
 INSERT INTO content_types (name, description) VALUES
 ('video', 'Video content'),

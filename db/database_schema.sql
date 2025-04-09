@@ -16,17 +16,27 @@ CREATE TABLE users (
     last_login TIMESTAMP NULL
 );
 
+-- Course categories table
+CREATE TABLE course_categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Courses table
 CREATE TABLE courses (
     course_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
     description TEXT,
     thumbnail VARCHAR(255),
+    category_id INT,
     created_by INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     status ENUM('draft', 'published', 'archived') DEFAULT 'draft',
-    FOREIGN KEY (created_by) REFERENCES users(user_id)
+    FOREIGN KEY (created_by) REFERENCES users(user_id),
+    FOREIGN KEY (category_id) REFERENCES course_categories(category_id) ON DELETE SET NULL
 );
 
 -- Modules table

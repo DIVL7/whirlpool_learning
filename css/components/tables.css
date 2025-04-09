@@ -1,0 +1,64 @@
+/* ===== TABLAS DE DATOS ===== */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th {
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 2px solid var(--light-gray-color);
+}
+
+.data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--light-gray-color);
+    vertical-align: middle;
+}
+
+/* Reset para imágenes en tablas */
+table img {
+    max-width: 32px;
+    max-height: 32px;
+}
+
+/* Específicamente para imágenes de usuario */
+.user-info-cell img {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 1px solid var(--light-gray-color) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 0 0 32px !important;
+}
+
+/* Estilos para celdas con información de usuario */
+.data-table .user-info-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    max-width: none !important;
+    width: auto !important;
+}
+
+.data-table .user-info-cell span {
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.data-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}

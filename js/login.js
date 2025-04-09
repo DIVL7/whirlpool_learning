@@ -43,7 +43,7 @@ function handleLogin(event) {
     submitButton.disabled = true;
     
     // Send login request to server
-    fetch('/api/login', {
+    fetch('/api/auth/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
