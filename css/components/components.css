@@ -360,53 +360,42 @@
 }
 
 /* ===== INDICADORES DE CARGA ===== */
+/* Improved loading spinner styling */
 .loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-left-color: var(--primary-color);
-    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    width: 100%;
+    text-align: center;
+}
+
+.loading-spinner i {
+    font-size: 36px;
+    color: var(--primary-color);
+    margin-bottom: 15px;
     animation: spin 1s linear infinite;
 }
 
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
+.loading-spinner p {
+    font-size: 16px;
+    color: #666;
+    margin: 10px 0 0 0;
+}
+
+.text-center {
+    text-align: center;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* ===== EXPORTACIÓN DE DATOS ===== */
-.export-options {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.export-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 15px;
-    border-radius: 4px;
-    background-color: var(--white-color);
-    border: 1px solid var(--light-gray-color);
-    color: var(--dark-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
+/* Make sure the loading spinner cell takes full width */
+.data-table td[colspan="7"] {
+    padding: 30px 0;
 }
 
 .export-btn:hover {
@@ -417,112 +406,33 @@
     font-size: 14px;
 }
 
-/* Warning text for confirmation messages */
-.warning-text {
-    color: var(--error-color);
-    font-weight: 500;
-    margin-top: 10px;
-}
-
-.notification-text {
-    flex: 1;
-}
-
-.notification-text h4 {
-    margin: 0 0 5px 0;
-    font-size: 16px;
-}
-
-.notification-text p {
-    margin: 0;
-    font-size: 14px;
-    color: var(--gray-color);
-}
-
-.notification-close {
-    background: none;
+/* Colored action buttons */
+.btn-blue {
+    background-color: var(--primary-color);
+    color: white;
     border: none;
-    color: var(--gray-color);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 0;
-    margin-left: 10px;
 }
 
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+.btn-blue:hover {
+    background-color: #0056b3;
 }
 
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-    }
-    to {
-        opacity: 0;
-    }
+.btn-green {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
 }
 
-/* ===== INDICADORES DE CARGA ===== */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-left-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.btn-green:hover {
+    background-color: #218838;
 }
 
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
+.btn-red {
+    background-color: var(--error-color);
+    color: white;
+    border: none;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* ===== EXPORTACIÓN DE DATOS ===== */
-.export-options {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.export-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 15px;
-    border-radius: 4px;
-    background-color: var(--white-color);
-    border: 1px solid var(--light-gray-color);
-    color: var(--dark-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.export-btn:hover {
-    background-color: var(--light-color);
-}
-
-.export-btn i {
-    font-size: 14px;
+.btn-red:hover {
+    background-color: #c82333;
 }

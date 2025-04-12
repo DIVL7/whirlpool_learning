@@ -6,7 +6,12 @@ const fs = require('fs');
 // Get all courses
 async function getAllCourses(req, res) {
     try {
-        // Fetch courses from database - modified to include category
+        // Get pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+        
+        // Fetch courses from database with pagination
         const [courses] = await pool.query(`
             SELECT 
                 c.course_id as id,
@@ -30,27 +35,30 @@ async function getAllCourses(req, res) {
                 c.course_id
             ORDER BY
                 c.updated_at DESC
+            LIMIT ? OFFSET ?
+        `, [limit, offset]);
+        
+        // Get total count for pagination
+        const [countResult] = await pool.query(`
+            SELECT COUNT(*) as total FROM courses
         `);
         
-        // Format courses for response
-        const formattedCourses = courses.map(course => ({
-            id: course.id,
-            title: course.title,
-            description: course.description,
-            image_url: course.thumbnail ? `/uploads/courses/${course.thumbnail}` : null,
-            category_id: course.category_id ? course.category_id.toString() : '',
-            category_name: course.category_name || 'Sin categoría',
-            status: course.status,
-            created_at: course.created_at,
-            updated_at: course.updated_at,
-            lesson_count: course.lesson_count,
-            student_count: course.student_count
-        }));
+        const totalCount = countResult[0].total;
+        const totalPages = Math.ceil(totalCount / limit);
         
-        res.json(formattedCourses);
+        // Return courses with pagination metadata
+        res.json({
+            courses: courses,
+            pagination: {
+                currentPage: page,
+                totalPages: totalPages,
+                totalItems: totalCount,
+                itemsPerPage: limit
+            }
+        });
     } catch (error) {
-        console.error('Error getting courses:', error);
-        res.status(500).json({ error: 'Error al obtener los cursos' });
+        console.error('Error fetching courses:', error);
+        res.status(500).json({ error: 'Error al cargar los cursos' });
     }
 }
 

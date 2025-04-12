@@ -1,27 +1,15 @@
-document.addEventListener('DOMContentLoaded', function() {
-    loadCourses();
-    loadCategoryFilter();
-    
-    setTimeout(() => {
-        setupFilterEventListeners();
-    }, 500);
-    
-    const addCourseButtons = document.querySelectorAll('.add-course-btn');
-    addCourseButtons.forEach(button => {
-        button.addEventListener('click', () => openCourseModal());
-    });
-    
-    setupModalCloseListeners();
-});
-
+// Configurar event listeners para filtros
 function setupFilterEventListeners() {
+    // Event listener para el filtro de categorías
     const categoryFilter = document.getElementById('categoryFilter');
     if (categoryFilter) {
+        // Eliminar event listeners existentes clonando el elemento
         const newCategoryFilter = categoryFilter.cloneNode(true);
         categoryFilter.parentNode.replaceChild(newCategoryFilter, categoryFilter);
         newCategoryFilter.addEventListener('change', filterCourses);
     }
     
+    // Event listener para el filtro de estado
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
         // Eliminar event listeners existentes clonando el elemento
@@ -40,30 +28,90 @@ function setupFilterEventListeners() {
     }
 }
 
-function setupModalCloseListeners() {
+// Configurar event listeners para el modal
+function setupModalEventListeners() {
+    // Event listeners para cerrar modales
     const closeButtons = document.querySelectorAll('.close-modal');
     closeButtons.forEach(button => {
+        // Clone the button to remove all event listeners
         const newButton = button.cloneNode(true);
         button.parentNode.replaceChild(newButton, button);
+        
+        // Add the event listener to the new button
         newButton.addEventListener('click', function() {
             closeCourseModal();
         });
     });
     
+    // Close modal when clicking outside the modal content
     const modal = document.getElementById('courseModal');
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeCourseModal();
-        }
-    });
+    if (modal) {
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeCourseModal();
+            }
+        });
+    }
 
+    // Close modal when pressing Escape key
     document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && modal.style.display === 'flex') {
+        if (event.key === 'Escape' && modal && modal.style.display === 'flex') {
             closeCourseModal();
         }
     });
+    
+    // Setup form submission
+    const courseForm = document.getElementById('courseForm');
+    if (courseForm) {
+        // Prevent default form submission
+        courseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveCourse();
+        });
+        
+        // Make sure the save button calls saveCourse
+        const saveButton = document.querySelector('#courseModal .save-btn');
+        if (saveButton) {
+            saveButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveCourse();
+            });
+        }
+    }
+    
+    // Setup thumbnail preview
+    const courseThumbnail = document.getElementById('courseThumbnail');
+    if (courseThumbnail) {
+        courseThumbnail.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            let thumbnailPreview = document.getElementById('thumbnail-preview');
+            
+            if (!thumbnailPreview) {
+                thumbnailPreview = document.createElement('div');
+                thumbnailPreview.id = 'thumbnail-preview';
+                thumbnailPreview.className = 'thumbnail-preview';
+                courseThumbnail.parentNode.appendChild(thumbnailPreview);
+            }
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    thumbnailPreview.innerHTML = `<img src="${e.target.result}" alt="Thumbnail Preview">`;
+                    thumbnailPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                thumbnailPreview.innerHTML = '';
+                thumbnailPreview.style.display = 'none';
+            }
+        });
+    }
 }
 
+// Store the current page globally
+window.currentCoursePage = 1;
+
+// Función de conveniencia para diferentes tipos de notificaciones
 function showSuccess(message) {
     showNotification(message, 'success');
 }
@@ -80,54 +128,7 @@ function showInfo(message) {
     showNotification(message, 'info');
 }
 
-async function loadCourses() {
-    try {
-        const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center">
-                        <div class="loading-spinner"></div>
-                        <p>Cargando cursos...</p>
-                    </td>
-                </tr>
-            `;
-        }
-        
-        const response = await fetch('/api/courses');
-        if (!response.ok) {
-            throw new Error('Error al cargar los cursos');
-        }
-        
-        const courses = await response.json();
-        
-        displayCourses(courses);
-        
-    } catch (error) {
-        console.error('Error loading courses:', error);
-        
-        const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center">
-                        <div class="error-state">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>Error al cargar los cursos</p>
-                            <p class="error-details">${error.message}</p>
-                            <button class="btn-primary" onclick="loadCourses()">
-                                <i class="fas fa-sync-alt"></i> Reintentar
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
-        
-        showError('Error al cargar los cursos. Por favor, inténtalo de nuevo.');
-    }
-}
-
+// Cargar las categorías en el filtro
 async function loadCategoryFilter() {
     try {
         const response = await fetch('/api/courses/categories');
@@ -143,21 +144,27 @@ async function loadCategoryFilter() {
             return;
         }
         
+        // Mantener la opción "Todas las Categorías"
         while (categoryFilter.options.length > 1) {
             categoryFilter.remove(1);
         }
         
+        // Añadir las categorías al filtro
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.category_id;
             option.textContent = category.name;
             categoryFilter.appendChild(option);
         });
+        
+        // No agregamos event listener aquí, lo hacemos en setupFilterEventListeners
+        
     } catch (error) {
         console.error('Error loading category filter:', error);
     }
 }
 
+// Mostrar cursos en la tabla
 function displayCourses(courses) {
     const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
     
@@ -184,6 +191,7 @@ function displayCourses(courses) {
             </tr>
         `;
         
+        // Add event listener to the newly created button
         const addButton = tableBody.querySelector('.add-course-btn');
         if (addButton) {
             addButton.addEventListener('click', () => openCourseModal());
@@ -192,13 +200,18 @@ function displayCourses(courses) {
         return;
     }
     
+    // Agregar cada curso a la tabla
     courses.forEach(course => {
         const row = document.createElement('tr');
+        // Agregar atributos para filtrado
         row.setAttribute('data-category-id', course.category_id || '');
         row.setAttribute('data-status', course.status || '');
-    
+        row.setAttribute('data-course-id', course.id || '');
+        
+        // Formatear la fecha de actualización
         const updatedDate = course.updated_at ? formatDate(course.updated_at) : 'N/A';
         
+        // Determinar el estado del curso
         let statusClass = '';
         let statusText = '';
         
@@ -244,56 +257,59 @@ function displayCourses(courses) {
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
             <td>${updatedDate}</td>
             <td>
-                <div class="action-buttons">
-                    <button class="btn-icon edit-course-btn" data-course-id="${course.id}" data-tooltip="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon preview-course-btn" data-course-id="${course.id}" data-tooltip="Vista previa">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-icon delete-course-btn" data-course-id="${course.id}" data-tooltip="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
+            <div class="action-buttons">
+                <button class="btn-icon edit-course-btn btn-blue" data-course-id="${course.id}" data-tooltip="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon modules-course-btn btn-green" data-course-id="${course.id}" data-tooltip="Módulos">
+                    <i class="fas fa-book-open"></i>
+                </button>
+                <button class="btn-icon delete-course-btn btn-red" data-course-id="${course.id}" data-tooltip="Eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
         `;
         
         tableBody.appendChild(row);
         
+        // Agregar event listeners a los botones
         const editBtn = row.querySelector('.edit-course-btn');
-        const previewBtn = row.querySelector('.preview-course-btn');
+        const modulesBtn = row.querySelector('.modules-course-btn');
         const deleteBtn = row.querySelector('.delete-course-btn');
-        
+
         if (editBtn) {
             editBtn.addEventListener('click', () => editCourse(course.id));
         }
-        
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => previewCourse(course.id));
+
+        if (modulesBtn) {
+            modulesBtn.addEventListener('click', () => {
+                // Redirect to course-modules.html with the course ID
+                window.location.href = `course-modules.html?id=${course.id}`;
+            });
         }
-        
+
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => deleteCourse(course.id, course.title));
         }
     });
     
+    // Inicializar tooltips para los nuevos botones
     if (typeof initializeTooltips === 'function') {
         initializeTooltips();
     }
 }
+
+// Filtrar cursos según los criterios seleccionados
 function filterCourses() {
-    console.log('Filtering courses...');
-    
     const searchTerm = document.getElementById('searchInput')?.value?.toLowerCase() || '';
     const categoryFilter = document.getElementById('categoryFilter')?.value || 'all';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-    
-    console.log('Filter values:', { searchTerm, categoryFilter, statusFilter });
-    
     const rows = document.querySelectorAll('#courses-table tbody tr, .data-table tbody tr');
     let visibleCount = 0;
     
     rows.forEach(row => {
+        // Si es la fila de estado vacío o cargando, no aplicar filtros
         if (row.querySelector('.empty-state') || row.querySelector('.loading-spinner')) {
             return;
         }
@@ -303,18 +319,10 @@ function filterCourses() {
         const categoryId = row.getAttribute('data-category-id');
         const status = row.getAttribute('data-status');
         
-        console.log('Row data:', { 
-            title: title.substring(0, 20) + '...', 
-            categoryId, 
-            status,
-            rowElement: row
-        });
-        
+        // Verificar si cumple con todos los filtros
         const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
         const matchesCategory = categoryFilter === 'all' || categoryFilter === categoryId || categoryFilter.toString() === categoryId;
         const matchesStatus = statusFilter === 'all' || statusFilter === status;
-        
-        console.log('Matches:', { matchesSearch, matchesCategory, matchesStatus });
         
         if (matchesSearch && matchesCategory && matchesStatus) {
             row.style.display = '';
@@ -324,21 +332,27 @@ function filterCourses() {
         }
     });
     
+    // Mostrar mensaje si no hay resultados
     const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
+    
+    // Fix: Check if tableBody exists before trying to use it
     if (tableBody) {
         const noResultsRow = tableBody.querySelector('.no-results');
         
         if (visibleCount === 0 && !noResultsRow) {
+            // No hay resultados y no existe la fila de "no hay resultados"
             const newRow = document.createElement('tr');
             newRow.className = 'no-results';
             newRow.innerHTML = `<td colspan="7" class="text-center">No se encontraron cursos con los filtros seleccionados</td>`;
             tableBody.appendChild(newRow);
         } else if (visibleCount > 0 && noResultsRow) {
+            // Hay resultados pero existe la fila de "no hay resultados"
             noResultsRow.remove();
         }
     }
 }
 
+// Format date
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-MX', {
@@ -348,6 +362,7 @@ function formatDate(dateString) {
     });
 }
 
+// Función para cargar las categorías en el modal
 async function loadCategories() {
     try {
         const response = await fetch('/api/courses/categories');
@@ -363,10 +378,12 @@ async function loadCategories() {
             return;
         }
         
+        // Limpiar opciones existentes excepto la primera
         while (categorySelect.options.length > 1) {
             categorySelect.remove(1);
         }
         
+        // Añadir las categorías
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.category_id;
@@ -384,52 +401,70 @@ function openCourseModal(course = null) {
     const modalTitle = modal.querySelector('.modal-header h2');
     const form = document.getElementById('courseForm');
     
+    // Reset form
     form.reset();
     
+    // Cargar las categorías
     loadCategories();
     
+    // Limpiar el dataset del formulario
+    form.removeAttribute('data-course-id');
+    
+    // Limpiar la vista previa de la imagen
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    if (thumbnailPreview) {
+        thumbnailPreview.innerHTML = '';
+        thumbnailPreview.style.display = 'none';
+    }
+    
     if (course) {
+        // Edit existing course
         modalTitle.textContent = 'Editar Curso';
         document.getElementById('courseTitle').value = course.title || '';
         document.getElementById('courseDescription').value = course.description || '';
         
+        // Set the course ID in the form dataset for reference when saving
+        form.dataset.courseId = course.id;
+        
+        // Set category if it exists
         const categorySelect = document.getElementById('courseCategory');
         
         if (categorySelect && course.category_id) {
+            // Esperar un momento para que las categorías se carguen
             setTimeout(() => {
                 categorySelect.value = course.category_id;
             }, 500);
         }
         
+        // Set status
         const statusSelect = document.getElementById('courseStatus');
         if (statusSelect && course.status) {
             statusSelect.value = course.status;
         }
         
-        if (course.image_url) {
-            const previewContainer = document.getElementById('thumbnail-preview');
-            previewContainer.innerHTML = `<img src="${course.image_url}" alt="${course.title}">`;
-            previewContainer.style.display = 'block';
+        // Show thumbnail preview if it exists
+        if (course.thumbnail) {
+            const thumbnailPreview = document.getElementById('thumbnail-preview') || document.createElement('div');
+            thumbnailPreview.id = 'thumbnail-preview';
+            thumbnailPreview.className = 'thumbnail-preview';
+            thumbnailPreview.innerHTML = `<img src="${course.thumbnail}" alt="Thumbnail Preview">`;
+            thumbnailPreview.style.display = 'block';
+            
+            // Add it to the DOM if it doesn't exist
+            const thumbnailInput = document.getElementById('courseThumbnail');
+            if (thumbnailInput && !document.getElementById('thumbnail-preview')) {
+                thumbnailInput.parentNode.appendChild(thumbnailPreview);
+            }
         }
-        
-        form.dataset.courseId = course.id;
     } else {
         // New course
         modalTitle.textContent = 'Nuevo Curso';
-        form.removeAttribute('data-course-id');
-        
-        // Hide thumbnail preview
-        const previewContainer = document.getElementById('thumbnail-preview');
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
-            previewContainer.style.display = 'none';
-        }
     }
     
-    // Show modal
-    modal.style.display = 'block';
+    // Show the modal
+    modal.style.display = 'flex';
     
-    // Prevent body scrolling
+    // Prevent scrolling on the body
     document.body.style.overflow = 'hidden';
 }
 
@@ -442,7 +477,6 @@ function closeCourseModal() {
     document.body.style.overflow = 'auto';
 }
 
-// Guardar curso (nuevo o editar)
 async function saveCourse() {
     const form = document.getElementById('courseForm');
     if (!form) {
@@ -462,12 +496,6 @@ async function saveCourse() {
         const url = isEdit ? `/api/courses/${courseId}` : '/api/courses';
         const method = isEdit ? 'PUT' : 'POST';
         
-        console.log(`Sending ${method} request to ${url}`);
-        console.log('Form data contents:');
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + (pair[0] === 'thumbnail' ? 'File object' : pair[1]));
-        }
-        
         // Make sure the form has the required fields
         if (!formData.get('title')) {
             throw new Error('El título es obligatorio');
@@ -480,6 +508,13 @@ async function saveCourse() {
             formData.delete('thumbnail');
         }
         
+        // Debugging - log form data
+        console.log(`Sending ${method} request to ${url}`);
+        console.log('Form data contents:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + (pair[0] === 'thumbnail' ? 'File object' : pair[1]));
+        }
+        
         const response = await fetch(url, {
             method: method,
             body: formData
@@ -490,13 +525,10 @@ async function saveCourse() {
             throw new Error(errorData.error || 'Error al guardar el curso');
         }
         
-        // Cerrar modal y restaurar scrolling
         closeCourseModal();
         
-        // Recargar cursos para mostrar la lista actualizada
         loadCourses();
         
-        // Mostrar mensaje de éxito
         showSuccess(isEdit ? 'Curso actualizado exitosamente' : 'Curso creado exitosamente');
         
     } catch (error) {
@@ -538,16 +570,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 thumbnailPreview.style.display = 'none';
             }
         });
-        console.log('Course image event listener set up');
     } else {
-        console.warn('Course image input element not found in the DOM');
     }
 });
 
 // Error display function
 function showError(message) {
-    console.log('Showing error message:', message);
-    
     const errorContainer = document.createElement('div');
     errorContainer.className = 'error-message';
     errorContainer.innerHTML = `
@@ -618,114 +646,120 @@ function initializeTooltips() {
     });
 }
 
-// Function to close the course modal properly
-function closeCourseModal() {
-    const modal = document.getElementById('courseModal');
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
+// Función para manejar la selección de cursos
+function setupSelectionHandlers() {
+    // Manejar el checkbox "Seleccionar todos"
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            const checkboxes = document.querySelectorAll('.data-table tbody input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            
+            updateDeleteSelectedButton();
+        });
+    }
+    
+    // Actualizar el botón de eliminar seleccionados cuando cambie la selección
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.type === 'checkbox' && e.target.closest('.data-table')) {
+            updateDeleteSelectedButton();
+        }
+    });
+    
+    // Configurar el botón de eliminar seleccionados
+    const deleteSelectedBtn = document.querySelector('.delete-selected-btn');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            openDeleteMultipleModal();
+        });
+    }
 }
 
-// Update the event listener for the close button
-document.addEventListener('DOMContentLoaded', function() {
-    const closeButtons = document.querySelectorAll('.close-modal');
+// Función para actualizar la visibilidad del botón de eliminar seleccionados
+function updateDeleteSelectedButton() {
+    const selectedCheckboxes = document.querySelectorAll('.data-table tbody input[type="checkbox"]:checked');
+    const deleteSelectedBtn = document.querySelector('.delete-selected-btn');
+    
+    if (deleteSelectedBtn) {
+        if (selectedCheckboxes.length > 0) {
+            deleteSelectedBtn.style.display = 'inline-flex';
+            deleteSelectedBtn.textContent = `Eliminar (${selectedCheckboxes.length})`;
+        } else {
+            deleteSelectedBtn.style.display = 'none';
+        }
+    }
+}
+
+// Función genérica para abrir un modal de confirmación
+function openConfirmationModal(modalId, message, confirmCallback) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Si hay un elemento para mostrar el mensaje, actualizarlo
+    if (message) {
+        const messageElement = modal.querySelector('.modal-body p:first-child');
+        if (messageElement) {
+            messageElement.innerHTML = message;
+        }
+    }
+    
+    // Mostrar el modal
+    modal.style.display = 'flex';
+    
+    // Evitar scroll en el body mientras el modal está abierto
+    document.body.style.overflow = 'hidden';
+    
+    // Agregar event listeners a los botones del modal
+    const closeButtons = modal.querySelectorAll('.close-modal');
     closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            closeCourseModal();
-        });
+        button.onclick = () => {
+            closeConfirmationModal(modalId);
+        };
     });
+    
+    // Configurar el botón de confirmación
+    const confirmButton = modal.querySelector('.btn-danger');
+    if (confirmButton && confirmCallback) {
+        confirmButton.onclick = confirmCallback;
+    }
+}
 
-    const modal = document.getElementById('courseModal');
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeCourseModal();
-        }
+// Función genérica para cerrar un modal de confirmación
+function closeConfirmationModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.style.display = 'none';
+    
+    // Restaurar scroll en el body
+    document.body.style.overflow = 'auto';
+    
+    // Limpiar event listeners
+    const confirmButton = modal.querySelector('.btn-danger');
+    if (confirmButton) {
+        confirmButton.onclick = null;
+        
+        // Restaurar el estado del botón de confirmación
+        confirmButton.innerHTML = 'Eliminar';
+        confirmButton.disabled = false;
+    }
+    
+    const closeButtons = modal.querySelectorAll('.close-modal');
+    closeButtons.forEach(button => {
+        button.onclick = null;
     });
-
-    // Close modal when pressing Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && modal.style.display === 'flex') {
-            closeCourseModal();
+    
+    // Eliminar cualquier dato almacenado en el dataset
+    if (modal.dataset) {
+        for (const key in modal.dataset) {
+            delete modal.dataset[key];
         }
-    });
-});
-
-// Make sure form is properly set up when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const courseForm = document.getElementById('courseForm');
-    if (courseForm) {
-        // Prevent default form submission
-        courseForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            saveCourse();
-        });
-        
-        // Make sure the save button calls saveCourse
-        const saveButton = document.querySelector('#courseModal .save-btn');
-        if (saveButton) {
-            saveButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                saveCourse();
-            });
-        }
-        
-        console.log('Course form event listeners set up');
-    } else {
-        console.error('Course form not found in the DOM');
     }
-});
-
-function initEventListeners() {
-    // Remove any existing event listeners first to prevent duplicates
-    const addCourseBtn = document.querySelector('.add-course-btn');
-    if (addCourseBtn) {
-        // Clone the button to remove all event listeners
-        const newAddCourseBtn = addCourseBtn.cloneNode(true);
-        addCourseBtn.parentNode.replaceChild(newAddCourseBtn, addCourseBtn);
-        
-        // Add a single event listener
-        newAddCourseBtn.addEventListener('click', () => {
-            openCourseModal();
-        });
-    }
-};
-
-// Add this at the beginning of your document ready function or at the top of your script
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('%c[DOM] 🔄 Document loaded, checking for duplicate IDs...', 'background: #1abc9c; color: white; padding: 2px 5px; border-radius: 3px;');
-    
-    // Check for duplicate courseCategory elements
-    const categorySelects = document.querySelectorAll('#courseCategory');
-    console.log('%c[DOM] 🔍 Found', 'background: #1abc9c; color: white; padding: 2px 5px; border-radius: 3px;', categorySelects.length, 'elements with ID "courseCategory"');
-    
-    if (categorySelects.length > 1) {
-        console.error('%c[DOM] ❌ DUPLICATE ID DETECTED: Multiple elements with ID "courseCategory"', 'background: #e74c3c; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;');
-        categorySelects.forEach((el, index) => {
-            console.log(`%c[DOM] 🔍 Element ${index}:`, 'background: #1abc9c; color: white; padding: 2px 5px; border-radius: 3px;', el);
-        });
-    }
-    
-    // Check for duplicate courseStatus elements
-    const statusSelects = document.querySelectorAll('#courseStatus');
-    console.log('%c[DOM] 🔍 Found', 'background: #1abc9c; color: white; padding: 2px 5px; border-radius: 3px;', statusSelects.length, 'elements with ID "courseStatus"');
-    
-    if (statusSelects.length > 1) {
-        console.error('%c[DOM] ❌ DUPLICATE ID DETECTED: Multiple elements with ID "courseStatus"', 'background: #e74c3c; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;');
-        statusSelects.forEach((el, index) => {
-            console.log(`%c[DOM] 🔍 Element ${index}:`, 'background: #1abc9c; color: white; padding: 2px 5px; border-radius: 3px;', el);
-        });
-    }
-});
-
-// Make sure there's only one DOMContentLoaded event listener in the file
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Document ready - initializing courses page');
-    
-    // Initialize event listeners
-    initEventListeners();
-    
-    // Load courses
-    loadCourses();
-});
+}
 
 // Función para editar un curso existente
 async function editCourse(courseId) {
@@ -750,37 +784,25 @@ async function editCourse(courseId) {
 
 // Función para eliminar un curso
 async function deleteCourse(courseId, courseTitle) {
-    // Mostrar el modal de confirmación
-    const modal = document.getElementById('deleteCourseModal');
-    const courseTitleSpan = document.getElementById('deleteCourseTitle');
-    
-    // Establecer el título del curso en el mensaje
-    courseTitleSpan.textContent = courseTitle || 'este curso';
-    
-    // Mostrar el modal
-    modal.style.display = 'flex';
-    
-    // Evitar scroll en el body mientras el modal está abierto
-    document.body.style.overflow = 'hidden';
+    // Preparar el mensaje
+    const message = `¿Estás seguro de que deseas eliminar <strong>${courseTitle || 'este curso'}</strong>?`;
     
     // Guardar referencia al courseId para usarlo cuando se confirme
-    modal.dataset.courseId = courseId;
+    const modal = document.getElementById('deleteCourseModal');
+    if (modal) {
+        modal.dataset.courseId = courseId;
+    }
     
-    // Agregar event listeners a los botones del modal
-    const closeButtons = modal.querySelectorAll('.close-modal');
-    closeButtons.forEach(button => {
-        button.onclick = () => {
-            closeDeleteModal();
-        };
-    });
-    
-    // Configurar el botón de confirmación
-    const confirmButton = document.getElementById('confirmDeleteCourse');
-    confirmButton.onclick = async () => {
+    // Definir la función de confirmación
+    const confirmDelete = async () => {
+        const confirmButton = document.getElementById('confirmDeleteCourse');
+        
         try {
             // Mostrar indicador de carga
-            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-            confirmButton.disabled = true;
+            if (confirmButton) {
+                confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+                confirmButton.disabled = true;
+            }
             
             const response = await fetch(`/api/courses/${courseId}`, {
                 method: 'DELETE'
@@ -791,10 +813,13 @@ async function deleteCourse(courseId, courseTitle) {
                 throw new Error(errorData.error || 'Error al eliminar el curso');
             }
             
-            closeDeleteModal();
+            // Cerrar el modal
+            closeConfirmationModal('deleteCourseModal');
             
+            // Recargar la lista de cursos
             loadCourses();
             
+            // Mostrar mensaje de éxito
             showSuccess('Curso eliminado correctamente');
             
         } catch (error) {
@@ -802,113 +827,253 @@ async function deleteCourse(courseId, courseTitle) {
             showError(error.message || 'Error al eliminar el curso. Por favor, inténtalo de nuevo.');
             
             // Restaurar el botón
-            confirmButton.innerHTML = 'Eliminar';
-            confirmButton.disabled = false;
+            if (confirmButton) {
+                confirmButton.innerHTML = 'Eliminar';
+                confirmButton.disabled = false;
+            }
         }
     };
+    
+    // Abrir el modal con el mensaje y la función de confirmación
+    openConfirmationModal('deleteCourseModal', message, confirmDelete);
 }
 
-// Función para cerrar el modal de confirmación
-function closeDeleteModal() {
-    const modal = document.getElementById('deleteCourseModal');
-    modal.style.display = 'none';
+// Función para abrir el modal de eliminación múltiple
+function openDeleteMultipleModal() {
+    const selectedCheckboxes = document.querySelectorAll('.data-table tbody input[type="checkbox"]:checked');
+    const selectedCount = selectedCheckboxes.length;
     
-    // Restaurar scroll en el body
-    document.body.style.overflow = 'auto';
+    if (selectedCount === 0) {
+        return;
+    }
     
-    // Limpiar event listeners
-    const confirmButton = document.getElementById('confirmDeleteCourse');
-    confirmButton.onclick = null;
+    // Preparar el mensaje
+    const message = `¿Estás seguro de que deseas eliminar <strong>${selectedCount}</strong> cursos?`;
     
-    const closeButtons = modal.querySelectorAll('.close-modal');
-    closeButtons.forEach(button => {
-        button.onclick = null;
-    });
+    // Definir la función de confirmación
+    const confirmDeleteMultiple = async () => {
+        const confirmButton = document.getElementById('confirmDeleteMultipleCourses');
+        const selectedCheckboxes = document.querySelectorAll('.data-table tbody input[type="checkbox"]:checked');
+        const courseIds = Array.from(selectedCheckboxes).map(checkbox => {
+            const row = checkbox.closest('tr');
+            return row.getAttribute('data-course-id') || checkbox.dataset.courseId;
+        }).filter(id => id); // Filtrar IDs vacíos
+        
+        if (courseIds.length === 0) {
+            closeConfirmationModal('deleteMultipleCoursesModal');
+            return;
+        }
+        
+        try {
+            // Mostrar indicador de carga
+            if (confirmButton) {
+                confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+                confirmButton.disabled = true;
+            }
+            
+            // Eliminar cada curso seleccionado
+            const deletePromises = courseIds.map(courseId => 
+                fetch(`/api/courses/${courseId}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `Error al eliminar el curso ${courseId}`);
+                        });
+                    }
+                    return response.json();
+                })
+            );
+            
+            // Esperar a que todas las eliminaciones se completen
+            await Promise.all(deletePromises);
+            
+            // Cerrar el modal
+            closeConfirmationModal('deleteMultipleCoursesModal');
+            
+            // Recargar la lista de cursos
+            loadCourses();
+            
+            // Mostrar mensaje de éxito
+            showSuccess(`${courseIds.length} cursos eliminados exitosamente`);
+            
+            // Actualizar el botón de eliminar seleccionados
+            // Esta línea es la solución al problema
+            updateDeleteSelectedButton();
+            
+            // También deseleccionar el checkbox "Seleccionar todos" si existe
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            
+        } catch (error) {
+            console.error('Error deleting courses:', error);
+            showError(error.message || 'Error al eliminar los cursos. Por favor, inténtalo de nuevo.');
+            
+            // Restaurar el botón de confirmación
+            if (confirmButton) {
+                confirmButton.innerHTML = 'Eliminar';
+                confirmButton.disabled = false;
+            }
+        }
+    };
+    
+    // Abrir el modal con el mensaje y la función de confirmación
+    openConfirmationModal('deleteMultipleCoursesModal', message, confirmDeleteMultiple);
 }
 
 // Función para previsualizar un curso
 function previewCourse(courseId) {
-    // Abrir una nueva ventana o pestaña con la vista previa del curso
-    window.open(`/course/${courseId}/preview`, '_blank');
+    // Redirigir a la página de vista previa del curso
+    window.open(`/courses/preview/${courseId}`, '_blank');
 }
 
-// Asegurarnos de que las funciones estén disponibles globalmente
-window.editCourse = editCourse;
-window.deleteCourse = deleteCourse;
-window.previewCourse = previewCourse;
+// Función para cargar los cursos desde la API
+async function loadCourses(page = 1) {
+    try {
+        // Mostrar indicador de carga
+        const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
 
-// Modificar la función init para llamar a initializeFilters
-function init() {
-    // Cargar cursos al iniciar
-    loadCourses();
-    
-    // Inicializar filtros
-    initializeFilters();
-    
-    // Configurar event listeners para botones
-    const addCourseBtn = document.querySelector('.add-course-btn');
-    if (addCourseBtn) {
-        addCourseBtn.addEventListener('click', () => openCourseModal());
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Cargando cursos...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Guardar la página actual
+        window.currentCoursePage = page;
+        
+        // Construir la URL con parámetros de paginación
+        const url = `/api/courses?page=${page}&limit=10`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar los cursos');
+        }
+        
+        const data = await response.json();
+        
+        // Mostrar los cursos en la tabla
+        displayCourses(data.courses || data);
+        
+        // Actualizar la paginación si está disponible
+        if (data.pagination && typeof updatePagination === 'function') {
+            updatePagination(data.pagination);
+        } else if (Array.isArray(data.courses) && typeof updatePagination === 'function') {
+            // FIX: Verificar si realmente hay más páginas basado en el total de cursos
+            // en lugar de asumir que hay más páginas si hay exactamente 10 cursos
+            const totalItems = data.totalCount || 0;
+            const totalPages = Math.ceil(totalItems / 10);
+            
+            // PROBLEMA: Esta condición está creando una página adicional cuando hay exactamente 10 cursos
+            // Si no hay totalCount, solo crear una página adicional si estamos en página 1
+            // y hay exactamente 10 cursos (límite completo)
+            const hasMorePages = totalItems > 0 
+            ? page < totalPages 
+            : (page === 1 && data.courses.length > 10);
+
+            const paginationData = {
+            currentPage: page,
+            totalPages: totalItems > 0 
+                ? totalPages 
+                : (hasMorePages ? page + 1 : page),
+            totalItems: totalItems || data.courses.length,
+            itemsPerPage: 10
+            };
+            updatePagination(paginationData);
+        } else if (Array.isArray(data) && typeof updatePagination === 'function') {
+            // FIX: Similar a la lógica anterior pero para cuando data es un array directamente
+            const totalItems = data.totalCount || 0;
+            const totalPages = Math.ceil(totalItems / 10);
+            
+            // Solo crear una página adicional si estamos en página 1 y hay exactamente 10 cursos
+            const hasMorePages = totalItems > 0 
+                ? page < totalPages 
+                : (page === 1 && data.length > 10);
+                
+            const paginationData = {
+                currentPage: page,
+                totalPages: totalItems > 0 
+                    ? totalPages 
+                    : (hasMorePages ? page + 1 : page),
+                totalItems: totalItems || data.length,
+                itemsPerPage: 10
+            };
+            updatePagination(paginationData);
+        }
+        
+    } catch (error) {
+        console.error('Error loading courses:', error);
+        
+        // Mostrar mensaje de error en la tabla
+        const tableBody = document.querySelector('#courses-table tbody') || document.querySelector('.data-table tbody');
+        
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Error al cargar los cursos</p>
+                            <button class="btn-primary retry-btn" onclick="loadCourses()">
+                                <i class="fas fa-sync"></i> Reintentar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
     }
-    
-    // Configurar event listeners para el modal
-    setupModalEventListeners();
 }
 
-// Llamar a init cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', init);
-
-// Function to handle pagination
-function setupPagination(totalItems, itemsPerPage = 10, currentPage = 1) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+// Función para actualizar la paginación
+function updatePagination(pagination) {
     const paginationContainer = document.querySelector('.pagination');
     
     if (!paginationContainer) {
-        console.error('Pagination container not found');
         return;
     }
     
-    // Clear existing pagination
+    const { currentPage, totalPages } = pagination;
+    
+    // Limpiar la paginación existente
     paginationContainer.innerHTML = '';
     
-    // Don't show pagination if there's only one page or no items
-    if (totalPages <= 1) {
-        paginationContainer.style.display = 'none';
-        return;
-    } else {
-        paginationContainer.style.display = 'flex';
-    }
-    
-    // Previous button
+    // Botón anterior
     const prevButton = document.createElement('button');
-    prevButton.className = 'pagination-btn';
+    prevButton.className = 'pagination-btn prev-btn';
     prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
-    prevButton.disabled = currentPage === 1;
-    prevButton.addEventListener('click', () => {
-        if (currentPage > 1) {
-            goToPage(currentPage - 1);
-        }
-    });
+    prevButton.disabled = currentPage <= 1;
+    prevButton.addEventListener('click', () => loadCourses(currentPage - 1));
     paginationContainer.appendChild(prevButton);
     
-    // Determine which page buttons to show
+    // Determinar qué páginas mostrar
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + 4);
     
-    // Adjust if we're near the end
-    if (endPage - startPage < 4) {
+    // Ajustar si estamos cerca del final
+    if (endPage - startPage < 4 && startPage > 1) {
         startPage = Math.max(1, endPage - 4);
     }
     
-    // First page button (if not already included)
+    // Primera página si no está incluida en el rango
     if (startPage > 1) {
         const firstPageBtn = document.createElement('button');
         firstPageBtn.className = 'pagination-btn';
         firstPageBtn.textContent = '1';
-        firstPageBtn.addEventListener('click', () => goToPage(1));
+        firstPageBtn.addEventListener('click', () => loadCourses(1));
         paginationContainer.appendChild(firstPageBtn);
         
-        // Add ellipsis if there's a gap
+        // Añadir elipsis si hay un salto
         if (startPage > 2) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'pagination-ellipsis';
@@ -917,21 +1082,21 @@ function setupPagination(totalItems, itemsPerPage = 10, currentPage = 1) {
         }
     }
     
-    // Page buttons
+    // Páginas numeradas
     for (let i = startPage; i <= endPage; i++) {
         const pageBtn = document.createElement('button');
         pageBtn.className = 'pagination-btn';
         if (i === currentPage) {
             pageBtn.classList.add('active');
         }
-        pageBtn.textContent = i.toString();
-        pageBtn.addEventListener('click', () => goToPage(i));
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => loadCourses(i));
         paginationContainer.appendChild(pageBtn);
     }
     
-    // Last page button (if not already included)
+    // Última página si no está incluida en el rango
     if (endPage < totalPages) {
-        // Add ellipsis if there's a gap
+        // Añadir elipsis si hay un salto
         if (endPage < totalPages - 1) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'pagination-ellipsis';
@@ -941,97 +1106,45 @@ function setupPagination(totalItems, itemsPerPage = 10, currentPage = 1) {
         
         const lastPageBtn = document.createElement('button');
         lastPageBtn.className = 'pagination-btn';
-        lastPageBtn.textContent = totalPages.toString();
-        lastPageBtn.addEventListener('click', () => goToPage(totalPages));
+        lastPageBtn.textContent = totalPages;
+        lastPageBtn.addEventListener('click', () => loadCourses(totalPages));
         paginationContainer.appendChild(lastPageBtn);
     }
     
-    // Next button
+    // Botón siguiente
     const nextButton = document.createElement('button');
-    nextButton.className = 'pagination-btn';
+    nextButton.className = 'pagination-btn next-btn';
     nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            goToPage(currentPage + 1);
-        }
-    });
+    nextButton.disabled = currentPage >= totalPages;
+    nextButton.addEventListener('click', () => loadCourses(currentPage + 1));
     paginationContainer.appendChild(nextButton);
 }
 
-// Function to navigate to a specific page
-function goToPage(page) {
-    // Store the current page in a variable accessible to the loadCourses function
-    window.currentCoursePage = page;
+// Inicializar la página cuando el DOM esté cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar las categorías en el filtro
+    loadCategoryFilter();
     
-    // Reload courses with the new page
-    loadCourses(page);
-}
-
-// Modify the loadCourses function to handle pagination
-async function loadCourses(page = 1) {
-    const itemsPerPage = 10; // Number of courses per page
-    const tableBody = document.querySelector('.data-table tbody');
+    // Configurar event listeners para filtros
+    setupFilterEventListeners();
     
-    if (!tableBody) {
-        console.error('Table body not found');
-        return;
-    }
+    // Configurar event listeners para el modal
+    setupModalEventListeners();
     
-    // Show loading state
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando cursos...</td></tr>';
+    // Configurar handlers para selección de cursos
+    setupSelectionHandlers();
     
-    try {
-        // Fetch all courses first to get the total count
-        const response = await fetch('/api/courses');
-        
-        if (!response.ok) {
-            throw new Error('Error al cargar los cursos');
-        }
-        
-        const courses = await response.json();
-        
-        // Calculate pagination
-        const totalItems = courses.length;
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-        const paginatedCourses = courses.slice(startIndex, endIndex);
-        
-        // Display the courses for the current page
-        if (paginatedCourses.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No hay cursos disponibles</td></tr>';
-        } else {
-            tableBody.innerHTML = '';
-            displayCourses(paginatedCourses);
-        }
-        
-        // Setup pagination
-        setupPagination(totalItems, itemsPerPage, page);
-        
-    } catch (error) {
-        console.error('Error loading courses:', error);
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center">Error al cargar los cursos: ${error.message}</td></tr>`;
-    }
-}
-
-// Store the current page globally
-window.currentCoursePage = 1;
-
-// Make sure to update the init function to use the new pagination
-function init() {
-    // Cargar cursos al iniciar con la página 1
-    loadCourses(1);
+    // Cargar los cursos
+    loadCourses();
     
-    // Inicializar filtros
-    initializeFilters();
-    
-    // Configurar event listeners para botones
+    // Configurar el botón para crear un nuevo curso
     const addCourseBtn = document.querySelector('.add-course-btn');
     if (addCourseBtn) {
         addCourseBtn.addEventListener('click', () => openCourseModal());
     }
     
-    // Configurar event listeners para el modal
-    setupModalEventListeners();
-}
-
+    // Inicializar tooltips
+    if (typeof initializeTooltips === 'function') {
+        initializeTooltips();
+    }
+});
