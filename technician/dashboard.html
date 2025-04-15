@@ -1,159 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Usuario - Whirlpool</title>
-  <link rel="stylesheet" href="../css/admin-styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    .section { display: none; }
-    .section.active { display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Plataforma Técnicos Whirlpool</title>
+    <link rel="stylesheet" href="../css/technician-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="admin-container">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
-        <h3>Plataforma Whirlpool</h3>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li class="active"><a href="#" onclick="showSection('cursos', event)"><i class="fas fa-book"></i> Cursos</a></li>
-          <li><a href="#" onclick="showSection('foro', event)"><i class="fas fa-comments"></i> Foro</a></li>
-          <li><a href="#" onclick="showSection('calificaciones', event)"><i class="fas fa-star"></i> Calificaciones</a></li>
-        </ul>
-      </nav>
-      <div class="sidebar-footer">
-        <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-      </div>
-    </aside>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Plataforma de Técnicos</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="courses.html"><i class="fas fa-book"></i> Mis Cursos</a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
+                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
 
-    <main class="main-content">
-      <header class="top-nav">
-        <div class="search-container">
-          <i class="fas fa-search"></i>
-          <input type="text" placeholder="Buscar...">
-        </div>
-        <div class="user-info">
-          <div class="notifications">
-            <i class="far fa-bell"></i>
-            <span class="badge">3</span>
-          </div>
-          <div class="user-profile">
-            <img src="../images/admin-avatar.jpg" alt="Avatar">
-            <span>Usuario</span>
-            <i class="fas fa-chevron-down"></i>
-          </div>
-        </div>
-      </header>
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar cursos...">
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge notification-count">0</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
+                        <span id="user-name">Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
 
-      <div class="dashboard-content">
-        <div class="page-header">
-          <h1>Dashboard</h1>
-          <p>Bienvenido a la Plataforma de Aprendizaje Whirlpool</p>
-        </div>
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <p>Bienvenido a tu panel de técnico, <span id="welcome-name">Usuario</span></p>
+                </div>
 
-        <!-- Sección de Cursos -->
-        <section id="cursos" class="section active">
-          <div class="card">
-            <h3>Cursos disponibles</h3>
-            <table class="data-table">
-              <thead>
-                <tr><th>Curso</th><th>Estado</th><th>Acción</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Curso de ejemplo 1</td>
-                  <td><span class="badge status completed">Completado</span></td>
-                  <td><button class="btn-primary">Entrar</button></td>
-                </tr>
-                <tr>
-                  <td>Curso de ejemplo 2</td>
-                  <td><span class="badge status progress">En progreso</span></td>
-                  <td><button class="btn-primary">Entrar</button></td>
-                </tr>
-                <tr>
-                  <td>Curso de ejemplo 3</td>
-                  <td><span class="badge status not-started">No iniciado</span></td>
-                  <td><button class="btn-primary">Entrar</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                <div class="dashboard-widgets">
+                    <div class="widget">
+                        <div class="widget-icon" style="background-color: #3b82f6;"><i class="fas fa-graduation-cap"></i></div>
+                        <div class="widget-info">
+                            <h3 id="courses-count">0</h3>
+                            <p>Cursos Asignados</p>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="courses-trend">0%</span> desde el mes pasado</span>
+                        </div>
+                    </div>
 
-          <div class="card">
-            <h3>Progreso General</h3>
-            <canvas id="progresoPie" width="180" height="180"></canvas>
-          </div>
-        </section>
+                    <div class="widget">
+                        <div class="widget-icon" style="background-color: #16a34a;"><i class="fas fa-check-circle"></i></div>
+                        <div class="widget-info">
+                            <h3 id="completed-count">0</h3>
+                            <p>Cursos Completados</p>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="completed-trend">0%</span> desde el mes pasado</span>
+                        </div>
+                    </div>
 
-        <!-- Sección de Calificaciones -->
-        <section id="calificaciones" class="section">
-          <div class="card">
-            <h3>Calificaciones por curso</h3>
-            <table class="data-table">
-              <thead>
-                <tr><th>Curso</th><th>Calificación</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Curso de ejemplo 1</td><td>95%</td></tr>
-                <tr><td>Curso de ejemplo 2</td><td>80%</td></tr>
-                <tr><td>Curso de ejemplo 3</td><td>—</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+                    <div class="widget">
+                        <div class="widget-icon" style="background-color: #eab308;"><i class="fas fa-certificate"></i></div>
+                        <div class="widget-info">
+                            <h3 id="certification-count">0</h3>
+                            <p>Certificaciones</p>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="certification-trend">0%</span> desde el mes pasado</span>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Sección de Foro -->
-        <section id="foro" class="section">
-          <div class="card">
-            <h3>Foro</h3>
-            <table class="data-table">
-              <thead>
-                <tr><th>Tema</th><th>Calificación</th><th>Progreso</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>Tema de discusión 1</td><td>90</td><td>100%</td></tr>
-                <tr><td>Tema de ejemplo 2</td><td>85</td><td>100%</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-    </main>
-  </div>
+                <div class="dashboard-charts">
+                    <div class="chart-card">
+                        <h3>Mi Progreso (Último Mes)</h3>
+                        <div style="position: relative; height: 350px; width: 100%;">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
+                
+                    <div class="chart-card">
+                        <h3>Estado de Cursos</h3>
+                        <div class="doughnut-chart-container">
+                            <canvas id="courseStatusChart"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><span class="legend-color not-started"></span> No Iniciado</div>
+                            <div class="legend-item"><span class="legend-color in-progress"></span> En Progreso</div>
+                            <div class="legend-item"><span class="legend-color completed"></span> Completado</div>
+                        </div>
+                    </div>
 
-  <script>
-    function showSection(id, event) {
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-      if (event) event.target.closest('li').classList.add('active');
-    }
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3>
+                    <ul class="activity-list" id="activity-list">
+                        <li class="loading-item">Cargando actividades...</li>
+                    </ul>
+                    <div class="view-all"><a href="activity.html">Ver Todo <i class="fas fa-arrow-right"></i></a></div>
+                </div>
+                
+                <div class="next-courses">
+                    <h3>Próximos Cursos</h3>
+                    <div class="courses-container" id="upcoming-courses">
+                        <div class="loading-card">Cargando cursos...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-    const ctx = document.getElementById('progresoPie').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Completado', 'En progreso', 'No iniciado'],
-        datasets: [{
-          data: [25, 50, 25],
-          backgroundColor: ['#16a34a', '#eab308', '#6b7280'],
-          borderWidth: 0,
-          cutout: '70%'
-        }]
-      },
-      options: {
-        responsive: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false }
-        }
-      }
-    });
-  </script>
+    <div class="notification-container" id="notification-container"></div>
+
+    <script src="../js/technician-dashboard.js"></script>
 </body>
 </html>

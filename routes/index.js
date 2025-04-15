@@ -6,6 +6,8 @@ const settingsRoutes = require('./settings');
 const dashboardRoutes = require('./dashboard');
 const reportRoutes = require('./reports');
 const logRoutes = require('./log');
+const technicianRoutes = require('./technician'); // Add technician routes
+const forumRoutes = require('./forum'); // Add forum routes
 
 // Health check route
 router.get('/health', (req, res) => {
@@ -18,6 +20,8 @@ router.use('/courses', courseRoutes); // All course routes under /api/courses
 router.use('/settings', settingsRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
+router.use('/technician', technicianRoutes); // Add technician routes
+router.use('/forum', forumRoutes); // Add forum routes
 
 // Make sure the course categories endpoint is properly registered
 router.get('/courses/categories', (req, res, next) => {

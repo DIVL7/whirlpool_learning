@@ -8,6 +8,7 @@ const routes = require('./routes/index');
 const errorHandler = require('./middleware/errorHandler');
 const session = require('express-session');
 const logRoutes = require('./routes/log'); // Add this line to import log routes
+const technicianRoutes = require('./routes/technician'); // Add this line to import technician routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,12 @@ app.use('/api', routes);
 // Add the log routes directly to ensure they're accessible
 app.use('/api/log', logRoutes); // Add this line to register log routes
 
+// Add the technician routes
+app.use('/api/technician', technicianRoutes); // Add this line to register technician routes
+
+// Add the forum routes
+app.use('/api/forum', require('./routes/forum')); // Add this line
+
 // Compatibility routes to keep the frontend working
 // These can be removed once the frontend is updated to use the new API endpoints
 app.post('/api/login', (req, res) => {
@@ -41,6 +48,12 @@ app.get('/api/check-session', (req, res) => {
 app.get('/api/logout', (req, res) => {
     req.url = '/auth/logout';
     routes(req, res);
+});
+
+// Add notifications endpoint
+app.get('/api/notifications', (req, res) => {
+    req.url = '/technician/notifications';
+    technicianRoutes(req, res);
 });
 
 // Error handling middleware

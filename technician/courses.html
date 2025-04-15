@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Cursos - Plataforma Técnicos Whirlpool</title>
+    <link rel="stylesheet" href="../css/technician-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Plataforma de Técnicos</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> Mis Cursos</a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
+                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="course-search" placeholder="Buscar cursos...">
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge notification-count">0</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
+                        <span id="user-name">Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="page-header">
+                    <h1>Mis Cursos</h1>
+                    <div class="filter-controls">
+                        <select id="course-filter">
+                            <option value="all">Todos los cursos</option>
+                            <option value="in_progress">En progreso</option>
+                            <option value="completed">Completados</option>
+                            <option value="not_started">No iniciados</option>
+                        </select>
+                        <select id="sort-courses">
+                            <option value="name_asc">Nombre (A-Z)</option>
+                            <option value="name_desc">Nombre (Z-A)</option>
+                            <option value="progress_asc">Progreso (Menor a Mayor)</option>
+                            <option value="progress_desc">Progreso (Mayor a Menor)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="course-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-book"></i></div>
+                        <div class="stat-content">
+                            <h3 id="total-courses">0</h3>
+                            <p>Cursos Totales</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-spinner"></i></div>
+                        <div class="stat-content">
+                            <h3 id="in-progress-courses">0</h3>
+                            <p>En Progreso</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-content">
+                            <h3 id="completed-courses">0</h3>
+                            <p>Completados</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="courses-grid" id="courses-container">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p>Cargando cursos...</p>
+                    </div>
+                </div>
+
+                <!-- Template para las tarjetas de cursos -->
+                <template id="course-card-template">
+                    <div class="course-card" data-status="">
+                        <div class="course-image">
+                            <img src="../images/course-default.jpg" alt="Imagen del curso">
+                            <span class="course-status"></span>
+                        </div>
+                        <div class="course-content">
+                            <h3 class="course-title"></h3>
+                            <p class="course-description"></p>
+                            <div class="course-footer">
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill"></div>
+                                    </div>
+                                    <span class="progress-text"></span>
+                                </div>
+                                <div class="course-actions">
+                                    <button class="course-button"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Paginación para cursos -->
+                <div class="pagination-container" id="pagination-container">
+                    <!-- Paginación generada dinámicamente -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal para visualizar certificados -->
+    <div class="modal" id="certificate-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Certificado de Finalización</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="certificate-container">
+                    <div class="certificate">
+                        <div class="certificate-header">
+                            <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="certificate-logo">
+                            <h2>Certificado de Finalización</h2>
+                        </div>
+                        <div class="certificate-body">
+                            <p>Este certificado reconoce que</p>
+                            <h3 id="certificate-name">Nombre del Técnico</h3>
+                            <p>ha completado exitosamente el curso</p>
+                            <h3 id="certificate-course">Nombre del Curso</h3>
+                            <p>con una calificación final de</p>
+                            <h3 id="certificate-score">95%</h3>
+                        </div>
+                        <div class="certificate-footer">
+                            <div class="certificate-date" id="certificate-date">Fecha: 15 de Abril, 2025</div>
+                            <div class="certificate-signature">
+                                <img src="../images/signature.png" alt="Firma">
+                                <p>Director de Capacitación</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="certificate-actions">
+                    <button class="btn-primary" id="download-certificate">Descargar PDF</button>
+                    <button class="btn-secondary close-modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notification-container"></div>
+    
+    <script src="../js/technician-courses.js"></script>
+</body>
+</html>

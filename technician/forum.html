@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foro - Plataforma Whirlpool</title>
+    <link rel="stylesheet" href="../css/technician-styles.css">
+    <link rel="stylesheet" href="../css/technician-forum.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Plataforma Whirlpool</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="courses.html"><i class="fas fa-book"></i> Cursos</a></li>
+                    <li class="active"><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
+                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> Configuración</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="forum-search" placeholder="Buscar temas en el foro...">
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/admin-avatar.jpg" alt="Avatar">
+                        <span id="username-display">Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="page-header">
+                    <h1>Foro de Discusión</h1>
+                    <p>Participa en las discusiones y comparte tus conocimientos.</p>
+                </div>
+                
+                <!-- Categorías del foro -->
+                <div class="card">
+                    <h3>Categorías</h3>
+                    <div class="categories-container" id="forum-categories">
+                        <div class="category-loading">Cargando categorías...</div>
+                    </div>
+                </div>
+
+                <!-- Temas activos -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Temas Activos</h3>
+                        <div class="category-filter">
+                            <select id="category-filter">
+                                <option value="">Todas las categorías</option>
+                                <!-- Las categorías se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="forum-container">
+                        <table class="data-table" id="forum-topics-table">
+                            <thead>
+                                <tr>
+                                    <th>Tema</th>
+                                    <th>Autor</th>
+                                    <th>Respuestas</th>
+                                    <th>Última Actividad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="forum-topics">
+                                <!-- Los temas se cargarán dinámicamente aquí -->
+                                <tr>
+                                    <td colspan="4" class="loading-message">Cargando temas del foro...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="topics-pagination">
+                            <!-- La paginación se generará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nuevo tema -->
+                <div class="card">
+                    <form class="new-topic-form" id="new-topic-form">
+                        <h4>Crear un Nuevo Tema</h4>
+                        <div class="form-group">
+                            <label for="topic-category">Categoría:</label>
+                            <select id="topic-category" name="topic-category" required>
+                                <option value="">Selecciona una categoría</option>
+                                <!-- Las categorías se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="topic-title">Título del Tema:</label>
+                            <input type="text" id="topic-title" name="topic-title" required placeholder="Introduce el título de tu tema">
+                        </div>
+                        <div class="form-group">
+                            <label for="topic-content">Contenido:</label>
+                            <textarea id="topic-content" name="topic-content" rows="5" required placeholder="Escribe el contenido de tu mensaje"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Publicar Tema</button>
+                    </form>
+                </div>
+                
+                <!-- Modal para ver tema completo y respuestas -->
+                <div class="topic-modal" id="topic-modal">
+                    <div class="topic-modal-content">
+                        <span class="close-modal">&times;</span>
+                        <div id="topic-detail">
+                            <!-- El contenido del tema se cargará aquí -->
+                        </div>
+                        <div id="topic-answers">
+                            <h4>Respuestas</h4>
+                            <div id="answers-container">
+                                <!-- Las respuestas se cargarán aquí -->
+                            </div>
+                        </div>
+                        <div id="new-answer-form-container">
+                            <h4>Tu Respuesta</h4>
+                            <form id="new-answer-form">
+                                <div class="form-group">
+                                    <textarea id="answer-content" name="answer-content" rows="4" required placeholder="Escribe tu respuesta aquí..."></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary">Publicar Respuesta</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/technician-forum.js"></script>
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contenido del Curso - Plataforma Técnicos Whirlpool</title>
+    <link rel="stylesheet" href="../css/technician-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Plataforma de Técnicos</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> Mis Cursos</a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
+                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="course-breadcrumb">
+                    <a href="courses.html"><i class="fas fa-arrow-left"></i> Volver a mis cursos</a>
+                    <span id="course-name">Cargando curso...</span>
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="badge notification-count">0</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
+                        <span id="user-name">Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div id="course-loading" class="loader-container">
+                    <div class="loader"></div>
+                    <p>Cargando contenido del curso...</p>
+                </div>
+
+                <div id="course-container" class="course-container" style="display:none;">
+                    <div class="course-header">
+                        <div class="course-info">
+                            <h1 id="course-title"></h1>
+                            <p id="course-description"></p>
+                        </div>
+                        <div class="course-progress-bar">
+                            <div class="progress-container">
+                                <div class="progress-text">Progreso total: <span id="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="course-content-layout">
+                        <div class="modules-sidebar">
+                            <h3>Módulos del curso</h3>
+                            <ul id="modules-list" class="modules-list">
+                                <!-- Módulos generados dinámicamente -->
+                            </ul>
+                        </div>
+
+                        <div class="content-area">
+                            <div id="welcome-screen" class="welcome-screen">
+                                <div class="welcome-icon">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <h2>Bienvenido al curso</h2>
+                                <p>Selecciona un módulo para comenzar a aprender. Recuerda que puedes seguir tu progreso
+                                    en la barra superior.</p>
+                                <button id="start-course-btn" class="btn-primary">Comenzar con el primer módulo</button>
+                            </div>
+
+                            <div id="module-content" class="module-content" style="display:none;">
+                                <!-- Contenido del módulo generado dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="course-error" class="error-container" style="display:none;">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2>Error al cargar el curso</h2>
+                    <p id="error-message">Ha ocurrido un error al cargar el contenido del curso. Por favor, intenta de
+                        nuevo más tarde.</p>
+                    <a href="courses.html" class="btn-primary" style="padding: 12px 25px; font-size: 1.1rem;">
+                        <i class="fas fa-arrow-left"></i> Volver a Mis Cursos
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="notification-container" id="notification-container"></div>
+
+    <script>
+        // Función para mostrar errores
+        function showError(message) {
+            document.getElementById('course-loading').style.display = 'none';
+            document.getElementById('course-container').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('course-error').style.display = 'block';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Obtener el ID del curso de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+
+            if (!courseId) {
+                showError('No se ha especificado un curso. Por favor, selecciona un curso desde la lista de cursos.');
+                return;
+            }
+
+            // Verificar si es inicio de curso (start=true)
+            const isStart = urlParams.get('start') === 'true';
+
+            // Intentar cargar el curso
+            loadCourse(courseId, isStart);
+
+            // Configurar el botón de cerrar sesión
+            document.getElementById('logout-btn').addEventListener('click', function (e) {
+                e.preventDefault();
+                window.location.href = '../index.html';
+            });
+        });
+
+        // Función para cargar el curso
+        async function loadCourse(courseId, isStart) {
+            try {
+                // Mostrar la interfaz de carga
+                document.getElementById('course-loading').style.display = 'flex';
+                document.getElementById('course-container').style.display = 'none';
+                document.getElementById('course-error').style.display = 'none';
+
+                // Realizar petición a la API para obtener datos del curso
+                const response = await fetch(`/api/technician/courses/${courseId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error al cargar el curso: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Error al cargar el curso');
+                }
+
+                // Actualizar la interfaz con los datos del curso
+                const course = data.course;
+                updateCourseInterface(course);
+
+                // Cargar los módulos del curso
+                await loadCourseModules(courseId);
+
+                // Configurar el botón de inicio
+                setupStartButton();
+
+                // Si es inicio, simular clic en el botón de inicio
+                if (isStart) {
+                    setTimeout(() => {
+                        document.getElementById('start-course-btn').click();
+                    }, 500);
+                }
+
+                // Ocultar la pantalla de carga y mostrar el contenido
+                document.getElementById('course-loading').style.display = 'none';
+                document.getElementById('course-container').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading course:', error);
+                // Si falla la carga, intentamos con datos de ejemplo
+                tryLoadWithFallbackData(courseId);
+            }
+        }
+
+        // Función para actualizar la interfaz con los datos del curso
+        function updateCourseInterface(course) {
+            document.getElementById('course-name').textContent = course.title;
+            document.getElementById('course-title').textContent = course.title;
+            document.getElementById('course-description').textContent = course.description || 'Sin descripción disponible';
+
+            // Si tenemos datos de progreso, actualizarlos
+            if (course.progress_percentage) {
+                const progress = parseFloat(course.progress_percentage);
+                document.getElementById('progress-percentage').textContent = `${progress}%`;
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+            }
+        }
+
+        // Función para cargar los módulos del curso
+        async function loadCourseModules(courseId) {
+            try {
+                // Hacer una petición para obtener los módulos del curso
+                const response = await fetch(`/api/technician/courses/${courseId}/modules`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    console.error('Error HTTP:', response.status, response.statusText);
+                    throw new Error(`Error al cargar los módulos: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Respuesta del servidor (módulos):', data);
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Error al cargar los módulos');
+                }
+
+                // Actualizar la lista de módulos con los datos reales
+                const modules = data.modules;
+                const modulesList = document.getElementById('modules-list');
+                modulesList.innerHTML = '';
+
+                // Si no hay módulos, mostrar mensaje
+                if (modules.length === 0) {
+                    modulesList.innerHTML = `
+                <li class="no-modules">
+                    <p>Este curso aún no tiene módulos disponibles.</p>
+                </li>
+            `;
+                    return;
+                }
+
+                // Generar HTML para cada módulo
+                modules.forEach((module, index) => {
+                    let statusClass = '';
+
+                    if (module.status === 'completed') {
+                        statusClass = 'completed';
+                    } else if (module.status === 'in_progress') {
+                        statusClass = 'in-progress';
+                    }
+
+                    const moduleHTML = `
+                <li class="module-item ${statusClass}" data-module-id="${module.module_id}">
+                    <div class="module-header">
+                        <span class="module-number">${index + 1}</span>
+                        <span class="module-title">${module.title}</span>
+                        <span class="module-progress">${module.progress}%</span>
+                    </div>
+                </li>
+            `;
+
+                    modulesList.innerHTML += moduleHTML;
+                });
+
+                // Configurar eventos para los módulos
+                setupModuleEvents(modules);
+            } catch (error) {
+                console.error('Error loading modules:', error);
+                // Si falla, usar datos de ejemplo
+                useExampleModules();
+            }
+        }
+
+        // Función para usar módulos de ejemplo en caso de error
+        function useExampleModules() {
+            console.log('Usando módulos de ejemplo como fallback');
+
+            const modulesList = document.getElementById('modules-list');
+            modulesList.innerHTML = `
+        <li class="module-item completed">
+            <div class="module-header">
+                <span class="module-number">1</span>
+                <span class="module-title">Introducción al curso</span>
+                <span class="module-progress">100%</span>
+            </div>
+        </li>
+        <li class="module-item in-progress">
+            <div class="module-header">
+                <span class="module-number">2</span>
+                <span class="module-title">Conceptos básicos</span>
+                <span class="module-progress">60%</span>
+            </div>
+        </li>
+        <li class="module-item">
+            <div class="module-header">
+                <span class="module-number">3</span>
+                <span class="module-title">Aplicaciones prácticas</span>
+                <span class="module-progress">0%</span>
+            </div>
+        </li>
+        <li class="module-item">
+            <div class="module-header">
+                <span class="module-number">4</span>
+                <span class="module-title">Evaluación final</span>
+                <span class="module-progress">0%</span>
+            </div>
+        </li>`;
+
+            // Configurar eventos para los módulos de ejemplo
+            setupModuleEvents();
+        }
+
+        // Configurar el botón de inicio
+        function setupStartButton() {
+            document.getElementById('start-course-btn').addEventListener('click', function () {
+                // Simular clic en el primer módulo
+                const firstModule = document.querySelector('.module-item');
+                if (firstModule) {
+                    firstModule.click();
+                } else {
+                    // Si no hay módulos, mostrar un mensaje
+                    document.getElementById('welcome-screen').style.display = 'none';
+                    document.getElementById('module-content').style.display = 'block';
+
+                    document.getElementById('module-content').innerHTML = `
+                <div class="module-header">
+                    <h2>No hay módulos disponibles</h2>
+                </div>
+                <div class="content-section">
+                    <p>Este curso aún no tiene módulos disponibles. Por favor, intenta más tarde.</p>
+                </div>
+                <div class="navigation-buttons">
+                    <button class="btn-secondary" onclick="document.getElementById('welcome-screen').style.display = 'block'; document.getElementById('module-content').style.display = 'none';">Volver</button>
+                </div>
+            `;
+                }
+            });
+        }
+
+        // Configurar eventos para los módulos
+        function setupModuleEvents(modules = null) {
+            document.querySelectorAll('.module-item').forEach((item, index) => {
+                item.addEventListener('click', function () {
+                    document.getElementById('welcome-screen').style.display = 'none';
+                    document.getElementById('module-content').style.display = 'block';
+
+                    // Obtener datos del módulo
+                    let moduleTitle, moduleNumber, moduleId, moduleContent;
+
+                    if (modules) {
+                        // Si tenemos datos reales de la API
+                        moduleId = this.dataset.moduleId;
+                        const module = modules.find(m => m.module_id == moduleId);
+
+                        if (!module) {
+                            console.error('Módulo no encontrado:', moduleId);
+                            return;
+                        }
+
+                        moduleTitle = module.title;
+                        moduleNumber = index + 1;
+                        moduleContent = module.description || 'No hay descripción disponible para este módulo.';
+
+                        // Mostrar contenido del módulo seleccionado con datos reales
+                        document.getElementById('module-content').innerHTML = `
+                    <div class="module-header">
+                        <h2>Módulo ${moduleNumber}: ${moduleTitle}</h2>
+                    </div>
+                    <div class="content-section">
+                        <h3>Contenido del módulo ${moduleNumber}</h3>
+                        <p>${moduleContent}</p>
+                        ${module.contents && module.contents.length > 0 ? renderContents(module.contents) : ''}
+                        ${module.quizzes && module.quizzes.length > 0 ? renderQuizzes(module.quizzes) : ''}
+                    </div>
+                    <div class="navigation-buttons">
+                        <button class="btn-secondary" ${moduleNumber === 1 ? 'disabled' : ''}>Anterior</button>
+                        <button class="btn-primary" ${index === modules.length - 1 ? 'disabled' : ''}>Siguiente</button>
+                    </div>
+                `;
+                    } else {
+                        // Si estamos usando datos de ejemplo
+                        moduleNumber = this.querySelector('.module-number').textContent;
+                        moduleTitle = this.querySelector('.module-title').textContent;
+                        moduleContent = `Este es el contenido de ejemplo para el módulo ${moduleNumber}. En una implementación real, cargaríamos el contenido específico para este módulo desde la API.`;
+
+                        // Mostrar contenido del módulo seleccionado con datos de ejemplo
+                        document.getElementById('module-content').innerHTML = `
+                    <div class="module-header">
+                        <h2>Módulo ${moduleNumber}: ${moduleTitle}</h2>
+                    </div>
+                    <div class="content-section">
+                        <h3>Contenido del módulo ${moduleNumber}</h3>
+                        <p>${moduleContent}</p>
+                    </div>
+                    <div class="navigation-buttons">
+                        <button class="btn-secondary" ${moduleNumber === '1' ? 'disabled' : ''}>Anterior</button>
+                        <button class="btn-primary" ${moduleNumber === '4' ? 'disabled' : ''}>Siguiente</button>
+                    </div>
+                `;
+                    }
+                });
+            });
+        }
+
+        // Función auxiliar para renderizar contenidos
+        function renderContents(contents) {
+            if (!contents || contents.length === 0) return '';
+
+            let html = '<div class="module-contents"><h4>Lecciones</h4><ul class="content-list">';
+
+            contents.forEach(content => {
+                const icon = getContentTypeIcon(content.content_type);
+                html += `
+            <li class="content-item" data-content-id="${content.content_id}">
+                <i class="${icon}"></i>
+                <span>${content.title}</span>
+            </li>
+        `;
+            });
+
+            html += '</ul></div>';
+            return html;
+        }
+
+        // Función auxiliar para renderizar quizzes
+        function renderQuizzes(quizzes) {
+            if (!quizzes || quizzes.length === 0) return '';
+
+            let html = '<div class="module-quizzes"><h4>Evaluaciones</h4><ul class="quiz-list">';
+
+            quizzes.forEach(quiz => {
+                html += `
+            <li class="quiz-item" data-quiz-id="${quiz.quiz_id}">
+                <i class="fas fa-question-circle"></i>
+                <span>${quiz.title}</span>
+            </li>
+        `;
+            });
+
+            html += '</ul></div>';
+            return html;
+        }
+
+        // Función auxiliar para obtener iconos según el tipo de contenido
+        function getContentTypeIcon(contentType) {
+            switch (contentType) {
+                case 'video':
+                    return 'fas fa-play-circle';
+                case 'pdf':
+                    return 'fas fa-file-pdf';
+                case 'text':
+                    return 'fas fa-file-alt';
+                case 'image':
+                    return 'fas fa-image';
+                case 'interactive':
+                    return 'fas fa-puzzle-piece';
+                default:
+                    return 'fas fa-file';
+            }
+        }
+
+        // Si falla la carga, intentar con datos de ejemplo
+        function tryLoadWithFallbackData(courseId) {
+            console.log('Intentando cargar con datos de ejemplo para el curso ID:', courseId);
+
+            // Simulamos la carga del curso
+            const courseName = `Curso de ejemplo #${courseId}`;
+            document.getElementById('course-name').textContent = courseName;
+            document.getElementById('course-title').textContent = courseName;
+            document.getElementById('course-description').textContent = 'Este es un curso de ejemplo para mostrar la estructura de contenido. En una implementación real, cargaríamos los datos desde la API.';
+            document.getElementById('progress-percentage').textContent = '30%';
+            document.getElementById('progress-fill').style.width = '30%';
+
+            // Mostrar módulos de ejemplo
+            useExampleModules();
+
+            // Configurar el botón de inicio
+            setupStartButton();
+
+            // Ocultar la pantalla de carga y mostrar el contenido
+            document.getElementById('course-loading').style.display = 'none';
+            document.getElementById('course-container').style.display = 'block';
+        }
+    </script>
+</body>
