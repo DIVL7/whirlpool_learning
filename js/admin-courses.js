@@ -233,6 +233,11 @@ function displayCourses(courses) {
                 statusText = 'Borrador';
         }
         
+        // Fix: Correct image path handling
+        const imagePath = course.thumbnail 
+            ? `/uploads/courses/${course.thumbnail}`
+            : (course.image_url || '');
+        
         row.innerHTML = `
             <td>
                 <input type="checkbox" class="course-checkbox" data-course-id="${course.id}">
@@ -240,8 +245,8 @@ function displayCourses(courses) {
             <td>
                 <div class="course-info">
                     <div class="course-thumbnail">
-                        ${course.image_url 
-                            ? `<img src="${course.image_url}" alt="${course.title}">`
+                        ${imagePath 
+                            ? `<img src="${imagePath}" alt="${course.title}">`
                             : `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`
                         }
                     </div>

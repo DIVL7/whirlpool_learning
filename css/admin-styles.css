@@ -13,7 +13,8 @@
 @import 'components/charts.css';
 @import 'components/modals.css';
 @import 'components/modules.css';
-@import 'components/notifications.css'; /* Nuevo componente de notificaciones */
+@import 'components/admin-modules.css'; /* Nuevo archivo de estilos para módulos */
+@import 'components/notifications.css';
 
 /* Importar utilidades */
 @import 'components/responsive.css';

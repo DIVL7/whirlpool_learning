@@ -28,21 +28,44 @@ async function loadCourseDetails(courseId) {
         
         const course = await response.json();
         
-        // Update course details in the UI
-        document.getElementById('course-title').textContent = course.title;
-        document.getElementById('course-description').textContent = course.description || 'Sin descripción';
+        // Update course details in the UI - check if elements exist first
+        const titleElement = document.getElementById('course-title');
+        if (titleElement) {
+            titleElement.textContent = course.title;
+        }
+        
+        const descriptionElement = document.getElementById('course-description');
+        if (descriptionElement) {
+            descriptionElement.textContent = course.description || 'Sin descripción';
+        }
         
         // Update course thumbnail if available
         const thumbnailContainer = document.getElementById('course-thumbnail');
-        if (course.image_url) {
-            thumbnailContainer.innerHTML = `<img src="${course.image_url}" alt="${course.title}">`;
-        } else {
-            thumbnailContainer.innerHTML = `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`;
+        if (thumbnailContainer) {
+            if (course.thumbnail) {
+                thumbnailContainer.innerHTML = `<img src="/uploads/courses/${course.thumbnail}" alt="${course.title}">`;
+            } else if (course.image_url) {
+                thumbnailContainer.innerHTML = `<img src="${course.image_url}" alt="${course.title}">`;
+            } else {
+                thumbnailContainer.innerHTML = `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`;
+            }
         }
         
-        // Update course metadata
-        document.getElementById('module-count').textContent = course.module_count || 0;
-        document.getElementById('content-count').textContent = course.content_count || 0;
+        // Update course metadata - check if elements exist
+        const moduleCountElement = document.getElementById('module-count');
+        if (moduleCountElement) {
+            moduleCountElement.textContent = course.module_count || 0;
+        }
+        
+        const contentCountElement = document.getElementById('content-count');
+        if (contentCountElement) {
+            contentCountElement.textContent = course.content_count || 0;
+        }
+        
+        const enrolledCountElement = document.getElementById('enrolled-count');
+        if (enrolledCountElement) {
+            enrolledCountElement.textContent = course.student_count || 0;
+        }
         
         // Update page title
         document.title = `${course.title} - Módulos | Whirlpool Learning`;
@@ -53,7 +76,7 @@ async function loadCourseDetails(courseId) {
     }
 }
 
-// Load modules for the course
+// Load modules for a course
 async function loadModules(courseId) {
     try {
         // Using standardized endpoint
@@ -64,251 +87,207 @@ async function loadModules(courseId) {
         
         const modules = await response.json();
         
-        const modulesContainer = document.getElementById('modules-container');
-        modulesContainer.innerHTML = '';
+        // Render modules
+        renderModules(modules, courseId);
         
-        if (modules.length === 0) {
-            modulesContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-cubes"></i>
-                    <p>Este curso no tiene módulos</p>
-                    <button id="add-first-module" class="btn-primary">
-                        <i class="fas fa-plus"></i> Añadir primer módulo
-                    </button>
+    } catch (error) {
+        console.error('Error loading modules:', error);
+        showError(`Error al cargar los módulos: ${error.message}`);
+    }
+}
+
+// Load contents for a module
+async function loadModuleContents(courseId, moduleId) {
+    try {
+        const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}/contents`);
+        if (!response.ok) {
+            throw new Error('No se pudieron cargar los contenidos');
+        }
+        
+        const contents = await response.json();
+        
+        const contentContainer = document.getElementById(`content-container-${moduleId}`);
+        if (!contentContainer) return;
+        
+        if (contents.length === 0) {
+            contentContainer.innerHTML = `
+                <div class="no-content-message">
+                    <p>No hay contenidos en este módulo</p>
                 </div>
+                <button class="add-content-btn" data-module-id="${moduleId}">
+                    <i class="fas fa-plus"></i> Añadir contenido
+                </button>
             `;
             
-            // Add event listener to the "add first module" button
-            document.getElementById('add-first-module').addEventListener('click', function() {
-                openModuleModal(courseId);
-            });
-        } else {
-            // Sort modules by position
-            modules.sort((a, b) => a.position - b.position);
+            // Add event listener to the add content button
+            const addContentBtn = contentContainer.querySelector('.add-content-btn');
+            if (addContentBtn) {
+                addContentBtn.addEventListener('click', function() {
+                    openContentModal(courseId, moduleId);
+                });
+            }
             
-            // Create module cards
-            modules.forEach(module => {
-                const moduleCard = createModuleCard(module, courseId);
-                modulesContainer.appendChild(moduleCard);
+            return;
+        }
+        
+        // Sort contents by position
+        contents.sort((a, b) => a.position - b.position);
+        
+        // Create content list
+        let contentHTML = '<ul class="content-list">';
+        
+        contents.forEach(content => {
+            let contentIcon = '';
+            
+            // Set icon based on content type
+            switch (content.content_type_id) {
+                case 1: // Video
+                    contentIcon = '<i class="fas fa-video"></i>';
+                    break;
+                case 2: // Text
+                    contentIcon = '<i class="fas fa-file-alt"></i>';
+                    break;
+                case 3: // PDF
+                    contentIcon = '<i class="fas fa-file-pdf"></i>';
+                    break;
+                case 4: // Image
+                    contentIcon = '<i class="fas fa-image"></i>';
+                    break;
+                default:
+                    contentIcon = '<i class="fas fa-file"></i>';
+            }
+            
+            contentHTML += `
+                <li class="content-item" data-content-id="${content.content_id}">
+                    <div class="content-icon">${contentIcon}</div>
+                    <div class="content-title">${content.title}</div>
+                    <div class="content-actions">
+                        <button class="edit-content-btn" data-tooltip="Editar contenido">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-content-btn" data-tooltip="Eliminar contenido">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </li>
+            `;
+        });
+        
+        contentHTML += '</ul>';
+        contentHTML += `
+            <button class="add-content-btn" data-module-id="${moduleId}">
+                <i class="fas fa-plus"></i> Añadir contenido
+            </button>
+        `;
+        
+        contentContainer.innerHTML = contentHTML;
+        
+        // Add event listeners to content actions
+        contentContainer.querySelectorAll('.edit-content-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const contentItem = this.closest('.content-item');
+                const contentId = contentItem.dataset.contentId;
+                
+                // Get content details and open modal
+                fetch(`/api/courses/modules/contents/${contentId}`)
+                    .then(response => response.json())
+                    .then(content => {
+                        openContentModal(courseId, moduleId, content);
+                    })
+                    .catch(error => {
+                        console.error('Error loading content details:', error);
+                        showError(`Error al cargar los detalles del contenido: ${error.message}`);
+                    });
+            });
+        });
+        
+        contentContainer.querySelectorAll('.delete-content-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const contentItem = this.closest('.content-item');
+                const contentId = contentItem.dataset.contentId;
+                const contentTitle = contentItem.querySelector('.content-title').textContent;
+                
+                confirmDeleteContent(contentId, moduleId, contentTitle);
+            });
+        });
+        
+        // Add event listener to the add content button
+        const addContentBtn = contentContainer.querySelector('.add-content-btn');
+        if (addContentBtn) {
+            addContentBtn.addEventListener('click', function() {
+                openContentModal(courseId, moduleId);
             });
         }
         
     } catch (error) {
-        console.error('Error loading modules:', error);
-        document.getElementById('modules-container').innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error al cargar los módulos</p>
-                <p class="error-message">${error.message}</p>
-                <button id="retry-load-modules" class="btn-primary">
-                    <i class="fas fa-sync"></i> Reintentar
-                </button>
-            </div>
-        `;
-        
-        document.getElementById('retry-load-modules').addEventListener('click', function() {
-            loadModules(courseId);
-        });
-    }
-}
-
-// Create a module card element
-function createModuleCard(module, courseId) {
-    const moduleCard = document.createElement('div');
-    moduleCard.className = 'module-card';
-    moduleCard.dataset.moduleId = module.module_id;
-    
-    // Create module header
-    const moduleHeader = document.createElement('div');
-    moduleHeader.className = 'module-header';
-    
-    // Title container with position and title
-    const titleContainer = document.createElement('div');
-    titleContainer.className = 'module-title-container';
-    
-    titleContainer.innerHTML = `
-        <div class="module-position">${module.position}</div>
-        <h3 class="module-title">${module.title}</h3>
-        <button class="btn-icon toggle-module" title="Expandir/Colapsar">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-    `;
-    
-    // Actions container with buttons
-    const actionsContainer = document.createElement('div');
-    actionsContainer.className = 'module-actions';
-    
-    actionsContainer.innerHTML = `
-        <button class="btn-icon add-content" title="Añadir contenido">
-            <i class="fas fa-plus"></i>
-        </button>
-        <button class="btn-icon edit-module" title="Editar módulo">
-            <i class="fas fa-edit"></i>
-        </button>
-        <button class="btn-icon delete-module" title="Eliminar módulo">
-            <i class="fas fa-trash-alt"></i>
-        </button>
-    `;
-    
-    moduleHeader.appendChild(titleContainer);
-    moduleHeader.appendChild(actionsContainer);
-    moduleCard.appendChild(moduleHeader);
-    
-    // Create module content container
-    const moduleContent = document.createElement('div');
-    moduleContent.className = 'module-content';
-    
-    // Module description
-    if (module.description) {
-        const description = document.createElement('p');
-        description.className = 'module-description';
-        description.textContent = module.description;
-        moduleContent.appendChild(description);
-    }
-    
-    // Content list
-    const contentList = document.createElement('div');
-    contentList.className = 'content-list';
-    
-    // If module has contents
-    if (module.contents && module.contents.length > 0) {
-        module.contents.forEach(content => {
-            const contentItem = createContentItem(content);
-            contentList.appendChild(contentItem);
-        });
-    } else {
-        contentList.innerHTML = `
-            <div class="empty-content">
-                <p>No hay contenido en este módulo</p>
-                <button class="btn-text add-first-content" data-module-id="${module.module_id}">
-                    <i class="fas fa-plus-circle"></i> Añadir contenido
-                </button>
-            </div>
-        `;
-    }
-    
-    moduleContent.appendChild(contentList);
-    moduleCard.appendChild(moduleContent);
-    
-    // Add event listeners
-    moduleCard.querySelector('.toggle-module').addEventListener('click', function() {
-        moduleContent.classList.toggle('expanded');
-        this.querySelector('i').classList.toggle('fa-chevron-down');
-        this.querySelector('i').classList.toggle('fa-chevron-up');
-    });
-    
-    moduleCard.querySelector('.edit-module').addEventListener('click', function() {
-        openModuleModal(courseId, module);
-    });
-    
-    moduleCard.querySelector('.add-content').addEventListener('click', function() {
-        openContentModal(module.module_id);
-    });
-    
-    if (moduleCard.querySelector('.add-first-content')) {
-        moduleCard.querySelector('.add-first-content').addEventListener('click', function() {
-            openContentModal(module.module_id);
-        });
-    }
-    
-    moduleCard.querySelector('.delete-module').addEventListener('click', function() {
-        if (confirm(`¿Estás seguro de que deseas eliminar el módulo "${module.title}"?`)) {
-            deleteModule(module.module_id, courseId);
+        console.error('Error loading module contents:', error);
+        const contentContainer = document.getElementById(`content-container-${moduleId}`);
+        if (contentContainer) {
+            contentContainer.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error al cargar los contenidos</p>
+                    <p class="error-message">${error.message}</p>
+                </div>
+            `;
         }
-    });
-    
-    return moduleCard;
-}
-
-// Create a content item element
-function createContentItem(content) {
-    const contentItem = document.createElement('div');
-    contentItem.className = 'content-item';
-    contentItem.dataset.contentId = content.content_id;
-    
-    // Get content type icon
-    let typeIcon = 'fa-file-alt'; // Default
-    switch (content.content_type_id) {
-        case 1: typeIcon = 'fa-video'; break;
-        case 2: typeIcon = 'fa-file-alt'; break;
-        case 3: typeIcon = 'fa-file-pdf'; break;
-        case 4: typeIcon = 'fa-image'; break;
-        case 5: typeIcon = 'fa-puzzle-piece'; break;
     }
-    
-    contentItem.innerHTML = `
-        <div class="content-info">
-            <i class="fas ${typeIcon} content-type-icon"></i>
-            <span class="content-title">${content.title}</span>
-        </div>
-        <div class="content-actions">
-            <button class="btn-icon edit-content" title="Editar contenido">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn-icon delete-content" title="Eliminar contenido">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    `;
-    
-    // Add event listeners
-    contentItem.querySelector('.edit-content').addEventListener('click', function() {
-        openContentModal(content.module_id, content);
-    });
-    
-    contentItem.querySelector('.delete-content').addEventListener('click', function() {
-        if (confirm(`¿Estás seguro de que deseas eliminar el contenido "${content.title}"?`)) {
-            deleteContent(content.content_id, content.module_id);
-        }
-    });
-    
-    return contentItem;
 }
 
-// Setup event listeners
+// Set up event listeners
 function setupEventListeners(courseId) {
     // Add module button
-    document.getElementById('add-module-btn').addEventListener('click', function() {
-        openModuleModal(courseId);
-    });
+    const addModuleBtn = document.getElementById('add-module-btn');
+    if (addModuleBtn) {
+        addModuleBtn.addEventListener('click', function() {
+            openModuleModal(courseId);
+        });
+    }
     
-    // Back button
-    document.getElementById('back-to-modules-btn').addEventListener('click', function() {
-        window.location.href = 'course-modules.html';
-    });
+    // Save module button
+    const saveModuleBtn = document.getElementById('save-module-btn');
+    if (saveModuleBtn) {
+        saveModuleBtn.addEventListener('click', function() {
+            saveModule(courseId);
+        });
+    }
     
-    // Preview course button
-    document.getElementById('preview-course-btn').addEventListener('click', function() {
-        window.open(`../course-preview.html?id=${courseId}`, '_blank');
-    });
+    // Save content button
+    const saveContentBtn = document.getElementById('save-content-btn');
+    if (saveContentBtn) {
+        saveContentBtn.addEventListener('click', saveContent);
+    }
     
-    // Close modals
-    document.querySelectorAll('.close-modal, #cancel-module, #cancel-content').forEach(element => {
-        element.addEventListener('click', function() {
-            document.getElementById('module-modal').style.display = 'none';
-            document.getElementById('content-modal').style.display = 'none';
+    // Content type change
+    const contentTypeSelect = document.getElementById('content-type');
+    if (contentTypeSelect) {
+        contentTypeSelect.addEventListener('change', function() {
+            updateContentDataField(this.value);
+        });
+    }
+    
+    // Close modals with close buttons
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
         });
     });
     
-    // Module form submission
-    document.getElementById('module-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveModule(courseId);
-    });
-    
-    // Content form submission
-    document.getElementById('content-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveContent();
-    });
-    
-    // Content type change
-    document.getElementById('content-type').addEventListener('change', function() {
-        updateContentDataField(this.value);
-    });
+    // Back to courses button
+    const backToCourses = document.getElementById('back-to-courses');
+    if (backToCourses) {
+        backToCourses.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'courses.html';
+        });
+    }
 }
 
-// Open module modal for adding or editing
+// Open module modal (create or edit)
 function openModuleModal(courseId, module = null) {
     const modal = document.getElementById('module-modal');
     const modalTitle = document.getElementById('module-modal-title');
@@ -339,8 +318,8 @@ function openModuleModal(courseId, module = null) {
     document.body.style.overflow = 'hidden';
 }
 
-// Open content modal for adding or editing
-function openContentModal(moduleId, content = null) {
+// Open content modal (create or edit)
+function openContentModal(courseId, moduleId, content = null) {
     const modal = document.getElementById('content-modal');
     const modalTitle = document.getElementById('content-modal-title');
     const form = document.getElementById('content-form');
@@ -353,29 +332,35 @@ function openContentModal(moduleId, content = null) {
         modalTitle.textContent = 'Editar Contenido';
         document.getElementById('content-title').value = content.title;
         document.getElementById('content-type').value = content.content_type_id;
-        document.getElementById('content-data').value = content.content_data || '';
         document.getElementById('content-position').value = content.position;
         form.dataset.contentId = content.content_id;
         
         // Update content data field based on type
         updateContentDataField(content.content_type_id);
+        
+        // Set content data if available
+        if (content.content_data) {
+            document.getElementById('content-data').value = content.content_data;
+        }
     } else {
         // Add new content
         modalTitle.textContent = 'Añadir Nuevo Contenido';
         delete form.dataset.contentId;
         
-        // Get module card to count existing contents
-        const moduleCard = document.querySelector(`.module-card[data-module-id="${moduleId}"]`);
-        const contentCount = moduleCard.querySelectorAll('.content-item').length;
-        document.getElementById('content-position').value = contentCount + 1;
+        // Set default content type
+        const contentTypeSelect = document.getElementById('content-type');
+        updateContentDataField(contentTypeSelect.value);
         
-        // Default to text content
-        document.getElementById('content-type').value = '2';
-        updateContentDataField('2');
+        // Set next position
+        // Get the number of existing contents in the module
+        const contentItems = document.querySelectorAll(`#content-container-${moduleId} .content-item`);
+        document.getElementById('content-position').value = contentItems.length + 1;
     }
     
     form.dataset.moduleId = moduleId;
-    modal.style.display = 'block';
+    form.dataset.courseId = courseId;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 // Update content data field based on content type
@@ -394,11 +379,14 @@ function updateContentDataField(contentTypeId) {
             label.textContent = 'URL del Video';
             
             input = document.createElement('input');
-            input.setAttribute('type', 'text');
+            input.setAttribute('type', 'url');
             input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
+            input.setAttribute('name', 'content-data');
             input.setAttribute('placeholder', 'https://www.youtube.com/watch?v=...');
-            input.required = true;
+            input.setAttribute('required', 'required');
+            
+            container.appendChild(label);
+            container.appendChild(input);
             break;
             
         case '2': // Text
@@ -408,61 +396,34 @@ function updateContentDataField(contentTypeId) {
             
             input = document.createElement('textarea');
             input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
+            input.setAttribute('name', 'content-data');
             input.setAttribute('rows', '10');
-            input.required = true;
+            input.setAttribute('placeholder', 'Escribe el contenido aquí...');
+            input.setAttribute('required', 'required');
+            
+            container.appendChild(label);
+            container.appendChild(input);
             break;
             
         case '3': // PDF
-            label = document.createElement('label');
-            label.setAttribute('for', 'content-data');
-            label.textContent = 'Archivo PDF';
-            
-            input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
-            input.setAttribute('accept', '.pdf');
-            break;
-            
         case '4': // Image
             label = document.createElement('label');
             label.setAttribute('for', 'content-data');
-            label.textContent = 'Imagen';
+            label.textContent = contentTypeId === '3' ? 'Archivo PDF' : 'Imagen';
             
             input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
-            input.setAttribute('accept', 'image/*');
-            break;
+            input.setAttribute('name', 'content-data');
+            input.setAttribute('accept', contentTypeId === '3' ? '.pdf' : 'image/*');
             
-        case '5': // Interactive
-            label = document.createElement('label');
-            label.setAttribute('for', 'content-data');
-            label.textContent = 'Contenido Interactivo (HTML)';
-            
-            input = document.createElement('textarea');
-            input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
-            input.setAttribute('rows', '15');
-            input.required = true;
+            container.appendChild(label);
+            container.appendChild(input);
             break;
             
         default:
-            label = document.createElement('label');
-            label.setAttribute('for', 'content-data');
-            label.textContent = 'Contenido';
-            
-            input = document.createElement('textarea');
-            input.setAttribute('id', 'content-data');
-            input.setAttribute('name', 'content_data');
-            input.setAttribute('rows', '5');
-            input.required = true;
+            console.error('Tipo de contenido no válido');
     }
-    
-    container.appendChild(label);
-    container.appendChild(input);
 }
 
 // Save module (create or update)
@@ -479,7 +440,7 @@ async function saveModule(courseId) {
     };
     
     try {
-        const url = isEdit ? `/api/courses/modules/${moduleId}` : '/api/courses/modules';
+        const url = isEdit ? `/api/courses/${courseId}/modules/${moduleId}` : `/api/courses/${courseId}/modules`;
         const method = isEdit ? 'PUT' : 'POST';
         
         const response = await fetch(url, {
@@ -496,12 +457,15 @@ async function saveModule(courseId) {
         
         // Close modal and reload modules
         document.getElementById('module-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Reload course details and modules
         loadCourseDetails(courseId);
         loadModules(courseId);
         
     } catch (error) {
         console.error('Error saving module:', error);
-        alert('Error al guardar el módulo. Por favor, inténtalo de nuevo.');
+        showError(`Error al guardar el módulo: ${error.message}`);
     }
 }
 
@@ -510,6 +474,7 @@ async function saveContent() {
     const form = document.getElementById('content-form');
     const moduleId = form.dataset.moduleId;
     const contentId = form.dataset.contentId;
+    const courseId = form.dataset.courseId;
     const isEdit = !!contentId;
     
     // Get form data
@@ -524,71 +489,68 @@ async function saveContent() {
     const contentType = document.getElementById('content-type').value;
     const contentDataElement = document.getElementById('content-data');
     
-    if (contentType === '3' || contentType === '4') {
-        // File upload (PDF or Image)
-        if (contentDataElement.files && contentDataElement.files[0]) {
-            // Use FormData for file uploads
-            const formData = new FormData();
-            formData.append('file', contentDataElement.files[0]);
-            formData.append('data', JSON.stringify(contentData));
-            
-            try {
+    try {
+        let response;
+        
+        if (contentType === '3' || contentType === '4') {
+            // File upload (PDF or Image)
+            if (contentDataElement.files && contentDataElement.files[0]) {
+                // Use FormData for file uploads
+                const formData = new FormData();
+                formData.append('file', contentDataElement.files[0]);
+                formData.append('data', JSON.stringify(contentData));
+                
                 const url = isEdit ? `/api/courses/modules/contents/${contentId}` : '/api/courses/modules/contents';
-                const response = await fetch(url, {
+                response = await fetch(url, {
                     method: isEdit ? 'PUT' : 'POST',
                     body: formData
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Error al guardar el contenido');
-                }
-                
-                // Close modal and reload modules
-                document.getElementById('content-modal').style.display = 'none';
-                loadModules(document.getElementById('module-form').dataset.courseId);
-                
-            } catch (error) {
-                console.error('Error saving content:', error);
-                alert('Error al guardar el contenido. Por favor, inténtalo de nuevo.');
+            } else if (!isEdit) {
+                throw new Error('Por favor, selecciona un archivo.');
+            } else {
+                // If editing and no new file selected, just update the metadata
+                const url = `/api/courses/modules/contents/${contentId}`;
+                response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(contentData)
+                });
             }
         } else {
-            alert('Por favor, selecciona un archivo.');
-        }
-    } else {
-        // Text-based content
-        contentData.content_data = contentDataElement.value;
-        
-        try {
-            const url = isEdit ? `/api/courses/modules/contents/${contentId}` : '/api/courses/modules/contents';
-            const method = isEdit ? 'PUT' : 'POST';
+            // Text-based content
+            contentData.content_data = contentDataElement.value;
             
-            const response = await fetch(url, {
-                method: method,
+            const url = isEdit ? `/api/courses/modules/contents/${contentId}` : '/api/courses/modules/contents';
+            response = await fetch(url, {
+                method: isEdit ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(contentData)
             });
-            
-            if (!response.ok) {
-                throw new Error('Error al guardar el contenido');
-            }
-            
-            // Close modal and reload modules
-            document.getElementById('content-modal').style.display = 'none';
-            loadModules(document.getElementById('module-form').dataset.courseId);
-            
-        } catch (error) {
-            console.error('Error saving content:', error);
-            alert('Error al guardar el contenido. Por favor, inténtalo de nuevo.');
         }
+        
+        if (!response.ok) {
+            throw new Error('Error al guardar el contenido');
+        }
+        
+        // Close modal and reload modules
+        document.getElementById('content-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        loadModules(courseId);
+        
+    } catch (error) {
+        console.error('Error saving content:', error);
+        showError(`Error al guardar el contenido: ${error.message}`);
     }
 }
 
 // Delete module
 async function deleteModule(moduleId, courseId) {
     try {
-        const response = await fetch(`/api/courses/modules/${moduleId}`, {
+        const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}`, {
             method: 'DELETE'
         });
         
@@ -602,7 +564,7 @@ async function deleteModule(moduleId, courseId) {
         
     } catch (error) {
         console.error('Error deleting module:', error);
-        alert('Error al eliminar el módulo. Por favor, inténtalo de nuevo.');
+        showError(`Error al eliminar el módulo: ${error.message}`);
     }
 }
 
@@ -625,8 +587,42 @@ async function deleteContent(contentId, moduleId) {
         
     } catch (error) {
         console.error('Error deleting content:', error);
-        alert('Error al eliminar el contenido. Por favor, inténtalo de nuevo.');
+        showError(`Error al eliminar el contenido: ${error.message}`);
     }
+}
+
+// Confirm delete module
+function confirmDeleteModule(courseId, moduleId, moduleTitle) {
+    if (confirm(`¿Estás seguro de que deseas eliminar el módulo "${moduleTitle}"? Esta acción no se puede deshacer.`)) {
+        deleteModule(moduleId, courseId);
+    }
+}
+
+// Confirm delete content
+function confirmDeleteContent(contentId, moduleId, contentTitle) {
+    if (confirm(`¿Estás seguro de que deseas eliminar el contenido "${contentTitle}"? Esta acción no se puede deshacer.`)) {
+        deleteContent(contentId, moduleId);
+    }
+}
+
+// Show error message
+function showError(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'error-message';
+    errorContainer.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <span>${message}</span>
+        <button class="close-error" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    document.body.appendChild(errorContainer);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (errorContainer.parentNode) {
+            errorContainer.remove();
+        }
+    }, 5000);
 }
 
 // Close modals when clicking outside
@@ -636,216 +632,14 @@ window.addEventListener('click', function(event) {
     
     if (event.target === moduleModal) {
         moduleModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
     
     if (event.target === contentModal) {
         contentModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
 });
-
-// Add CSS for the module management interface
-document.head.insertAdjacentHTML('beforeend', `
-<style>
-    .module-card {
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 16px;
-        overflow: hidden;
-    }
-    
-    .module-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px;
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .module-title-container {
-        display: flex;
-        align-items: center;
-        flex: 1;
-    }
-    
-    .module-position {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        background-color: var(--primary-color);
-        color: white;
-        border-radius: 50%;
-        margin-right: 12px;
-        font-weight: bold;
-    }
-    
-    .module-title {
-        margin: 0;
-        font-size: 16px;
-        flex: 1;
-    }
-    
-    .module-actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .module-content {
-        padding: 0;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease, padding 0.3s ease;
-    }
-    
-    .module-content.expanded {
-        padding: 16px;
-        max-height: 1000px;
-    }
-    
-    .module-description {
-        margin-top: 0;
-        margin-bottom: 16px;
-        color: #6c757d;
-    }
-    
-    .content-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .content-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        border-left: 3px solid var(--primary-color);
-    }
-    
-    .content-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .content-type-icon {
-        color: var(--primary-color);
-    }
-    
-    .content-actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .empty-content {
-        text-align: center;
-        padding: 16px;
-        color: #6c757d;
-    }
-    
-    .btn-text {
-        background: none;
-        border: none;
-        color: var(--primary-color);
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    
-    .btn-text:hover {
-        text-decoration: underline;
-    }
-    
-    .course-modules-container {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 24px;
-    }
-    
-    .course-info-card {
-        height: fit-content;
-    }
-    
-    .course-header {
-        margin-bottom: 16px;
-    }
-    
-    .course-thumbnail {
-        width: 100%;
-        height: 180px;
-        overflow: hidden;
-        border-radius: 8px;
-        margin-bottom: 16px;
-    }
-    
-    .course-thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .course-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-    
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #6c757d;
-    }
-    
-    .course-actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 48px 0;
-        color: #6c757d;
-    }
-    
-    .empty-state i {
-        font-size: 48px;
-        margin-bottom: 16px;
-        color: #dee2e6;
-    }
-    
-    .error-state {
-        text-align: center;
-        padding: 48px 0;
-        color: #dc3545;
-    }
-    
-    .error-state i {
-        font-size: 48px;
-        margin-bottom: 16px;
-    }
-    
-    @media (max-width: 992px) {
-        .course-modules-container {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-`);
 
 // Function to show course selection view
 function showCourseSelectionView() {
@@ -883,17 +677,20 @@ function showCourseSelectionView() {
     }
 }
 
-// Function to load available courses
-function loadAvailableCourses() {
-    // Using standardized endpoint
-    fetch('/api/courses')
+function loadAvailableCourses(page = 1) {
+    // Using standardized endpoint with pagination
+    fetch(`/api/courses?page=${page}&limit=12`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Error al cargar los cursos');
             }
             return response.json();
         })
-        .then(courses => {
+        .then(data => {
+            // Extract courses and pagination from the response
+            const courses = data.courses || [];
+            const pagination = data.pagination || { currentPage: 1, totalPages: 1 };
+            
             const coursesGrid = document.getElementById('courses-grid');
             coursesGrid.innerHTML = '';
             
@@ -914,23 +711,25 @@ function loadAvailableCourses() {
                     
                     courseCard.innerHTML = `
                         <div class="course-thumbnail">
-                            ${course.image_url 
-                                ? `<img src="${course.image_url}" alt="${course.title}">`
+                            ${course.thumbnail 
+                                ? `<img src="/uploads/courses/${course.thumbnail}" alt="${course.title}">`
                                 : `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`
                             }
                         </div>
-                        <h3 class="course-title">${course.title}</h3>
-                        <p class="course-description">${course.description || 'Sin descripción'}</p>
-                        <div class="course-meta">
-                                                        <span class="meta-item">
-                                <i class="fas fa-cubes"></i> ${course.module_count || 0} módulos
-                            </span>
-                            <span class="meta-item">
-                                <i class="fas fa-file-alt"></i> ${course.content_count || 0} contenidos
-                            </span>
+                        <div class="course-info">
+                            <h3 class="course-title">${course.title}</h3>
+                            <p class="course-description">${course.description || 'Sin descripción'}</p>
+                            <div class="course-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-cubes"></i> ${course.module_count || 0} módulos
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-users"></i> ${course.student_count || 0} estudiantes
+                                </span>
+                            </div>
                         </div>
                         <div class="course-actions">
-                            <a href="course-modules.html?id=${course.course_id}" class="btn-primary">
+                            <a href="course-modules.html?id=${course.id}" class="btn-primary">
                                 <i class="fas fa-cubes"></i> Administrar Módulos
                             </a>
                         </div>
@@ -938,6 +737,30 @@ function loadAvailableCourses() {
                     
                     coursesGrid.appendChild(courseCard);
                 });
+                
+                // Add pagination controls if there are multiple pages
+                if (pagination.totalPages > 1) {
+                    // Remove existing pagination if any
+                    const existingPagination = document.querySelector('.pagination-container');
+                    if (existingPagination) {
+                        existingPagination.remove();
+                    }
+                    
+                    const paginationContainer = document.createElement('div');
+                    paginationContainer.className = 'pagination-container';
+                    paginationContainer.innerHTML = createPaginationHTML(pagination);
+                    coursesGrid.parentElement.appendChild(paginationContainer);
+                    
+                    // Add event listeners to pagination buttons
+                    document.querySelectorAll('.pagination-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const pageNum = parseInt(this.dataset.page);
+                            if (!isNaN(pageNum)) {
+                                loadAvailableCourses(pageNum);
+                            }
+                        });
+                    });
+                }
             }
         })
         .catch(error => {
@@ -959,31 +782,185 @@ function loadAvailableCourses() {
         });
 }
 
-// Error display function
-// Eliminar la función showError existente (líneas 963-988)
-// function showError(message) {
-//     const errorContainer = document.createElement('div');
-//     errorContainer.className = 'error-message';
-//     errorContainer.innerHTML = `
-//         <i class="fas fa-exclamation-circle"></i>
-//         <span>${message}</span>
-//     `;
-//     
-//     // Remove any existing error messages
-//     const existingError = document.querySelector('.error-message');
-//     if (existingError) {
-//         existingError.remove();
-//     }
-//     
-//     // Insert error at the top of the content
-//     const contentContainer = document.querySelector('.dashboard-content');
-//     contentContainer.insertBefore(errorContainer, contentContainer.firstChild);
-//     
-//     // Auto-remove after 5 seconds
-//     setTimeout(() => {
-//         errorContainer.classList.add('fade-out');
-//         setTimeout(() => {
-//             errorContainer.remove();
-//         }, 500);
-//     }, 5000);
-// }
+// Helper function to create pagination HTML
+function createPaginationHTML(pagination) {
+    const { currentPage, totalPages } = pagination;
+    
+    let paginationHTML = '<div class="pagination">';
+    
+    // Previous button
+    paginationHTML += `
+        <button class="pagination-btn prev-btn" ${currentPage <= 1 ? 'disabled' : ''} data-page="${currentPage - 1}">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+    
+    // Determine which page numbers to show
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    // Adjust if we're near the end
+    if (endPage - startPage < 4 && startPage > 1) {
+        startPage = Math.max(1, endPage - 4);
+    }
+    
+    // First page if not included in range
+    if (startPage > 1) {
+        paginationHTML += `<button class="pagination-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        }
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Last page if not included in range
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        }
+        paginationHTML += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+// Next button
+paginationHTML += `
+    <button class="pagination-btn next-btn" ${currentPage >= totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+`;
+
+paginationHTML += '</div>';
+return paginationHTML;
+}
+
+// Render modules in the UI
+function renderModules(modules, courseId) {
+    const container = document.getElementById('modules-container');
+    
+    if (!container) {
+        console.error('Modules container not found');
+        return;
+    }
+    
+    if (!modules || modules.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-cubes"></i>
+                <p>No hay módulos disponibles para este curso</p>
+                <button class="btn-primary" id="create-first-module">
+                    <i class="fas fa-plus"></i> Crear primer módulo
+                </button>
+            </div>
+        `;
+        
+        // Add event listener for the create first module button
+        const createFirstModuleBtn = document.getElementById('create-first-module');
+        if (createFirstModuleBtn) {
+            createFirstModuleBtn.addEventListener('click', () => openModuleModal(courseId));
+        }
+        
+        return;
+    }
+    
+    // Clear previous content
+    container.innerHTML = '';
+    
+    // Sort modules by position
+    modules.sort((a, b) => a.position - b.position);
+    
+    // Render each module
+    modules.forEach(module => {
+        const moduleElement = document.createElement('div');
+        moduleElement.className = 'module-item';
+        moduleElement.dataset.moduleId = module.module_id;
+        
+        moduleElement.innerHTML = `
+            <div class="module-header" data-module-id="${module.module_id}">
+                <div class="module-left">
+                    <div class="module-number">${module.position}</div>
+                    <div class="module-title">${module.title}</div>
+                </div>
+                <div class="module-actions">
+                    <button class="toggle-module-btn" data-tooltip="Expandir/Colapsar">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <button class="add-content-btn" data-tooltip="Añadir contenido">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="edit-module-btn" data-tooltip="Editar módulo">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-module-btn btn-danger" data-tooltip="Eliminar módulo">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="module-content" style="display: none;">
+                <div class="module-description">${module.description || 'Sin descripción'}</div>
+                <div class="module-contents-header">
+                    <div class="module-contents-title">Contenidos</div>
+                </div>
+                <div class="content-container" id="content-container-${module.module_id}">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(moduleElement);
+        
+        // Add event listeners for module actions
+        const header = moduleElement.querySelector('.module-header');
+        const toggleBtn = moduleElement.querySelector('.toggle-module-btn');
+        const addContentBtn = moduleElement.querySelector('.add-content-btn');
+        const editBtn = moduleElement.querySelector('.edit-module-btn');
+        const deleteBtn = moduleElement.querySelector('.delete-module-btn');
+        
+        // Toggle module content
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const content = moduleElement.querySelector('.module-content');
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+            toggleBtn.querySelector('i').className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        });
+        
+        // Header click also toggles content
+        header.addEventListener('click', () => {
+            toggleBtn.click();
+        });
+        
+        // Add content button
+        addContentBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openContentModal(courseId, module.module_id);
+        });
+        
+        // Edit module button
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModuleModal(courseId, module);
+        });
+        
+        // Delete module button
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            confirmDeleteModule(courseId, module.module_id, module.title);
+        });
+        
+        // Load module contents
+        loadModuleContents(courseId, module.module_id);
+    });
+    
+    // Update module count in the UI
+    const moduleCountElement = document.getElementById('module-count');
+    if (moduleCountElement) {
+        moduleCountElement.textContent = modules.length;
+    }
+}

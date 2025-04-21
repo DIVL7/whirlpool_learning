@@ -1,0 +1,458 @@
+/* Estilos para la gestión de módulos */
+
+/* Layout principal de la página de módulos */
+.course-modules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.course-info-card {
+    width: 100%;
+    height: fit-content;
+    margin-bottom: 20px;
+}
+
+/* Modificar el estilo de la metadata del curso */
+.course-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    justify-content: flex-start; /* Alinear a la izquierda */
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.modules-container {
+    width: 100%;
+}
+
+/* Estilos responsivos */
+@media (max-width: 992px) {
+    .course-modules-container {
+        flex-direction: column;
+    }
+    
+    .module-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .module-header {
+        flex-wrap: wrap;
+    }
+    
+    .module-title {
+        width: 100%;
+        margin: 8px 0;
+    }
+    
+    .module-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+}
+
+/* Estilos para las tarjetas de cursos en la selección */
+.course-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.course-thumbnail {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+}
+
+.course-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    font-size: 48px;
+}
+
+.course-info {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-title {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    line-height: 1.3;
+    height: 46px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.course-description {
+    margin-bottom: 16px;
+    color: #6c757d;
+    flex-grow: 1;
+    height: 60px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.course-meta {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 0;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.course-actions {
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    margin-top: auto;
+}
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* Estilos para la paginación */
+.pagination-container {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    color: #6c757d;
+}
+
+/* Estilos para estados vacíos y errores */
+.empty-state, .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 24px 0;
+}
+
+.empty-state i, .error-state i {
+    font-size: 48px;
+    color: #adb5bd;
+    margin-bottom: 16px;
+}
+
+.error-state i {
+    color: #dc3545;
+}
+
+.empty-state p, .error-state p {
+    margin-bottom: 16px;
+    color: #6c757d;
+}
+
+.error-message {
+    font-family: monospace;
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+/* Ajustes específicos para las miniaturas en la tabla de cursos */
+.data-table .course-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.data-table .course-thumbnail {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid var(--light-gray-color);
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-table .course-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.data-table .placeholder-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 24px;
+}
+
+.data-table .course-details {
+    flex: 1;
+    min-width: 0; /* Importante para que el texto se ajuste correctamente */
+}
+
+.data-table .course-details h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.data-table .course-details p {
+    margin: 0 0 5px 0;
+    color: #6c757d;
+    font-size: 14px;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.data-table .course-category {
+    display: inline-block;
+    font-size: 12px;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+/* Estilos para los módulos individuales */
+.module-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    width: 100%;
+}
+
+.module-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.module-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.module-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    margin-right: 12px;
+}
+
+.module-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.module-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.module-actions button:hover {
+    background-color: #f1f3f5;
+    color: var(--primary-color);
+}
+
+.module-content {
+    padding: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .course-modules-container {
+        flex-direction: column;
+    }
+    
+    .module-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .module-header {
+        flex-wrap: wrap;
+    }
+    
+    .module-title {
+        width: 100%;
+        margin: 8px 0;
+    }
+    
+    .module-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+}
+
+/* Añadir al final del archivo */
+
+/* Estilos adicionales para mejorar la alineación */
+.module-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.modules-container {
+    margin-top: 20px;
+}
+
+.module-contents-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.module-contents-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: #495057;
+}
+
+.content-container {
+    padding: 8px 0;
+}
+
+/* Mejorar la apariencia de los botones de acción */
+.btn-danger {
+    color: #dc3545 !important;
+}
+
+.btn-danger:hover {
+    background-color: #ffebee !important;
+    border-color: #dc3545 !important;
+}
+
+/* Mejorar la apariencia del botón de nuevo módulo */
+#add-module-btn {
+    margin-bottom: 20px;
+}
