@@ -61,8 +61,3 @@ table img {
 .action-bar button {
     height: 38px;
 }
-
-/* Ocultar mensajes de error estáticos */
-.error-message {
-    display: none !important;
-}

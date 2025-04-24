@@ -111,22 +111,7 @@ function setupModalEventListeners() {
 // Store the current page globally
 window.currentCoursePage = 1;
 
-// Función de conveniencia para diferentes tipos de notificaciones
-function showSuccess(message) {
-    showNotification(message, 'success');
-}
-
-function showError(message) {
-    showNotification(message, 'error');
-}
-
-function showWarning(message) {
-    showNotification(message, 'warning');
-}
-
-function showInfo(message) {
-    showNotification(message, 'info');
-}
+// Las funciones de notificación ahora se importan desde utils.js
 
 // Cargar las categorías en el filtro
 async function loadCategoryFilter() {

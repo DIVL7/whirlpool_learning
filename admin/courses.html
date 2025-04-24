@@ -24,10 +24,7 @@
                     </li>
                     <li class="active">
                         <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
-                        <ul class="submenu">
-                            <li class="active"><a href="courses.html"><i class="fas fa-list"></i> Listado</a></li>
-                            <li><a href="course-modules.html"><i class="fas fa-book-open"></i> Módulos</a></li>
-                        </ul>
+                        <!-- Eliminamos el submenú -->
                     </li>
                     <li>
                         <a href="users.html"><i class="fas fa-users"></i> Usuarios</a>
@@ -240,8 +237,12 @@
         </div>
     </div>
 
-    <!-- Asegúrate de que utils.js se cargue antes que admin-courses.js -->
-    <script src="/js/utils.js"></script>
+    <!-- Contenedor de notificaciones -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Asegúrate de que utils.js se cargue como módulo -->
+    <script type="module" src="/js/utils.js"></script>
+    <script src="/js/sidebar-active.js"></script>
     <script src="/js/admin-courses.js"></script>
 </body>
 </html>

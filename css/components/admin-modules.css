@@ -33,34 +33,7 @@
 
 .modules-container {
     width: 100%;
-}
-
-/* Estilos responsivos */
-@media (max-width: 992px) {
-    .course-modules-container {
-        flex-direction: column;
-    }
-    
-    .module-actions {
-        flex-wrap: wrap;
-    }
-}
-
-@media (max-width: 768px) {
-    .module-header {
-        flex-wrap: wrap;
-    }
-    
-    .module-title {
-        width: 100%;
-        margin: 8px 0;
-    }
-    
-    .module-actions {
-        width: 100%;
-        justify-content: flex-end;
-        margin-top: 8px;
-    }
+    margin-top: 20px;
 }
 
 /* Estilos para las tarjetas de cursos en la selección */
@@ -131,22 +104,6 @@
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
-}
-
-.course-meta {
-    margin-top: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 0;
-}
-
-.meta-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #6c757d;
-    font-size: 14px;
 }
 
 .course-actions {
@@ -335,6 +292,12 @@
     justify-content: space-between;
 }
 
+.module-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
 .module-number {
     width: 32px;
     height: 32px;
@@ -380,50 +343,17 @@
     color: var(--primary-color);
 }
 
+.module-actions .add-content-btn {
+    color: var(--success-color);
+}
+
+.module-actions .add-content-btn:hover {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: var(--success-color);
+}
 .module-content {
     padding: 16px;
     border-top: 1px solid #e9ecef;
-}
-
-/* Responsive styles */
-@media (max-width: 992px) {
-    .course-modules-container {
-        flex-direction: column;
-    }
-    
-    .module-actions {
-        flex-wrap: wrap;
-    }
-}
-
-@media (max-width: 768px) {
-    .module-header {
-        flex-wrap: wrap;
-    }
-    
-    .module-title {
-        width: 100%;
-        margin: 8px 0;
-    }
-    
-    .module-actions {
-        width: 100%;
-        justify-content: flex-end;
-        margin-top: 8px;
-    }
-}
-
-/* Añadir al final del archivo */
-
-/* Estilos adicionales para mejorar la alineación */
-.module-left {
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
-
-.modules-container {
-    margin-top: 20px;
 }
 
 .module-contents-header {
@@ -455,4 +385,226 @@
 /* Mejorar la apariencia del botón de nuevo módulo */
 #add-module-btn {
     margin-bottom: 20px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 992px) {
+    .course-modules-container {
+        flex-direction: column;
+    }
+    
+    .module-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .module-header {
+        flex-wrap: wrap;
+    }
+    
+    .module-title {
+        width: 100%;
+        margin: 8px 0;
+    }
+    
+    .module-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+}
+
+/* Estilos adicionales para módulos */
+.modules-list {
+    margin-top: 20px;
+}
+
+.module-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #eee;
+}
+
+.module-position {
+    width: 30px;
+    height: 30px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.module-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.module-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.module-actions button {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.module-actions button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.module-content {
+    padding: 15px;
+    background-color: #fff;
+}
+
+.module-description {
+    color: var(--gray-color);
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.content-container {
+    margin-bottom: 15px;
+}
+
+.content-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.content-item {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 10px 15px;
+}
+
+.content-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-type {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    width: 80px;
+}
+
+.content-position {
+    width: 24px;
+    height: 24px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.content-title {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.content-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.content-actions button {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.content-actions button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.content-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.add-content-btn {
+    background-color: var(--light-color);
+    color: var(--primary-color);
+    border: 1px dashed var(--primary-color);
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.add-content-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: var(--gray-color);
+}
+
+.loading-indicator i {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+.empty-state i {
+    font-size: 36px;
+    margin-bottom: 15px;
+    color: var(--light-gray-color);
 }
