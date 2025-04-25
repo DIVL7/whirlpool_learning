@@ -75,11 +75,16 @@ async function loadCourseDetails(courseId) {
 // Cargar módulos para un curso
 async function loadModules(courseId) {
     try {
-        console.log('Loading modules for course ID:', courseId);
-        
+        console.log('CORE: Loading modules for course ID:', courseId);
+
         const modules = await loadModulesFromAPI(courseId);
-        console.log('Modules loaded:', modules);
-        
+        // --- DEBUG LOG ---
+        console.log('CORE: Modules data received from API:', JSON.stringify(modules, null, 2));
+        if (!Array.isArray(modules)) {
+            console.error('CORE: ERROR - Expected modules to be an array, but received:', typeof modules);
+        }
+        // --- END DEBUG LOG ---
+
         // Renderizar módulos
         renderModules(modules, courseId);
         

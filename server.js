@@ -7,8 +7,9 @@ const sessionConfig = require('./config/session');
 const routes = require('./routes/index');
 const errorHandler = require('./middleware/errorHandler');
 const session = require('express-session');
-const logRoutes = require('./routes/log'); // Add this line to import log routes
-const technicianRoutes = require('./routes/technician'); // Add this line to import technician routes
+const logRoutes = require('./routes/log');
+const technicianRoutes = require('./routes/technician');
+const { quizRouter, questionRouter, answerRouter } = require('./routes/quizzes'); // Import quiz/question/answer routers
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +17,15 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
+
+// Configurar tipos MIME correctos para archivos estáticos
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 // Session configuration
 app.use(session(sessionConfig));
@@ -31,7 +40,12 @@ app.use('/api/log', logRoutes); // Add this line to register log routes
 app.use('/api/technician', technicianRoutes); // Add this line to register technician routes
 
 // Add the forum routes
-app.use('/api/forum', require('./routes/forum')); // Add this line
+app.use('/api/forum', require('./routes/forum'));
+
+// Add the quiz/question/answer routes
+app.use('/api/quizzes', quizRouter); // Mount quiz-specific routes
+app.use('/api/questions', questionRouter); // Mount question-specific routes
+app.use('/api/answers', answerRouter); // Mount answer-specific routes
 
 // Compatibility routes to keep the frontend working
 // These can be removed once the frontend is updated to use the new API endpoints

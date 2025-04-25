@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
+const { moduleQuizRouter } = require('./quizzes'); // Import the router for quizzes within modules
 // Importar ambas configuraciones de multer
-const { courseUpload, contentUpload } = require('../config/multer'); 
+const { courseUpload, contentUpload } = require('../config/multer');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 // Public routes
@@ -30,9 +31,12 @@ router.put('/:id/modules/:moduleId/contents/:contentId',
     courseController.updateContent
 );
 router.delete('/:id/modules/:moduleId/contents/:contentId', 
-    isAdmin, 
+    isAdmin,
     courseController.deleteContent
 );
+
+// Mount quiz routes under modules
+router.use('/:id/modules/:moduleId/quizzes', moduleQuizRouter); // Use the imported router
 
 // Basic course routes
 router.get('/', courseController.getAllCourses);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - Whirlpool Learning Platform</title>
+    <title>Inicio - Whirlpool Learning Platform</title>
     <link rel="stylesheet" href="../css/admin-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,7 +19,7 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li class="active">
-                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Inicio</a>
                     </li>
                     <li>
                         <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
@@ -45,19 +45,11 @@
         <main class="main-content">
             <!-- Top Navigation -->
             <header class="top-nav">
-                <div class="search-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar...">
-                </div>
+                <!-- Eliminamos la barra de búsqueda -->
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
                     <div class="user-profile">
-                        <img src="../images/admin-avatar.jpg" alt="Admin Avatar">
+                        <img src="../images/default-admin.png" alt="Admin Avatar">
                         <span>Admin User</span>
-                        <i class="fas fa-chevron-down"></i>
                     </div>
                 </div>
             </header>
@@ -65,135 +57,80 @@
             <!-- Dashboard Content -->
             <div class="dashboard-content">
                 <div class="page-header">
-                    <h1>Dashboard</h1>
-                    <p>Bienvenido al panel de administración de la Plataforma de Aprendizaje Whirlpool</p>
+                    <h1>Inicio</h1>
+                    <p>Bienvenido al panel de administración</p>
+                </div>
+                <p>Resumen de la plataforma de aprendizaje Whirlpool</p>
                 </div>
 
-                <!-- Stats Cards -->
-                <div class="stats-cards">
-                    <div class="stat-card">
-                        <div class="stat-card-icon blue">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Técnicos Activos</h3>
-                            <p class="stat-number">42</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 12% desde el mes pasado</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon green">
-                            <i class="fas fa-book-open"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Cursos Completados</h3>
-                            <p class="stat-number">156</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 8% desde el mes pasado</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon orange">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Certificaciones</h3>
-                            <p class="stat-number">78</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 15% desde el mes pasado</p>
-                        </div>
-                    </div>
-                    <!-- Removed forum stat card as this functionality will be for technicians only -->
-                </div>
-
-                <!-- Charts Section -->
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Actividad de Usuarios</h3>
-                            <div class="chart-actions">
-                                <select id="userActivityTimeRange">
-                                    <option value="week">Última Semana</option>
-                                    <option value="month" selected>Último Mes</option>
-                                    <option value="quarter">Último Trimestre</option>
-                                </select>
+                <!-- Stats Overview - Redesigned for better visibility -->
+                <div class="stats-overview">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-card-icon blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-card-content">
+                                <h3>Usuarios</h3>
+                                <p class="stat-number" id="total-users">--</p>
                             </div>
                         </div>
-                        <div class="chart-body">
-                            <canvas id="userActivityChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Progreso de Cursos</h3>
-                            <div class="chart-actions">
-                                <select id="courseProgressFilter">
-                                    <option value="all" selected>Todos los Cursos</option>
-                                    <option value="refrigerator">Refrigerador</option>
-                                    <option value="washing">Lavadora</option>
-                                    <option value="dryer">Secadora</option>
-                                </select>
+                        <div class="stat-card">
+                            <div class="stat-card-icon green">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="stat-card-content">
+                                <h3>Cursos</h3>
+                                <p class="stat-number" id="active-courses">--</p>
                             </div>
                         </div>
-                        <div class="chart-body">
-                            <canvas id="courseProgressChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="recent-activity">
-                    <div class="section-header">
-                        <h2>Actividad Reciente</h2>
-                        <a href="#" class="view-all">Ver Todo <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                    <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon blue">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div class="activity-details">
-                                <h4>Nuevo Técnico Registrado</h4>
-                                <p>Carlos Rodríguez se ha unido a la plataforma</p>
-                                <span class="activity-time">Hace 2 horas</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon green">
+                        <div class="stat-card">
+                            <div class="stat-card-icon purple">
                                 <i class="fas fa-graduation-cap"></i>
                             </div>
-                            <div class="activity-details">
-                                <h4>Curso Completado</h4>
-                                <p>María García completó "Refrigerator Repair Basics"</p>
-                                <span class="activity-time">Hace 5 horas</span>
+                            <div class="stat-card-content">
+                                <h3>Certificaciones</h3>
+                                <p class="stat-number" id="total-certifications">--</p>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon orange">
-                                <i class="fas fa-question-circle"></i>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Panels -->
+                <div class="dashboard-panels">
+                    <!-- Left Panel: Performance Overview -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h3>Rendimiento General</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="completion-stats">
+                                <div class="completion-stat">
+                                    <span class="stat-label">Tasa de Finalización</span>
+                                    <span class="stat-value" id="completion-rate">--</span>
+                                </div>
+                                <div class="completion-stat">
+                                    <span class="stat-label">Promedio de Calificación</span>
+                                    <span class="stat-value" id="avg-score">--</span>
+                                </div>
                             </div>
-                            <div class="activity-details">
-                                <h4>Nueva Pregunta en el Foro</h4>
-                                <p>John Doe preguntó sobre "Problemas con el compresor de refrigerador"</p>
-                                <span class="activity-time">Hace 8 horas</span>
+                            <div class="chart-container">
+                                <canvas id="courseCompletionChart"></canvas>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon purple">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div class="activity-details">
-                                <h4>Curso Actualizado</h4>
-                                <p>Se actualizó el contenido de "Washing Machine Troubleshooting"</p>
-                                <span class="activity-time">Hace 1 día</span>
-                            </div>
+                    </div>
+                    
+                    <!-- Right Panel: Recent Activity -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h3>Actividad Reciente</h3>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon red">
-                                <i class="fas fa-certificate"></i>
-                            </div>
-                            <div class="activity-details">
-                                <h4>Nueva Certificación</h4>
-                                <p>Robert Johnson obtuvo la certificación "Refrigeration Expert"</p>
-                                <span class="activity-time">Hace 2 días</span>
+                        <div class="panel-body">
+                            <div class="activity-list" id="activity-list">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Cargando actividad...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -205,9 +142,7 @@
     <!-- Contenedor de notificaciones -->
     <div class="notification-container" id="notification-container"></div>
 
-    <!-- Asegúrate de que utils.js se cargue antes que admin-dashboard.js -->
-    <script src="/js/utils.js"></script>
-    <script src="/js/sidebar-active.js"></script>
-    <script src="/js/admin-dashboard.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/admin-dashboard.js"></script>
 </body>
 </html>

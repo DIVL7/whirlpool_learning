@@ -2,13 +2,14 @@
 .admin-container {
     display: flex;
     min-height: 100vh;
+    background-color: #f8fafc;
 }
 
 /* Contenido principal */
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
-    background-color: var(--light-color);
+    background-color: #f8fafc;
 }
 
 .dashboard-content {
@@ -138,69 +139,65 @@
 /* ===== NAVEGACIÓN SUPERIOR ===== */
 .top-nav {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* Cambiado a flex-end para alinear a la derecha */
     align-items: center;
-    padding: 15px 30px;
-    background-color: var(--white-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.search-container {
-    position: relative;
-    width: 300px;
-}
-
-.search-container i {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--gray-color);
-}
-
-.search-container input {
-    width: 100%;
-    padding: 10px 10px 10px 35px;
-    border: 1px solid var(--light-gray-color);
-    border-radius: 4px;
-    font-size: 0.9rem;
-    transition: border-color 0.3s ease;
-}
-
-.search-container input:focus {
-    outline: none;
-    border-color: var(--primary-color);
+    padding: 1rem 2rem;
+    background-color: white;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .user-info {
     display: flex;
     align-items: center;
+    margin-left: auto; /* Asegura que user-info se alinee a la derecha */
 }
 
 .notifications {
     position: relative;
-    margin-right: 20px;
+    margin-right: 1.5rem;
     cursor: pointer;
 }
 
 .notifications i {
-    font-size: 1.2rem;
-    color: var(--gray-color);
+    font-size: 1.25rem;
+    color: #64748b;
 }
 
 .badge {
     position: absolute;
     top: -8px;
     right: -8px;
-    background-color: var(--accent-color);
-    color: var(--white-color);
-    font-size: 0.7rem;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
     width: 18px;
     height: 18px;
-    border-radius: 50%;
+    font-size: 0.7rem;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.user-profile img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0.75rem;
+    border: 2px solid #f1f5f9;
+}
+
+.user-profile span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin-right: 0.5rem;
 }
 
 .user-profile {

@@ -1,9 +1,22 @@
 import { loadModuleContents } from './admin-modules-content.js';
 import { showSuccess, showError } from './admin-modules-utils.js';
-import { loadModules } from './admin-modules-core.js';
+// import { loadModules } from './admin-modules-core.js'; // Removed import to break circular dependency
 
 // Renderizar módulos
 function renderModules(modules, courseId) {
+    // --- DEBUG LOG ---
+    console.log('UI: renderModules called with courseId:', courseId);
+    console.log('UI: renderModules received modules data:', JSON.stringify(modules, null, 2));
+    if (!Array.isArray(modules)) {
+         console.error('UI: ERROR - renderModules expected an array, but received:', typeof modules);
+         // Display error in UI as well
+         const modulesContainer = document.getElementById('modules-container');
+         if(modulesContainer) {
+            modulesContainer.innerHTML = '<p class="error-message">Error: Datos de módulos inválidos.</p>';
+         }
+         return; // Stop execution if data is not an array
+    }
+
     const modulesContainer = document.getElementById('modules-container');
     if (!modulesContainer) {
         console.error('Modules container not found');
@@ -47,7 +60,19 @@ function renderModules(modules, courseId) {
     modules.sort((a, b) => a.position - b.position);
     
     // Crear lista de módulos
-    modules.forEach(module => {
+    modules.forEach((module, index) => {
+        // --- DEBUG LOG ---
+        console.log(`UI: Processing module ${index + 1}:`, JSON.stringify(module, null, 2));
+        if (!module || typeof module !== 'object') {
+            console.error(`UI: ERROR - Invalid module data at index ${index}:`, module);
+            return; // Skip this invalid module
+        }
+        if (!module.title || (!module.id && !module.module_id)) {
+             console.warn(`UI: WARN - Module at index ${index} is missing title or ID:`, module);
+             // Potentially skip rendering this module or render with placeholders
+        }
+        // --- END DEBUG LOG ---
+
         const moduleElement = document.createElement('div');
         moduleElement.className = 'module-card';
         moduleElement.dataset.moduleId = module.id || module.module_id; // Usar id o module_id
@@ -65,6 +90,9 @@ function renderModules(modules, courseId) {
                     </button>
                     <button class="add-content-btn" data-tooltip="Agregar contenido">
                         <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="manage-quiz-btn" data-tooltip="Gestionar quizzes">
+                        <i class="fas fa-question-circle"></i> <!-- Icon for quizzes -->
                     </button>
                     <button class="toggle-content-btn" data-tooltip="Mostrar/ocultar contenidos">
                         <i class="fas fa-chevron-down"></i>
@@ -144,6 +172,20 @@ function renderModules(modules, courseId) {
                 }
             });
         }
+
+        // --- Add event listener for Manage Quiz button ---
+        const manageQuizBtn = moduleElement.querySelector('.manage-quiz-btn');
+        if (manageQuizBtn) {
+            manageQuizBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const moduleId = module.id || module.module_id;
+                const moduleTitle = module.title;
+                console.log(`Manage quiz button clicked for module ${moduleId}`);
+                openQuizManagementModal(moduleId, moduleTitle); // Call function to open the quiz management modal
+            });
+        }
+        // --- End Manage Quiz button listener ---
+
     });
 }
 
@@ -192,83 +234,9 @@ function openModuleModal(courseId, module = null) {
     document.getElementById('module-title').focus();
 }
 
-// Guardar módulo
-async function saveModule(courseId) {
-    try {
-        // Validar que tenemos un ID de curso
-        if (!courseId) {
-            showError('No se ha especificado un curso');
-            return;
-        }
-        
-        // Obtener datos del formulario
-        const form = document.getElementById('module-form');
-        const title = document.getElementById('module-title').value.trim();
-        const description = document.getElementById('module-description').value.trim();
-        const position = parseInt(document.getElementById('module-position').value) || 1;
-        
-        // Validar datos
-        if (!title) {
-            showError('El título del módulo es obligatorio');
-            return;
-        }
-        
-        // Crear objeto con datos del módulo
-        const moduleData = {
-            title,
-            description,
-            position,
-            course_id: courseId
-        };
-        
-        // Determinar si es creación o actualización
-        const moduleId = form.dataset.moduleId;
-        const isUpdate = !!moduleId;
-        
-        // URL y método según operación
-        const url = isUpdate 
-            ? `/api/courses/${courseId}/modules/${moduleId}` 
-            : `/api/courses/${courseId}/modules`;
-        const method = isUpdate ? 'PUT' : 'POST';
-        
-        // Enviar petición
-        const response = await fetch(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(moduleData)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Error al guardar el módulo');
-        }
-        
-        // Procesar respuesta
-        const data = await response.json();
-        
-        // Cerrar modal
-        const modal = document.getElementById('module-modal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        // Mostrar mensaje de éxito
-        showSuccess(isUpdate ? 'Módulo actualizado correctamente' : 'Módulo creado correctamente');
-        
-        // Recargar módulos
-        loadModules(courseId);
-        
-    } catch (error) {
-        console.error('Error saving module:', error);
-        showError(`Error al guardar el módulo: ${error.message}`);
-    }
-}
-
-// Confirmar eliminación de módulo
+// Prepare and show the delete module confirmation modal
 function confirmDeleteModule(moduleId, moduleTitle) {
+    console.log(`UI: Opening confirm delete modal for module ${moduleId}`);
     if (!moduleId) {
         showError('No se ha especificado un módulo para eliminar');
         return;
@@ -296,69 +264,9 @@ function confirmDeleteModule(moduleId, moduleTitle) {
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
     
-    // Configurar botón de confirmación
-    // Eliminar listeners previos
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-    
-    // Agregar nuevo listener
-    newBtn.addEventListener('click', async function() {
-        try {
-            // Obtener ID del curso
-            const urlParams = new URLSearchParams(window.location.search);
-            const courseId = urlParams.get('id');
-            
-            if (!courseId) {
-                throw new Error('No se ha especificado un curso');
-            }
-            
-            // Obtener el ID del módulo del dataset
-            const moduleId = this.dataset.moduleId;
-            
-            if (!moduleId) {
-                throw new Error('No se ha especificado un módulo para eliminar');
-            }
-            
-            // Enviar petición para eliminar módulo
-            const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Error al eliminar el módulo');
-            }
-            
-            // Cerrar modal
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-            
-            // Mostrar mensaje de éxito
-            showSuccess('Módulo eliminado correctamente');
-            
-            // Recargar módulos
-            loadModules(courseId);
-            
-        } catch (error) {
-            console.error('Error deleting module:', error);
-            showError(`Error al eliminar el módulo: ${error.message}`);
-            
-            // Cerrar modal
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-    });
-    
-    // Configurar botones para cerrar modal
-    modal.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', function() {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        });
-    });
+    // NOTE: The actual deletion logic and event listener for the confirm button
+    // will be handled in admin-modules-events.js.
+    // This function now only prepares and shows the modal.
 }
 
 // Mostrar vista de selección de curso
@@ -380,12 +288,368 @@ function createPaginationHTML(pagination) {
 }
 
 // Exportar funciones para uso en otros módulos
-export { 
-    renderModules, 
-    openModuleModal, 
-    saveModule, 
-    confirmDeleteModule, 
-    showCourseSelectionView, 
+export {
+    renderModules,
+    openModuleModal,
+    confirmDeleteModule, // Exports the function that shows the modal
+    showCourseSelectionView,
     loadAvailableCourses, 
-    createPaginationHTML 
+    createPaginationHTML,
+    // Quiz UI functions
+    openQuizManagementModal, // Opens the main quiz list modal
+    renderQuizList,          // Renders the list of quizzes
+    openQuizFormModal,       // Opens the add/edit quiz details form
+    resetQuizForm,           // Resets the quiz details form
+    confirmDeleteQuiz,       // Opens the delete quiz confirmation modal
+    openQuizEditorModal,     // Opens the modal for editing questions/answers
+    renderQuestionList,      // Renders the list of questions
+    resetQuestionForm,       // Resets the question form
+    confirmDeleteQuestion,   // Opens the delete question confirmation modal
+    renderAnswerList,        // Renders the list of answers for a question
+    resetAnswerForm,         // Resets the answer form
+    confirmDeleteAnswer,     // Opens the delete answer confirmation modal
+    closeModal               // Generic helper to close any modal by ID
 };
+
+
+// --- Quiz UI Functions ---
+
+// Opens the modal listing quizzes for a specific module
+async function openQuizManagementModal(moduleId, moduleTitle) {
+    console.log(`Opening quiz management modal for module ${moduleId} (${moduleTitle})`);
+    const modal = document.getElementById('quiz-management-modal');
+    const titleElement = document.getElementById('quiz-management-module-title').querySelector('span');
+    const listContainer = document.getElementById('quiz-list-container');
+    const addQuizBtn = document.getElementById('add-quiz-btn');
+
+    if (!modal || !titleElement || !listContainer || !addQuizBtn) {
+        showError('Quiz management modal elements not found.');
+        return;
+    }
+
+    titleElement.textContent = moduleTitle;
+    modal.dataset.moduleId = moduleId; // Store module ID for later use
+    addQuizBtn.dataset.moduleId = moduleId; // Store module ID on the add button
+
+    // Clear previous list and show loading state (optional)
+    listContainer.innerHTML = '<div class="loading-indicator"><i class="fas fa-spinner fa-spin"></i> Cargando quizzes...</div>';
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Fetch and render quizzes
+    try {
+        // Dynamically import the API function only when needed
+        const { loadQuizzesFromAPI } = await import('./admin-modules-api.js');
+        const quizzes = await loadQuizzesFromAPI(moduleId);
+        renderQuizList(quizzes, moduleId); // Render the fetched quizzes
+    } catch (err) {
+        showError(`Error al cargar quizzes: ${err.message}`);
+        listContainer.innerHTML = '<p class="error-message">Error al cargar quizzes.</p>';
+    }
+}
+
+// Renders the list of quizzes in the management modal
+function renderQuizList(quizzes, moduleId) {
+    console.log(`Rendering quiz list for module ${moduleId}`, quizzes);
+    const container = document.getElementById('quiz-list-container');
+    if (!container) return;
+
+    if (!quizzes || quizzes.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay quizzes para este módulo.</p></div>';
+        return;
+    }
+
+    // Sort quizzes by position before rendering
+    quizzes.sort((a, b) => a.position - b.position);
+
+    container.innerHTML = quizzes.map(quiz => `
+        <div class="list-item quiz-item" data-quiz-id="${quiz.quiz_id}">
+             <div class="item-main"> {/* Re-confirming item-main wrapper */}
+                <span class="item-position">${quiz.position}.</span>
+                <span class="item-title">${quiz.title}</span>
+             </div>
+            <div class="item-actions">
+                <button class="btn-secondary btn-sm edit-quiz-btn" data-tooltip="Editar Quiz y Preguntas">
+                    <i class="fas fa-edit"></i> <span>Editar</span> {/* Re-confirming span */}
+                </button>
+                <button class="btn-danger btn-sm delete-quiz-btn" data-tooltip="Eliminar Quiz">
+                    <i class="fas fa-trash"></i> <span>Eliminar</span> {/* Re-confirming span */}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openQuizFormModal(moduleId, quiz = null) {
+    console.log(`Opening quiz form modal for module ${moduleId}`, quiz);
+    const modal = document.getElementById('quiz-form-modal');
+    const form = document.getElementById('quiz-form');
+    const title = document.getElementById('quiz-form-modal-title');
+
+    if (!modal || !form || !title) {
+        showError('Quiz form modal elements not found.');
+        return;
+    }
+
+    resetQuizForm(); // Clear form before populating
+
+    document.getElementById('quiz-module-id').value = moduleId;
+
+    if (quiz) { // Editing existing quiz
+        title.textContent = 'Editar Quiz';
+        document.getElementById('quiz-id').value = quiz.quiz_id;
+        document.getElementById('quiz-title').value = quiz.title || '';
+        document.getElementById('quiz-description').value = quiz.description || '';
+        document.getElementById('quiz-passing-score').value = quiz.passing_score !== null ? quiz.passing_score : 70;
+        document.getElementById('quiz-time-limit').value = quiz.time_limit !== null ? quiz.time_limit : '';
+        document.getElementById('quiz-position').value = quiz.position || 1;
+    } else { // Adding new quiz
+        title.textContent = 'Añadir Nuevo Quiz';
+        // Calculate next position (simple approach)
+        const quizItems = document.getElementById('quiz-list-container')?.querySelectorAll('.quiz-item') || [];
+        document.getElementById('quiz-position').value = quizItems.length + 1;
+    }
+
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function resetQuizForm() {
+    const form = document.getElementById('quiz-form');
+    if (form) {
+        form.reset();
+        document.getElementById('quiz-id').value = ''; // Clear hidden ID field
+        document.getElementById('quiz-module-id').value = ''; // Clear hidden module ID field
+    }
+}
+
+function confirmDeleteQuiz(quizId, quizTitle) {
+    console.log(`Confirming delete for quiz ${quizId} (${quizTitle})`);
+     const modal = document.getElementById('deleteQuizModal');
+     const titleElement = document.getElementById('deleteQuizTitle');
+     const confirmBtn = document.getElementById('confirmDeleteQuizBtn');
+
+     if (!modal || !titleElement || !confirmBtn) {
+         showError('Delete quiz confirmation modal elements not found.');
+         return;
+     }
+
+     titleElement.textContent = quizTitle || 'este quiz';
+     confirmBtn.dataset.quizId = quizId; // Store quiz ID on button
+
+     modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Opens the modal for editing a quiz's questions and answers
+async function openQuizEditorModal(quiz) { // Made async for potential API call
+    console.log('Opening quiz editor modal', quiz);
+    const modal = document.getElementById('quiz-editor-modal');
+    const titleSpan = document.getElementById('quiz-editor-modal-title').querySelector('span');
+    const quizIdInput = document.getElementById('editor-quiz-id');
+    const questionContainer = document.getElementById('question-list-container');
+    const addQuestionBtn = document.getElementById('add-question-btn');
+
+    if (!modal || !titleSpan || !quizIdInput || !questionContainer || !addQuestionBtn) {
+        showError('Quiz editor modal elements not found.');
+        return;
+    }
+
+    titleSpan.textContent = quiz.title;
+    quizIdInput.value = quiz.quiz_id;
+    addQuestionBtn.dataset.quizId = quiz.quiz_id; // Store quiz ID for adding questions
+
+    // Reset question/answer forms
+    resetQuestionForm();
+    resetAnswerForm();
+    document.getElementById('question-form-container').style.display = 'none';
+    document.getElementById('answer-section-container').style.display = 'none'; // Hide answer section initially
+
+    // Ensure we have the full quiz details (questions/answers)
+    // The event listener calling this should have already fetched details
+    if (!quiz.questions) {
+        // As a fallback, fetch details if missing (should ideally be handled before calling)
+        try {
+            console.warn("Quiz details missing questions, fetching again...");
+            const { loadQuizDetailsFromAPI } = await import('./admin-modules-api.js');
+            const fullQuizData = await loadQuizDetailsFromAPI(quiz.quiz_id);
+            quiz = fullQuizData; // Update quiz object with full data
+        } catch (error) {
+             showError(`Error al cargar detalles completos del quiz: ${error.message}`);
+             return; // Don't open modal if details can't be loaded
+        }
+    }
+
+    renderQuestionList(quiz.questions || [], quiz.quiz_id); // Render questions
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Renders the list of questions in the quiz editor modal
+function renderQuestionList(questions, quizId) {
+    console.log(`Rendering question list for quiz ${quizId}`, questions);
+    const container = document.getElementById('question-list-container');
+    if (!container) return;
+
+    if (!questions || questions.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No hay preguntas añadidas.</p></div>';
+        return;
+    }
+
+    // Sort questions by position
+    questions.sort((a, b) => a.position - b.position);
+
+    container.innerHTML = questions.map(q => `
+        <div class="list-item question-item" data-question-id="${q.question_id}">
+            <div class="item-main">
+                <span class="item-position">${q.position}.</span>
+                <span class="item-title">${q.question_text}</span>
+                <span class="item-meta">(${q.question_type.replace('_', ' ')}, ${q.points} pts)</span>
+            </div>
+            <div class="item-actions question-actions">
+                 <button class="btn-secondary btn-sm edit-question-btn" data-tooltip="Editar Pregunta">
+                    <i class="fas fa-edit"></i> Editar
+                 </button>
+                 <button class="btn-danger btn-sm delete-question-btn" data-tooltip="Eliminar Pregunta">
+                    <i class="fas fa-trash"></i> Eliminar
+                 </button>
+            </div>
+            <!-- Answer list rendered by renderAnswerList -->
+            <div class="answer-sublist" id="answer-list-for-q-${q.question_id}">
+                ${renderAnswerList(q.answers || [], q.question_id, true)}
+            </div>
+        </div>
+    `).join('');
+}
+
+function resetQuestionForm() {
+    const form = document.getElementById('question-form');
+     if (form) {
+        form.reset();
+        document.getElementById('question-id').value = ''; // Clear hidden ID
+        document.getElementById('question-form-title').textContent = 'Añadir Pregunta';
+        // Hide answer section when resetting question form
+        document.getElementById('answer-section-container').style.display = 'none';
+    }
+    // Also reset answer form just in case
+    resetAnswerForm();
+}
+
+function confirmDeleteQuestion(questionId, questionText) {
+    console.log(`Confirming delete for question ${questionId}`);
+    const modal = document.getElementById('deleteQuestionModal');
+    const textElement = document.getElementById('deleteQuestionText');
+    const confirmBtn = document.getElementById('confirmDeleteQuestionBtn');
+
+    if (!modal || !textElement || !confirmBtn) {
+        showError('Delete question confirmation modal elements not found.');
+        return;
+    }
+
+    textElement.textContent = questionText || 'esta pregunta';
+    confirmBtn.dataset.questionId = questionId;
+
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function renderAnswerList(answers, questionId, isSublist = false) {
+    console.log(`Rendering answer list for question ${questionId}`, answers);
+    const containerId = isSublist ? `answer-list-for-q-${questionId}` : 'answer-list-container';
+    const container = document.getElementById(containerId);
+
+    // If rendering as a sublist and the container doesn't exist yet (because renderQuestionList creates it), return the HTML string.
+    if (!container && isSublist) {
+        if (!answers || answers.length === 0) {
+            return '<p class="empty-sublist-message">No hay respuestas.</p>';
+        }
+        return answers.map(a => `
+            <div class="list-item answer-item" data-answer-id="${a.answer_id}">
+                 <span class="item-title">${a.answer_text}</span>
+                 ${a.is_correct ? '<i class="fas fa-check-circle correct-icon" data-tooltip="Respuesta Correcta"></i>' : ''}
+                 <div class="item-actions answer-actions">
+                     <button class="btn-secondary btn-xs edit-answer-btn" data-tooltip="Editar Respuesta">
+                        <i class="fas fa-edit"></i>
+                     </button>
+                     <button class="btn-danger btn-xs delete-answer-btn" data-tooltip="Eliminar Respuesta">
+                        <i class="fas fa-trash"></i>
+                     </button>
+                 </div>
+            </div>
+        `).join('');
+    }
+
+    // If rendering into an existing container (either main or sublist)
+    if (!container) {
+        console.error(`Answer container #${containerId} not found.`);
+        return; // Or return empty string if called internally
+    }
+
+    if (!answers || answers.length === 0) {
+        container.innerHTML = '<p class="empty-sublist-message">No hay respuestas.</p>';
+        return;
+    }
+
+    container.innerHTML = answers.map(a => `
+        <div class="list-item answer-item" data-answer-id="${a.answer_id}">
+             <span class="item-title">${a.answer_text}</span>
+             ${a.is_correct ? '<i class="fas fa-check-circle correct-icon" data-tooltip="Respuesta Correcta"></i>' : ''}
+             <div class="item-actions answer-actions">
+                 <button class="btn-secondary btn-xs edit-answer-btn" data-tooltip="Editar Respuesta">
+                    <i class="fas fa-edit"></i>
+                 </button>
+                 <button class="btn-danger btn-xs delete-answer-btn" data-tooltip="Eliminar Respuesta">
+                    <i class="fas fa-trash"></i>
+                 </button>
+            </div>
+        </div>
+    `).join('');
+
+     if (isSublist) {
+         return answers.length > 0 ? listHtml : '<p style="margin-left: 15px; font-size: 0.9em;">No hay respuestas.</p>';
+     } else {
+         // If rendering into the main container (not as sublist)
+         if (!answers || answers.length === 0) {
+             container.innerHTML = '<p>No hay respuestas añadidas.</p>';
+         } else {
+             container.innerHTML = listHtml;
+         }
+     }
+}
+
+
+function resetAnswerForm() {
+    const form = document.getElementById('answer-form');
+    if (form) {
+        form.reset();
+        document.getElementById('answer-id').value = ''; // Clear hidden ID
+        document.getElementById('answer-is-correct').checked = false;
+    }
+}
+
+function confirmDeleteAnswer(answerId, answerText) {
+    console.log(`Confirming delete for answer ${answerId}`);
+    const modal = document.getElementById('deleteAnswerModal');
+    const textElement = document.getElementById('deleteAnswerText');
+    const confirmBtn = document.getElementById('confirmDeleteAnswerBtn');
+
+    if (!modal || !textElement || !confirmBtn) {
+        showError('Delete answer confirmation modal elements not found.');
+        return;
+    }
+
+    textElement.textContent = answerText || 'esta respuesta';
+    confirmBtn.dataset.answerId = answerId;
+
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Generic function to close any modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scroll
+    }
+}

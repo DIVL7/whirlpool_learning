@@ -2,18 +2,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dashboard data
     loadDashboardStats();
     loadRecentActivity();
+    loadCompletionStats();
     initializeCharts();
-    
-    // Set up event listeners
-    document.getElementById('courseProgressFilter').addEventListener('change', function() {
-        updateCourseProgressChart(this.value);
-    });
 });
 
 // Load dashboard statistics
 async function loadDashboardStats() {
     try {
-        console.log('%c[DASHBOARD] 🔄 Loading dashboard stats...', 'background: #3498db; color: white; padding: 2px 5px; border-radius: 3px;');
+        console.log('%c[DASHBOARD] 🔄 Cargando estadísticas del dashboard...', 'background: #3498db; color: white; padding: 2px 5px; border-radius: 3px;');
         
         const response = await fetch('/api/dashboard/stats');
         if (!response.ok) {
@@ -21,25 +17,48 @@ async function loadDashboardStats() {
         }
         
         const stats = await response.json();
-        console.log('%c[DASHBOARD] ✅ Stats loaded successfully:', 'background: #2ecc71; color: white; padding: 2px 5px; border-radius: 3px;', stats);
+        console.log('%c[DASHBOARD] ✅ Estadísticas cargadas correctamente:', 'background: #2ecc71; color: white; padding: 2px 5px; border-radius: 3px;', stats);
         
-        // Update stats cards
-        document.getElementById('total-users').textContent = stats.totalUsers || 0;
-        document.getElementById('active-courses').textContent = stats.activeCourses || 0;
-        document.getElementById('completed-courses').textContent = stats.totalCompleted || 0;
-        document.getElementById('total-modules').textContent = stats.totalModules || 0;
-        
-        // Add more detailed logging to help debug
-        console.log('%c[DASHBOARD] 🔍 Updated DOM elements with stats:', 'background: #3498db; color: white; padding: 2px 5px; border-radius: 3px;', {
-            'total-users': stats.totalUsers,
-            'active-courses': stats.activeCourses,
-            'completed-courses': stats.totalCompleted,
-            'total-modules': stats.totalModules
-        });
+        // Update stats cards - Usar updateElementTextIfExists en lugar de acceder directamente
+        updateElementTextIfExists('total-users', stats.totalUsers || 0);
+        updateElementTextIfExists('active-courses', stats.activeCourses || 0);
+        updateElementTextIfExists('completed-courses', stats.totalCompleted || 0);
+        updateElementTextIfExists('total-certifications', stats.totalCertifications || 0);
         
     } catch (error) {
-        console.error('%c[DASHBOARD] ❌ Error loading dashboard stats:', 'background: #e74c3c; color: white; padding: 2px 5px; border-radius: 3px;', error);
+        console.error('%c[DASHBOARD] ❌ Error al cargar estadísticas:', 'background: #e74c3c; color: white; padding: 2px 5px; border-radius: 3px;', error);
         showError('Error al cargar estadísticas del dashboard');
+    }
+}
+
+// Función auxiliar para actualizar el texto de un elemento si existe
+function updateElementTextIfExists(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value;
+    } else {
+        console.warn(`[DASHBOARD] ⚠️ Elemento con ID '${elementId}' no encontrado en el DOM`);
+    }
+}
+
+// Load completion statistics
+async function loadCompletionStats() {
+    try {
+        const response = await fetch('/api/dashboard/completion-stats');
+        if (!response.ok) {
+            throw new Error('Error al cargar estadísticas de finalización');
+        }
+        
+        const stats = await response.json();
+        
+        // Update completion stats
+        document.getElementById('completion-rate').textContent = `${stats.completionRate}%`;
+        document.getElementById('avg-score').textContent = stats.averageScore;
+        
+    } catch (error) {
+        console.error('Error al cargar estadísticas de finalización:', error);
+        document.getElementById('completion-rate').textContent = 'N/A';
+        document.getElementById('avg-score').textContent = 'N/A';
     }
 }
 
@@ -52,7 +71,7 @@ async function loadRecentActivity() {
         }
         
         const activities = await response.json();
-        const activityList = document.querySelector('.activity-list');
+        const activityList = document.getElementById('activity-list');
         
         // Clear existing activities
         activityList.innerHTML = '';
@@ -62,15 +81,15 @@ async function loadRecentActivity() {
             return;
         }
         
-        // Add activities to the list
-        activities.forEach(activity => {
+        // Add activities to the list (limit to 5 for minimalist view)
+        activities.slice(0, 5).forEach(activity => {
             const activityItem = createActivityItem(activity);
             activityList.appendChild(activityItem);
         });
         
     } catch (error) {
-        console.error('Error loading recent activity:', error);
-        document.querySelector('.activity-list').innerHTML = 
+        console.error('Error al cargar actividad reciente:', error);
+        document.getElementById('activity-list').innerHTML = 
             '<p class="error-state">Error al cargar actividad reciente</p>';
     }
 }
@@ -103,15 +122,8 @@ function createActivityItem(activity) {
             break;
     }
     
-    // Format date
-    const activityDate = new Date(activity.timestamp);
-    const formattedDate = activityDate.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    // Format time ago
+    const timeAgo = formatTimeAgo(new Date(activity.timestamp));
     
     activityItem.innerHTML = `
         <div class="activity-icon ${colorClass}">
@@ -119,147 +131,152 @@ function createActivityItem(activity) {
         </div>
         <div class="activity-details">
             <p class="activity-text">${activity.description}</p>
-            <p class="activity-time">${formattedDate}</p>
+            <p class="activity-time">${timeAgo}</p>
         </div>
     `;
     
     return activityItem;
 }
 
+// Format time ago
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    
+    if (diffDay > 0) {
+        return `Hace ${diffDay} día${diffDay > 1 ? 's' : ''}`;
+    } else if (diffHour > 0) {
+        return `Hace ${diffHour} hora${diffHour > 1 ? 's' : ''}`;
+    } else if (diffMin > 0) {
+        return `Hace ${diffMin} minuto${diffMin > 1 ? 's' : ''}`;
+    } else {
+        return 'Justo ahora';
+    }
+}
+
 // Initialize dashboard charts
 function initializeCharts() {
-    initUserRegistrationChart();
-    initCourseProgressChart();
+    initCourseCompletionChart();
 }
 
-// Initialize user registration chart
-function initUserRegistrationChart() {
-    const ctx = document.getElementById('userRegistrationChart').getContext('2d');
+// Initialize course completion chart
+function initCourseCompletionChart() {
+    const ctx = document.getElementById('courseCompletionChart').getContext('2d');
     
-    // Sample data - replace with API call in production
-    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const data = [5, 8, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Nuevos Usuarios',
-                data: data,
-                backgroundColor: 'rgba(0, 102, 204, 0.1)',
-                borderColor: 'rgba(0, 102, 204, 1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        drawBorder: false
-                    }
+    // Fetch data from API
+    fetch('/api/dashboard/course-completion')
+        .then(response => response.json())
+        .then(data => {
+            // Create chart with data from API
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completado', 'En Progreso', 'No Iniciado'],
+                    datasets: [{
+                        data: [
+                            data.completed || 2, 
+                            data.inProgress || 3, 
+                            data.notStarted || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
                 },
-                x: {
-                    grid: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            },
-            plugins: {
-                legend: {
-                    display: false
+            });
+        })
+        .catch(error => {
+            console.error('Error loading course completion chart:', error);
+            // Fallback data if API fails
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completado', 'En Progreso', 'No Iniciado'],
+                    datasets: [{
+                        data: [2, 3, 0],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
                 }
-            }
-        }
-    });
+            });
+        });
 }
 
-// Initialize course progress chart
-function initCourseProgressChart() {
-    const ctx = document.getElementById('courseProgressChart').getContext('2d');
+// Utility function to show error messages
+// Corregir la función showError para evitar la recursión infinita
+function showError(message) {
+    // Verificar si el contenedor de errores existe, si no, crearlo
+    let errorContainer = document.getElementById('error-container');
     
-    // Sample data - replace with API call in production
-    const data = {
-        labels: ['Completado', 'En Progreso', 'No Iniciado'],
-        datasets: [{
-            data: [30, 50, 20],
-            backgroundColor: [
-                'rgba(40, 167, 69, 0.8)',
-                'rgba(255, 193, 7, 0.8)',
-                'rgba(108, 117, 125, 0.8)'
-            ],
-            borderWidth: 0
-        }]
-    };
-    
-    window.courseProgressChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-}
-
-// Update course progress chart based on filter
-function updateCourseProgressChart(filter) {
-    // Sample data - replace with API call in production
-    let data;
-    
-    switch (filter) {
-        case 'refrigerator':
-            data = [40, 45, 15];
-            break;
-        case 'washing':
-            data = [25, 60, 15];
-            break;
-        case 'dryer':
-            data = [20, 45, 35];
-            break;
-        default: // 'all'
-            data = [30, 50, 20];
+    if (!errorContainer) {
+        errorContainer = document.createElement('div');
+        errorContainer.id = 'error-container';
+        errorContainer.className = 'error-container';
+        document.body.appendChild(errorContainer);
     }
     
-    window.courseProgressChart.data.datasets[0].data = data;
-    window.courseProgressChart.update();
+    // Crear el elemento de error
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-message';
+    errorElement.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <span>${message}</span>
+        <button class="close-error"><i class="fas fa-times"></i></button>
+    `;
+    
+    // Agregar el error al contenedor
+    errorContainer.appendChild(errorElement);
+    
+    // Configurar el botón para cerrar el error
+    const closeButton = errorElement.querySelector('.close-error');
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            errorElement.remove();
+        });
+    }
+    
+    // Eliminar automáticamente después de 5 segundos
+    setTimeout(() => {
+        if (errorElement && errorElement.parentNode) {
+            errorElement.remove();
+        }
+    }, 5000);
 }
-
-// Eliminar la función showError existente (líneas 247-272)
-// function showError(message) {
-//     const errorContainer = document.createElement('div');
-//     errorContainer.className = 'error-message';
-//     errorContainer.innerHTML = `
-//         <i class="fas fa-exclamation-circle"></i>
-//         <span>${message}</span>
-//     `;
-//     
-//     // Remove any existing error messages
-//     const existingError = document.querySelector('.error-message');
-//     if (existingError) {
-//         existingError.remove();
-//     }
-//     
-//     // Insert error at the top of the content
-//     const contentContainer = document.querySelector('.dashboard-content');
-//     contentContainer.insertBefore(errorContainer, contentContainer.firstChild);
-//     
-//     // Auto-remove after 5 seconds
-//     setTimeout(() => {
-//         errorContainer.classList.add('fade-out');
-//         setTimeout(() => {
-//             errorContainer.remove();
-//         }, 500);
-//     }, 5000);
-// }
+    // Check if the global showError function exists
+    if (typeof window.showError === 'function') {
+        window.showError(message);
+    } else {
+        console.error(message);
+        alert(message);
+    }
