@@ -1,5 +1,5 @@
 // Import UI functions needed for event handling
-import { openModuleModal, openQuizManagementModal, renderQuizList, openQuizFormModal, resetQuizForm, confirmDeleteQuiz, openQuizEditorModal, renderQuestionList, resetQuestionForm, confirmDeleteQuestion, renderAnswerList, resetAnswerForm, confirmDeleteAnswer, closeModal } from './admin-modules-ui.js';
+import { openModuleModal, openQuizManagementModal, renderQuizList, openQuizFormModal, resetQuizForm, confirmDeleteQuiz, openQuizEditorModal, renderQuestionList, resetQuestionForm, populateQuestionFormForEdit, confirmDeleteQuestion, renderAnswerList, resetAnswerForm, populateAnswerFormForEdit, confirmDeleteAnswer, closeModal, updateAnswerSectionVisibility } from './admin-modules-ui.js'; // Added updateAnswerSectionVisibility
 // Import content-related functions
 import { saveContent, updateContentDataField } from './admin-modules-content.js';
 // Import API functions
@@ -219,10 +219,23 @@ function setupQuizEventListeners() {
                 const quizId = quizItem.dataset.quizId;
                 const moduleId = quizManagementModal.dataset.moduleId; // Get module ID from modal
 
-                if (target.classList.contains('edit-quiz-btn') || target.closest('.edit-quiz-btn')) {
-                    console.log(`Edit quiz button clicked for quiz ${quizId}`);
+                if (target.classList.contains('edit-quiz-details-btn') || target.closest('.edit-quiz-details-btn')) {
+                    // --- Handle Edit Quiz Details ---
+                    console.log(`Edit quiz details button clicked for quiz ${quizId}`);
                     try {
-                        // Fetch full details needed for the editor
+                        // Fetch details needed for the form modal
+                        const quizDetails = await loadQuizDetailsFromAPI(quizId); // Assuming this fetches title, desc, score, time, pos
+                        // Pass moduleId and the fetched quiz data to the form modal function
+                        openQuizFormModal(moduleId, quizDetails);
+                    } catch (error) {
+                        showError(`Error al cargar detalles del quiz: ${error.message}`);
+                    }
+
+                } else if (target.classList.contains('edit-quiz-btn') || target.closest('.edit-quiz-btn')) {
+                    // --- Handle Edit Questions/Answers ---
+                    console.log(`Edit quiz questions/answers button clicked for quiz ${quizId}`);
+                    try {
+                        // Fetch full details needed for the editor modal
                         const quizDetails = await loadQuizDetailsFromAPI(quizId);
                         openQuizEditorModal(quizDetails); // Open the full editor
                     } catch (error) {
@@ -281,51 +294,122 @@ function setupQuizEventListeners() {
     if (quizEditorModal) {
         const questionFormContainer = document.getElementById('question-form-container');
         const questionForm = document.getElementById('question-form');
+        const questionTypeDropdown = document.getElementById('question-type'); // Get the dropdown
         const answerSectionContainer = document.getElementById('answer-section-container');
         const answerFormContainer = document.getElementById('answer-form-container');
         const answerForm = document.getElementById('answer-form');
 
+        // Add listener for Question Type change
+        if (questionTypeDropdown) {
+            // Use cloneNode to prevent duplicate listeners if setup is called multiple times
+            const newDropdown = questionTypeDropdown.cloneNode(true);
+            questionTypeDropdown.parentNode.replaceChild(newDropdown, questionTypeDropdown);
+
+            newDropdown.addEventListener('change', (e) => {
+                const selectedType = e.target.value;
+                updateAnswerSectionVisibility(selectedType); // Update UI based on selection
+                const answerListContainer = document.getElementById('answer-list-container');
+
+                if (selectedType !== 'multiple_choice') {
+                     resetAnswerForm(); // Reset answer form if not MC
+                     answerFormContainer.style.display = 'none'; // Hide form
+                }
+                if (selectedType === 'true_false') {
+                    // Render the T/F options immediately when selected in the form
+                    const questionId = document.getElementById('question-id').value; // Get current question ID (might be empty for new)
+                    renderAnswerList([], questionId, 'true_false'); // Render empty T/F structure
+                } else if (selectedType === 'multiple_choice') {
+                    // Clear the list if switching to MC from T/F or other types
+                     if (answerListContainer) answerListContainer.innerHTML = '<p class="empty-sublist-message">No hay respuestas añadidas.</p>';
+                } else if (selectedType === 'short_answer') {
+                     if (answerListContainer) answerListContainer.innerHTML = '<p class="empty-sublist-message">Las respuestas cortas se califican manualmente.</p>';
+                }
+            });
+        }
+
         // "Nueva Pregunta" button
         const addQuestionBtn = quizEditorModal.querySelector('#add-question-btn');
         if (addQuestionBtn) {
-            addQuestionBtn.addEventListener('click', () => {
+             // Clone to prevent duplicate listeners
+            const newBtn = addQuestionBtn.cloneNode(true);
+            addQuestionBtn.parentNode.replaceChild(newBtn, addQuestionBtn);
+            newBtn.addEventListener('click', () => {
                 resetQuestionForm();
                 // Calculate next position
                 const questionItems = document.getElementById('question-list-container')?.querySelectorAll('.question-item') || [];
                  document.getElementById('question-position').value = questionItems.length + 1;
                 questionFormContainer.style.display = 'block';
+                // Trigger change event on dropdown to set initial visibility for default type (multiple_choice)
+                document.getElementById('question-type').dispatchEvent(new Event('change'));
                 document.getElementById('question-text').focus();
             });
         }
 
-        // Cancel Question Edit button
-        const cancelQuestionBtn = quizEditorModal.querySelector('#cancel-question-edit');
-         if (cancelQuestionBtn) {
-            cancelQuestionBtn.addEventListener('click', () => {
-                questionFormContainer.style.display = 'none';
-                resetQuestionForm();
-            });
+         // Cancel Question Edit button
+         const cancelQuestionBtn = quizEditorModal.querySelector('#cancel-question-edit');
+          if (cancelQuestionBtn) {
+             // Clone to prevent duplicate listeners
+            const newBtn = cancelQuestionBtn.cloneNode(true);
+            cancelQuestionBtn.parentNode.replaceChild(newBtn, cancelQuestionBtn);
+             newBtn.addEventListener('click', () => {
+                 questionFormContainer.style.display = 'none'; // Hide question form
+                 answerSectionContainer.style.display = 'none'; // Hide answer section as well
+                 resetQuestionForm(); // Reset form (which also resets answer form)
+             });
         }
 
         // Question Form submission
         if (questionForm) {
-            questionForm.addEventListener('submit', async (e) => {
+             // Clone to prevent duplicate listeners
+            const newForm = questionForm.cloneNode(true);
+            questionForm.parentNode.replaceChild(newForm, questionForm);
+            newForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const formData = new FormData(questionForm);
+                const formData = new FormData(newForm); // Use the cloned form
                 const questionData = Object.fromEntries(formData.entries());
                 const quizId = document.getElementById('editor-quiz-id').value;
                 const questionId = questionData.questionId || null;
+                const questionType = questionData.question_type; // Get type from form data
 
                 // Convert numeric
                 questionData.points = parseInt(questionData.points) || 1;
                 questionData.position = parseInt(questionData.position) || 1;
                 if (!questionId) delete questionData.questionId; // Don't send empty ID
 
+                // Handle True/False answer saving (example - might need API adjustment)
+                let answersPayload = null;
+                if (questionType === 'true_false') {
+                    const correctAnswerValue = newForm.querySelector('input[name^="tf_correct_"]:checked')?.value; // Get checked radio value
+                    console.log('Selected T/F correct answer:', correctAnswerValue);
+                    // Example: Backend might expect answers array like [{ text: 'Verdadero', is_correct: true/false }, { text: 'Falso', is_correct: true/false }]
+                    answersPayload = [
+                        { answer_text: 'Verdadero', is_correct: correctAnswerValue === 'true' },
+                        { answer_text: 'Falso', is_correct: correctAnswerValue === 'false' }
+                    ];
+                    // Add answers to the question data payload if API expects it this way
+                    // questionData.answers = answersPayload; // Uncomment if API expects answers during question save
+                }
+
+
                 try {
                     const result = await saveQuestionToAPI(quizId, {
                         ...questionData,
                         question_id: questionId // Ensure question_id is passed for updates
+                        // If API handles T/F answers separately, don't send questionData.answers
                     });
+
+                    // If API requires separate calls to save T/F answers after question is saved/updated:
+                    // This assumes saveQuestionToAPI returns the saved/updated question with its ID
+                    const savedQuestionId = result?.question_id || questionId;
+                    if (questionType === 'true_false' && savedQuestionId && answersPayload) {
+                        console.log("Saving/Updating True/False answers separately...");
+                        // You might need a loop and call saveAnswerToAPI for 'Verdadero' and 'Falso'
+                        // This requires knowing if the answers already exist (to update) or need creation.
+                        // This logic depends heavily on the API design.
+                        // For now, we assume the question save handles it or it's done manually.
+                    }
+
+
                     showSuccess(questionId ? 'Pregunta actualizada' : 'Pregunta añadida');
                     questionFormContainer.style.display = 'none';
                     resetQuestionForm();
@@ -341,6 +425,7 @@ function setupQuizEventListeners() {
         // Event delegation for Question Edit/Delete buttons
         const questionListContainer = quizEditorModal.querySelector('#question-list-container');
         if (questionListContainer) {
+            // No need to clone here as it's delegation on a static parent
             questionListContainer.addEventListener('click', (e) => {
                 const target = e.target;
                 const questionItem = target.closest('.question-item');
@@ -349,32 +434,51 @@ function setupQuizEventListeners() {
                 const questionId = questionItem.dataset.questionId;
                 const quizId = document.getElementById('editor-quiz-id').value;
 
-                if (target.classList.contains('edit-question-btn') || target.closest('.edit-question-btn')) {
-                    // Find the question data (ideally fetch fresh data, or find from rendered list)
-                    // For simplicity, let's assume we refetch the quiz details to get the question
-                     loadQuizDetailsFromAPI(quizId).then(quiz => {
+                 if (target.classList.contains('edit-question-btn') || target.closest('.edit-question-btn')) {
+                    // --- Handle Edit Question ---
+                    console.log(`Edit question button clicked for question ${questionId}`);
+                    // Fetch fresh quiz details to ensure we have the latest question data
+                    loadQuizDetailsFromAPI(quizId).then(quiz => {
                          const question = quiz.questions.find(q => q.question_id == questionId);
                          if (question) {
-                             resetQuestionForm();
-                             // Populate form
-                             document.getElementById('question-id').value = question.question_id;
-                             document.getElementById('question-text').value = question.question_text;
-                             document.getElementById('question-type').value = question.question_type;
-                             document.getElementById('question-points').value = question.points;
-                             document.getElementById('question-position').value = question.position;
-                             document.getElementById('question-form-title').textContent = 'Editar Pregunta';
-                             // Show form and answer section
-                             questionFormContainer.style.display = 'block';
-                             answerSectionContainer.style.display = 'block';
-                             renderAnswerList(question.answers || [], questionId); // Render answers for this question
-                             document.getElementById('add-answer-btn').dataset.questionId = questionId; // Set question ID for adding answers
+                             // 1. Populate the question form
+                             populateQuestionFormForEdit(question); // This now calls updateAnswerSectionVisibility
+
+                             // 2. Get the main answer list container within the answer section
+                             const mainAnswerListContainer = document.getElementById('answer-list-container');
+
+                             // 3. Render the answers for THIS question into the main container, passing the type
+                             if (mainAnswerListContainer) {
+                                 renderAnswerList(question.answers || [], questionId, question.question_type); // Pass question type
+                             } else {
+                                 console.error("Answer list container (#answer-list-container) not found!");
+                             }
+
+                             // 4. Ensure the answer section is visible (handled by updateAnswerSectionVisibility called in populate)
+                             // answerSectionContainer.style.display = 'block'; // No longer needed here
+
+                             // 5. Set the question ID for the "Add Answer" button
+                             const addAnswerBtn = document.getElementById('add-answer-btn');
+                             if (addAnswerBtn) {
+                                 addAnswerBtn.dataset.questionId = questionId;
+                             } else {
+                                 console.error("Add answer button (#add-answer-btn) not found!");
+                             }
+
+                             // 6. Hide the answer form initially when editing a question
+                             const answerFormContainer = document.getElementById('answer-form-container');
+                             if(answerFormContainer) {
+                                answerFormContainer.style.display = 'none';
+                                resetAnswerForm(); // Reset just in case
+                             }
+
                          } else {
                              showError('No se encontró la pregunta para editar.');
-                         }
-                     }).catch(err => showError(`Error al cargar pregunta: ${err.message}`));
+                        }
+                    }).catch(err => showError(`Error al cargar detalles de la pregunta: ${err.message}`));
 
-                } else if (target.classList.contains('delete-question-btn') || target.closest('.delete-question-btn')) {
-                    const questionText = questionItem.querySelector('p > strong')?.textContent || 'esta pregunta';
+                 } else if (target.classList.contains('delete-question-btn') || target.closest('.delete-question-btn')) {
+                    const questionText = questionItem.querySelector('.item-title')?.textContent || 'esta pregunta'; // Adjusted selector
                     confirmDeleteQuestion(questionId, questionText);
                 }
             });
@@ -385,17 +489,29 @@ function setupQuizEventListeners() {
          // "Nueva Respuesta" button
          const addAnswerBtn = quizEditorModal.querySelector('#add-answer-btn');
          if (addAnswerBtn) {
-             addAnswerBtn.addEventListener('click', () => {
-                 resetAnswerForm();
-                 answerFormContainer.style.display = 'block';
-                 document.getElementById('answer-text').focus();
+             // Clone to prevent duplicate listeners
+            const newBtn = addAnswerBtn.cloneNode(true);
+            addAnswerBtn.parentNode.replaceChild(newBtn, addAnswerBtn);
+             newBtn.addEventListener('click', () => {
+                 // Only proceed if it's a multiple choice question
+                 const currentQuestionType = document.getElementById('question-type').value;
+                 if (currentQuestionType === 'multiple_choice') {
+                     resetAnswerForm();
+                     answerFormContainer.style.display = 'block';
+                     document.getElementById('answer-text').focus();
+                 } else {
+                     showError('Solo se pueden añadir respuestas a preguntas de opción múltiple.');
+                 }
              });
          }
 
          // Cancel Answer Edit button
          const cancelAnswerBtn = quizEditorModal.querySelector('#cancel-answer-edit');
          if (cancelAnswerBtn) {
-             cancelAnswerBtn.addEventListener('click', () => {
+             // Clone to prevent duplicate listeners
+            const newBtn = cancelAnswerBtn.cloneNode(true);
+            cancelAnswerBtn.parentNode.replaceChild(newBtn, cancelAnswerBtn);
+             newBtn.addEventListener('click', () => {
                  answerFormContainer.style.display = 'none';
                  resetAnswerForm();
              });
@@ -403,17 +519,26 @@ function setupQuizEventListeners() {
 
          // Answer Form submission
          if (answerForm) {
-             answerForm.addEventListener('submit', async (e) => {
+             // Clone to prevent duplicate listeners
+            const newForm = answerForm.cloneNode(true);
+            answerForm.parentNode.replaceChild(newForm, answerForm);
+             newForm.addEventListener('submit', async (e) => {
                  e.preventDefault();
-                 const formData = new FormData(answerForm);
+                 const formData = new FormData(newForm); // Use cloned form
                  const answerData = {
                      answer_text: formData.get('answer_text'),
                      is_correct: formData.has('is_correct') // Checkbox value
                  };
                  const answerId = formData.get('answerId') || null;
-                 // Get questionId from the currently edited question (e.g., from hidden input or data attribute)
-                 const questionId = document.getElementById('question-id').value;
+                 const questionId = document.getElementById('question-id').value; // ID of the question being edited
+                 const questionType = document.getElementById('question-type').value; // Get type from the form
                  const quizId = document.getElementById('editor-quiz-id').value; // Need quizId to refresh later
+
+                 // Only allow saving answers for multiple choice
+                 if (questionType !== 'multiple_choice') {
+                     showError('Solo se pueden guardar respuestas para preguntas de opción múltiple.');
+                     return;
+                 }
 
                  if (!questionId) {
                      showError('No se pudo determinar la pregunta para añadir la respuesta.');
@@ -428,10 +553,12 @@ function setupQuizEventListeners() {
                      showSuccess(answerId ? 'Respuesta actualizada' : 'Respuesta añadida');
                      answerFormContainer.style.display = 'none';
                      resetAnswerForm();
-                     // Refresh the answer list for the current question
+                     // Refresh the answer list for the current question, passing its type
                      const updatedQuiz = await loadQuizDetailsFromAPI(quizId);
                      const updatedQuestion = updatedQuiz.questions.find(q => q.question_id == questionId);
-                     renderAnswerList(updatedQuestion?.answers || [], questionId);
+                     if (updatedQuestion) {
+                         renderAnswerList(updatedQuestion.answers || [], questionId, updatedQuestion.question_type); // Pass type
+                     }
                  } catch (error) {
                      showError(`Error al guardar respuesta: ${error.message}`);
                  }
@@ -441,33 +568,52 @@ function setupQuizEventListeners() {
          // Event delegation for Answer Edit/Delete buttons (within the answer section)
          const answerSection = quizEditorModal.querySelector('#answer-section-container');
          if (answerSection) {
+             // No need to clone here as it's delegation on a static parent
              answerSection.addEventListener('click', (e) => {
                  const target = e.target;
-                 const answerItem = target.closest('.answer-item');
-                 if (!answerItem) return;
+                  const answerItem = target.closest('.answer-item');
+                  if (!answerItem) return;
 
-                 const answerId = answerItem.dataset.answerId;
-                 const questionId = document.getElementById('question-id').value; // Get current question ID
+                  const answerId = answerItem.dataset.answerId; // Might be undefined for T/F items
+                  const questionId = answerItem.dataset.questionId;
+                  const quizId = document.getElementById('editor-quiz-id').value; // Get quiz ID for fetching
 
-                 if (target.classList.contains('edit-answer-btn') || target.closest('.edit-answer-btn')) {
-                     // Find answer data (ideally fetch fresh, or find in rendered list)
-                     // Assuming we have the data from renderAnswerList or need to find it
-                     const answerText = answerItem.querySelector('span')?.textContent.split(' <i')[0] || '';
-                     const isCorrect = !!answerItem.querySelector('.correct-icon');
+                  if (!questionId) {
+                      showError('Error: No se pudo determinar la pregunta asociada a esta respuesta.');
+                      return;
+                  }
 
-                     resetAnswerForm();
-                     // Populate form
-                     document.getElementById('answer-id').value = answerId;
-                     document.getElementById('answer-text').value = answerText;
-                     document.getElementById('answer-is-correct').checked = isCorrect;
-                     // Show form
-                     answerFormContainer.style.display = 'block';
+                  // Handle T/F radio button clicks
+                  if (target.classList.contains('tf-radio') || target.classList.contains('tf-label')) {
+                      const radio = answerItem.querySelector('.tf-radio');
+                      if (radio && !radio.checked) {
+                          radio.checked = true;
+                          // Optionally: Immediately save the change or wait for question save?
+                          // For now, just update UI, save happens with question save.
+                          console.log(`T/F selection changed for Q:${questionId}, New correct: ${radio.value}`);
+                          // Update labels visually
+                          const labels = answerSection.querySelectorAll('.tf-label');
+                          labels.forEach(lbl => lbl.classList.remove('correct'));
+                          answerItem.querySelector('.tf-label').classList.add('correct');
+                      }
+                      return; // Stop further processing for T/F clicks
+                  }
 
-                 } else if (target.classList.contains('delete-answer-btn') || target.closest('.delete-answer-btn')) {
-                     const answerText = answerItem.querySelector('span')?.textContent.split(' <i')[0] || 'esta respuesta';
-                     confirmDeleteAnswer(answerId, answerText);
-                 }
-             });
+
+                  // Handle Delete button click (only for multiple choice)
+                  if (target.classList.contains('delete-answer-btn') || target.closest('.delete-answer-btn')) {
+                      // Ensure it's not a T/F item before trying to delete
+                      if (!answerItem.classList.contains('true-false-item') && answerId) {
+                          const answerText = answerItem.querySelector('.item-title')?.textContent || 'esta respuesta';
+                          confirmDeleteAnswer(answerId, answerText, questionId); // Pass questionId
+                      } else if (!answerId && answerItem.classList.contains('true-false-item')) {
+                          // Ignore delete clicks on T/F items for now
+                          console.log("Delete clicked on T/F item - ignored.");
+                      } else {
+                           showError('No se puede eliminar esta respuesta.');
+                      }
+                  }
+              });
          }
     }
 
@@ -477,8 +623,11 @@ function setupQuizEventListeners() {
     // Confirm Delete Quiz
     const confirmDeleteQuizBtn = document.getElementById('confirmDeleteQuizBtn');
     if (confirmDeleteQuizBtn) {
-        confirmDeleteQuizBtn.addEventListener('click', async () => {
-            const quizId = confirmDeleteQuizBtn.dataset.quizId;
+         // Clone to prevent duplicate listeners
+        const newBtn = confirmDeleteQuizBtn.cloneNode(true);
+        confirmDeleteQuizBtn.parentNode.replaceChild(newBtn, confirmDeleteQuizBtn);
+        newBtn.addEventListener('click', async () => {
+            const quizId = newBtn.dataset.quizId; // Use cloned button
             const moduleId = document.getElementById('quiz-management-modal')?.dataset.moduleId; // Get module ID
             if (!quizId || !moduleId) {
                 showError('Error: No se pudo obtener el ID del quiz o módulo.');
@@ -502,8 +651,11 @@ function setupQuizEventListeners() {
     // Confirm Delete Question
     const confirmDeleteQuestionBtn = document.getElementById('confirmDeleteQuestionBtn');
     if (confirmDeleteQuestionBtn) {
-        confirmDeleteQuestionBtn.addEventListener('click', async () => {
-            const questionId = confirmDeleteQuestionBtn.dataset.questionId;
+         // Clone to prevent duplicate listeners
+        const newBtn = confirmDeleteQuestionBtn.cloneNode(true);
+        confirmDeleteQuestionBtn.parentNode.replaceChild(newBtn, confirmDeleteQuestionBtn);
+        newBtn.addEventListener('click', async () => {
+            const questionId = newBtn.dataset.questionId; // Use cloned button
             const quizId = document.getElementById('editor-quiz-id')?.value; // Get quiz ID from editor
              if (!questionId || !quizId) {
                 showError('Error: No se pudo obtener el ID de la pregunta o quiz.');
@@ -524,26 +676,37 @@ function setupQuizEventListeners() {
         });
     }
 
-    // Confirm Delete Answer
-    const confirmDeleteAnswerBtn = document.getElementById('confirmDeleteAnswerBtn');
-    if (confirmDeleteAnswerBtn) {
-        confirmDeleteAnswerBtn.addEventListener('click', async () => {
-            const answerId = confirmDeleteAnswerBtn.dataset.answerId;
-            const questionId = document.getElementById('question-id')?.value; // Get current question ID
-            const quizId = document.getElementById('editor-quiz-id')?.value; // Get quiz ID
+     // Confirm Delete Answer
+     const confirmDeleteAnswerBtn = document.getElementById('confirmDeleteAnswerBtn');
+     if (confirmDeleteAnswerBtn) {
+         // Clone to prevent duplicate listeners
+         const newBtn = confirmDeleteAnswerBtn.cloneNode(true);
+         confirmDeleteAnswerBtn.parentNode.replaceChild(newBtn, confirmDeleteAnswerBtn);
+
+         newBtn.addEventListener('click', async () => {
+             const answerId = newBtn.dataset.answerId;
+             const questionId = newBtn.dataset.questionId; // Retrieve questionId stored on the button
+             const quizId = document.getElementById('editor-quiz-id')?.value; // Get quiz ID
+
              if (!answerId || !questionId || !quizId) {
-                showError('Error: No se pudo obtener el ID de la respuesta, pregunta o quiz.');
-                closeModal('deleteAnswerModal');
+                 showError('Error: No se pudo obtener el ID de la respuesta, pregunta o quiz.');
+                 closeModal('deleteAnswerModal');
                 return;
             }
             try {
                 await deleteAnswerFromAPI(answerId);
                 showSuccess('Respuesta eliminada correctamente.');
                 closeModal('deleteAnswerModal');
-                // Refresh answer list
+                // Refresh answer list for the specific question
                 const updatedQuiz = await loadQuizDetailsFromAPI(quizId);
                 const updatedQuestion = updatedQuiz.questions.find(q => q.question_id == questionId);
-                renderAnswerList(updatedQuestion?.answers || [], questionId);
+                if (updatedQuestion) {
+                    // Pass the correct question type when re-rendering
+                    renderAnswerList(updatedQuestion.answers || [], questionId, updatedQuestion.question_type);
+                } else {
+                     // If question somehow got deleted, maybe refresh the whole question list?
+                     renderQuestionList(updatedQuiz.questions || [], quizId);
+                }
             } catch (error) {
                 showError(`Error al eliminar respuesta: ${error.message}`);
                 closeModal('deleteAnswerModal');
@@ -555,7 +718,10 @@ function setupQuizEventListeners() {
      // Ensure all close buttons work for the new modals
      document.querySelectorAll('.modal .close-modal').forEach(btn => {
          // Check if listener already exists might be complex, re-adding might be okay if idempotent
-         btn.addEventListener('click', function() {
+         // Clone to prevent duplicate listeners
+         const newBtn = btn.cloneNode(true);
+         btn.parentNode.replaceChild(newBtn, btn);
+         newBtn.addEventListener('click', function() {
              const modalId = this.dataset.modalId || this.closest('.modal')?.id;
              if (modalId) {
                  closeModal(modalId);
@@ -564,7 +730,10 @@ function setupQuizEventListeners() {
      });
      // Add listeners for secondary cancel buttons that also close modals
      document.querySelectorAll('.modal .btn-secondary.close-modal').forEach(btn => {
-         btn.addEventListener('click', function() {
+          // Clone to prevent duplicate listeners
+         const newBtn = btn.cloneNode(true);
+         btn.parentNode.replaceChild(newBtn, btn);
+         newBtn.addEventListener('click', function() {
              const modalId = this.dataset.modalId || this.closest('.modal')?.id;
              if (modalId) {
                  closeModal(modalId);

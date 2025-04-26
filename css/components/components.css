@@ -25,6 +25,15 @@
     color: white;
 }
 
+/* Style for the Assign Courses button when it's enabled */
+#assignCoursesBtn:not([disabled]) {
+    background-color: var(--primary-color);
+    /* You might want to add a hover effect too if desired */
+    /* Example: */
+    /* &:hover { background-color: darken(var(--primary-color), 10%); } */
+}
+
+
 .btn-outline {
     background-color: transparent;
     border: 1px solid var(--primary-color);

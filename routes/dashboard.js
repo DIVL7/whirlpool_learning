@@ -6,10 +6,10 @@ const { pool } = require('../config/database');
 // Get dashboard stats
 router.get('/stats', isAuthenticated, async (req, res) => {
     try {
-        // Get total users
-        const [userRows] = await pool.query('SELECT COUNT(*) as total FROM users');
-        const totalUsers = userRows[0].total;
-        
+        // Get total technician users
+        const [userRows] = await pool.query('SELECT COUNT(*) as total FROM users WHERE role = ?', ['technician']); // Corrected role value
+        const totalUsers = userRows[0].total; // This now holds the count of technicians
+
         // Get total courses - Modificado para manejar errores silenciosamente
         let totalCourses = 0;
         let activeCourses = 0;
@@ -62,7 +62,7 @@ router.get('/stats', isAuthenticated, async (req, res) => {
         
         // Send response
         res.json({
-            totalUsers,
+            totalUsers: totalUsers, // Keep the key as totalUsers for now to match frontend ID
             totalCourses,
             activeCourses,
             totalCompleted,

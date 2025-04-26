@@ -171,7 +171,7 @@ function renderModules(modules, courseId) {
                     }
                 }
             });
-        }
+        } // *** REMOVED INCORRECTLY PLACED CODE BLOCK HERE ***
 
         // --- Add event listener for Manage Quiz button ---
         const manageQuizBtn = moduleElement.querySelector('.manage-quiz-btn');
@@ -304,11 +304,14 @@ export {
     openQuizEditorModal,     // Opens the modal for editing questions/answers
     renderQuestionList,      // Renders the list of questions
     resetQuestionForm,       // Resets the question form
+    populateQuestionFormForEdit, // Populates question form for editing
     confirmDeleteQuestion,   // Opens the delete question confirmation modal
     renderAnswerList,        // Renders the list of answers for a question
     resetAnswerForm,         // Resets the answer form
+    populateAnswerFormForEdit, // Populates answer form for editing
     confirmDeleteAnswer,     // Opens the delete answer confirmation modal
-    closeModal               // Generic helper to close any modal by ID
+    closeModal,              // Generic helper to close any modal by ID
+    updateAnswerSectionVisibility // Shows/hides answer section based on question type
 };
 
 
@@ -364,16 +367,19 @@ function renderQuizList(quizzes, moduleId) {
 
     container.innerHTML = quizzes.map(quiz => `
         <div class="list-item quiz-item" data-quiz-id="${quiz.quiz_id}">
-             <div class="item-main"> {/* Re-confirming item-main wrapper */}
+             <div class="item-main">
                 <span class="item-position">${quiz.position}.</span>
                 <span class="item-title">${quiz.title}</span>
              </div>
             <div class="item-actions">
-                <button class="btn-secondary btn-sm edit-quiz-btn" data-tooltip="Editar Quiz y Preguntas">
-                    <i class="fas fa-edit"></i> <span>Editar</span> {/* Re-confirming span */}
+                 <button class="btn-icon edit-quiz-details-btn" data-tooltip="Editar Detalles del Quiz">
+                    <i class="fas fa-cog"></i>
+                 </button>
+                <button class="btn-icon edit-quiz-btn" data-tooltip="Editar Preguntas y Respuestas">
+                    <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-danger btn-sm delete-quiz-btn" data-tooltip="Eliminar Quiz">
-                    <i class="fas fa-trash"></i> <span>Eliminar</span> {/* Re-confirming span */}
+                <button class="btn-icon btn-icon-danger delete-quiz-btn" data-tooltip="Eliminar Quiz">
+                    <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
@@ -507,19 +513,16 @@ function renderQuestionList(questions, quizId) {
                 <span class="item-meta">(${q.question_type.replace('_', ' ')}, ${q.points} pts)</span>
             </div>
             <div class="item-actions question-actions">
-                 <button class="btn-secondary btn-sm edit-question-btn" data-tooltip="Editar Pregunta">
-                    <i class="fas fa-edit"></i> Editar
+                 <button class="btn-icon edit-question-btn" data-tooltip="Editar Pregunta">
+                    <i class="fas fa-edit"></i>
                  </button>
-                 <button class="btn-danger btn-sm delete-question-btn" data-tooltip="Eliminar Pregunta">
-                    <i class="fas fa-trash"></i> Eliminar
-                 </button>
-            </div>
-            <!-- Answer list rendered by renderAnswerList -->
-            <div class="answer-sublist" id="answer-list-for-q-${q.question_id}">
-                ${renderAnswerList(q.answers || [], q.question_id, true)}
-            </div>
-        </div>
-    `).join('');
+                 <button class="btn-icon btn-icon-danger delete-question-btn" data-tooltip="Eliminar Pregunta">
+                     <i class="fas fa-trash"></i>
+                  </button>
+             </div>
+             <!-- Removed answer sublist rendering from here -->
+         </div>
+     `).join('');
 }
 
 function resetQuestionForm() {
@@ -534,6 +537,60 @@ function resetQuestionForm() {
     // Also reset answer form just in case
     resetAnswerForm();
 }
+
+// Populates the question form for editing
+function populateQuestionFormForEdit(questionData) {
+    console.log("Populating question form for edit:", questionData);
+    const form = document.getElementById('question-form');
+    const title = document.getElementById('question-form-title');
+    if (!form || !title) {
+        showError("Question form elements not found for editing.");
+        return;
+    }
+    resetQuestionForm(); // Clear previous data first
+
+    title.textContent = 'Editar Pregunta';
+    document.getElementById('question-id').value = questionData.question_id;
+    // Assuming the quiz ID is needed in the form, add a hidden input if not present
+    // document.getElementById('editor-quiz-id-for-question').value = questionData.quiz_id;
+    document.getElementById('question-text').value = questionData.question_text || '';
+    document.getElementById('question-type').value = questionData.question_type || 'multiple_choice';
+    document.getElementById('question-points').value = questionData.points !== null ? questionData.points : 1;
+    document.getElementById('question-position').value = questionData.position || 1;
+
+    // Show the form
+    document.getElementById('question-form-container').style.display = 'block';
+     document.getElementById('question-text').focus(); // Focus on text field
+
+     // Update visibility of answer section based on the question type
+     updateAnswerSectionVisibility(questionData.question_type);
+
+     // Reset the answer form, but don't hide the section here.
+     // Visibility is handled by updateAnswerSectionVisibility.
+     resetAnswerForm();
+ }
+
+// Populates the answer form for editing
+function populateAnswerFormForEdit(answerData) {
+    console.log("Populating answer form for edit:", answerData);
+    const form = document.getElementById('answer-form');
+     if (!form) {
+        showError("Answer form elements not found for editing.");
+        return;
+    }
+    resetAnswerForm(); // Clear previous data
+
+    document.getElementById('answer-id').value = answerData.answer_id;
+    // Assuming the question ID is needed in the form, add a hidden input if not present
+    // document.getElementById('answer-question-id').value = answerData.question_id;
+    document.getElementById('answer-text').value = answerData.answer_text || '';
+    document.getElementById('answer-is-correct').checked = !!answerData.is_correct;
+
+    // Ensure the answer section is visible (it might be hidden when editing a question)
+    document.getElementById('answer-section-container').style.display = 'block';
+    document.getElementById('answer-text').focus(); // Focus on the text field
+}
+
 
 function confirmDeleteQuestion(questionId, questionText) {
     console.log(`Confirming delete for question ${questionId}`);
@@ -553,68 +610,106 @@ function confirmDeleteQuestion(questionId, questionText) {
     document.body.style.overflow = 'hidden';
 }
 
-function renderAnswerList(answers, questionId, isSublist = false) {
-    console.log(`Rendering answer list for question ${questionId}`, answers);
-    const containerId = isSublist ? `answer-list-for-q-${questionId}` : 'answer-list-container';
-    const container = document.getElementById(containerId);
+// --- Helper to show/hide answer section based on question type ---
+function updateAnswerSectionVisibility(questionType) {
+    const answerSectionContainer = document.getElementById('answer-section-container');
+    const addAnswerBtn = document.getElementById('add-answer-btn');
+    const answerFormContainer = document.getElementById('answer-form-container');
 
-    // If rendering as a sublist and the container doesn't exist yet (because renderQuestionList creates it), return the HTML string.
-    if (!container && isSublist) {
+    if (!answerSectionContainer || !addAnswerBtn || !answerFormContainer) {
+        console.error("Answer section elements not found for visibility update.");
+        return;
+    }
+
+    if (questionType === 'multiple_choice') {
+        answerSectionContainer.style.display = 'block';
+        addAnswerBtn.style.display = 'inline-block'; // Or 'block' depending on layout
+        // Keep answer form hidden until explicitly opened
+        answerFormContainer.style.display = 'none'; // Keep hidden initially
+    } else if (questionType === 'true_false') {
+        answerSectionContainer.style.display = 'block'; // Show section to display T/F options
+        addAnswerBtn.style.display = 'none'; // Hide "Add Answer" button
+        answerFormContainer.style.display = 'none'; // Hide the generic answer form
+    } else if (questionType === 'short_answer') {
+        answerSectionContainer.style.display = 'none'; // Hide entire section
+        addAnswerBtn.style.display = 'none';
+        answerFormContainer.style.display = 'none';
+    } else {
+        // Default or unknown type, hide everything
+        answerSectionContainer.style.display = 'none';
+        addAnswerBtn.style.display = 'none';
+        answerFormContainer.style.display = 'none';
+    }
+}
+
+
+// Renders the list of answers based on question type
+function renderAnswerList(answers, questionId, questionType) { // Added questionType parameter
+    console.log(`Rendering answer list for question ${questionId}, type: ${questionType}`, answers);
+    const container = document.getElementById('answer-list-container'); // Always target the main container
+
+    if (!container) {
+        console.error(`Answer container #answer-list-container not found.`);
+        return;
+    }
+
+    // Clear previous content
+    container.innerHTML = '';
+
+    if (questionType === 'multiple_choice') {
         if (!answers || answers.length === 0) {
-            return '<p class="empty-sublist-message">No hay respuestas.</p>';
+            container.innerHTML = '<p class="empty-sublist-message">No hay respuestas añadidas.</p>';
+            return;
         }
-        return answers.map(a => `
-            <div class="list-item answer-item" data-answer-id="${a.answer_id}">
+        // Render multiple choice answers
+        container.innerHTML = answers.map(a => `
+            <div class="list-item answer-item" data-answer-id="${a.answer_id}" data-question-id="${questionId}">
                  <span class="item-title">${a.answer_text}</span>
                  ${a.is_correct ? '<i class="fas fa-check-circle correct-icon" data-tooltip="Respuesta Correcta"></i>' : ''}
                  <div class="item-actions answer-actions">
-                     <button class="btn-secondary btn-xs edit-answer-btn" data-tooltip="Editar Respuesta">
-                        <i class="fas fa-edit"></i>
-                     </button>
-                     <button class="btn-danger btn-xs delete-answer-btn" data-tooltip="Eliminar Respuesta">
+                     <button class="btn-icon btn-icon-xs btn-icon-danger delete-answer-btn" data-tooltip="Eliminar Respuesta">
                         <i class="fas fa-trash"></i>
                      </button>
                  </div>
             </div>
         `).join('');
-    }
 
-    // If rendering into an existing container (either main or sublist)
-    if (!container) {
-        console.error(`Answer container #${containerId} not found.`);
-        return; // Or return empty string if called internally
-    }
+    } else if (questionType === 'true_false') {
+        // Find which answer is correct (assuming backend provides 'Verdadero'/'Falso' text)
+        const trueAnswer = answers?.find(a => a.answer_text.toLowerCase() === 'verdadero');
+        const falseAnswer = answers?.find(a => a.answer_text.toLowerCase() === 'falso');
+        const isTrueCorrect = trueAnswer?.is_correct ?? false; // Default to false if not found
+        const isFalseCorrect = falseAnswer?.is_correct ?? false;
 
-    if (!answers || answers.length === 0) {
-        container.innerHTML = '<p class="empty-sublist-message">No hay respuestas.</p>';
-        return;
-    }
-
-    container.innerHTML = answers.map(a => `
-        <div class="list-item answer-item" data-answer-id="${a.answer_id}">
-             <span class="item-title">${a.answer_text}</span>
-             ${a.is_correct ? '<i class="fas fa-check-circle correct-icon" data-tooltip="Respuesta Correcta"></i>' : ''}
-             <div class="item-actions answer-actions">
-                 <button class="btn-secondary btn-xs edit-answer-btn" data-tooltip="Editar Respuesta">
-                    <i class="fas fa-edit"></i>
-                 </button>
-                 <button class="btn-danger btn-xs delete-answer-btn" data-tooltip="Eliminar Respuesta">
-                    <i class="fas fa-trash"></i>
-                 </button>
+        // Render static True/False options
+        // Using radio buttons for single selection logic
+        container.innerHTML = `
+            <div class="list-item answer-item true-false-item" data-question-id="${questionId}" data-value="true">
+                 <span class="item-title">Verdadero</span>
+                 <input type="radio" name="tf_correct_${questionId}" value="true" id="tf_true_${questionId}" ${isTrueCorrect ? 'checked' : ''} class="tf-radio">
+                 <label for="tf_true_${questionId}" class="tf-label ${isTrueCorrect ? 'correct' : ''}">
+                    ${isTrueCorrect ? '<i class="fas fa-check-circle correct-icon"></i>' : '<i class="far fa-circle incorrect-icon"></i>'} Marcar como correcta
+                 </label>
+                 <!-- Delete button might not make sense for T/F -->
             </div>
-        </div>
-    `).join('');
+            <div class="list-item answer-item true-false-item" data-question-id="${questionId}" data-value="false">
+                 <span class="item-title">Falso</span>
+                 <input type="radio" name="tf_correct_${questionId}" value="false" id="tf_false_${questionId}" ${isFalseCorrect ? 'checked' : ''} class="tf-radio">
+                 <label for="tf_false_${questionId}" class="tf-label ${isFalseCorrect ? 'correct' : ''}">
+                    ${isFalseCorrect ? '<i class="fas fa-check-circle correct-icon"></i>' : '<i class="far fa-circle incorrect-icon"></i>'} Marcar como correcta
+                 </label>
+                 <!-- Delete button might not make sense for T/F -->
+            </div>
+        `;
+        // TODO: Add CSS for .tf-radio (hide), .tf-label, .tf-label.correct, .tf-label i
 
-     if (isSublist) {
-         return answers.length > 0 ? listHtml : '<p style="margin-left: 15px; font-size: 0.9em;">No hay respuestas.</p>';
-     } else {
-         // If rendering into the main container (not as sublist)
-         if (!answers || answers.length === 0) {
-             container.innerHTML = '<p>No hay respuestas añadidas.</p>';
-         } else {
-             container.innerHTML = listHtml;
-         }
-     }
+    } else if (questionType === 'short_answer') {
+        container.innerHTML = '<p class="empty-sublist-message">Las respuestas cortas se califican manualmente.</p>';
+
+    } else {
+        // Unknown type
+        container.innerHTML = '<p class="error-message">Tipo de pregunta no reconocido.</p>';
+    }
 }
 
 
@@ -624,24 +719,26 @@ function resetAnswerForm() {
         form.reset();
         document.getElementById('answer-id').value = ''; // Clear hidden ID
         document.getElementById('answer-is-correct').checked = false;
-    }
-}
+ }
+ }
 
-function confirmDeleteAnswer(answerId, answerText) {
-    console.log(`Confirming delete for answer ${answerId}`);
-    const modal = document.getElementById('deleteAnswerModal');
-    const textElement = document.getElementById('deleteAnswerText');
+ function confirmDeleteAnswer(answerId, answerText, questionId) { // Add questionId parameter
+     console.log(`Confirming delete for answer ${answerId} (question ${questionId})`); // Log questionId
+     const modal = document.getElementById('deleteAnswerModal');
+     const textElement = document.getElementById('deleteAnswerText');
     const confirmBtn = document.getElementById('confirmDeleteAnswerBtn');
 
     if (!modal || !textElement || !confirmBtn) {
         showError('Delete answer confirmation modal elements not found.');
         return;
-    }
+     }
 
-    textElement.textContent = answerText || 'esta respuesta';
-    confirmBtn.dataset.answerId = answerId;
+     textElement.textContent = answerText || 'esta respuesta';
+     confirmBtn.dataset.answerId = answerId;
+     // Store questionId on the button as well, passed from the event listener
+     confirmBtn.dataset.questionId = questionId;
 
-    modal.style.display = 'block';
+     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 

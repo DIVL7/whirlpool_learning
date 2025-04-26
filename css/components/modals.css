@@ -189,3 +189,79 @@
 .btn-danger:hover {
     background-color: #c62828;
 }
+
+/* Styles for Assign Courses Modal */
+.assign-courses-modal-content .modal-body {
+    padding-top: 10px; /* Reduce top padding */
+}
+
+.assign-courses-modal-content .form-section {
+    margin-bottom: 15px;
+}
+
+.assign-courses-modal-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--light-gray-color);
+    padding-bottom: 5px;
+}
+
+.assign-courses-modal-content .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 100px; /* Limit height for user list */
+    overflow-y: auto;
+    font-size: 0.9rem;
+    color: var(--gray-color);
+}
+
+.assign-courses-modal-content .item-list li {
+    padding: 3px 0;
+}
+
+.assign-courses-modal-content .section-divider {
+    border: none;
+    border-top: 1px solid var(--light-gray-color);
+    margin: 20px 0;
+}
+
+.assign-courses-modal-content .styled-checkbox-list {
+    max-height: 200px; /* Limit height for course list */
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid var(--light-gray-color);
+    border-radius: 4px;
+    background-color: var(--light-color); /* Subtle background */
+}
+
+.assign-courses-modal-content .styled-checkbox-list label {
+    display: block;
+    margin-bottom: 8px;
+    padding: 5px 8px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.assign-courses-modal-content .styled-checkbox-list label:hover {
+    background-color: #e9ecef; /* Slightly darker on hover */
+}
+
+.assign-courses-modal-content .styled-checkbox-list input[type="checkbox"] {
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.assign-courses-modal-content .loading-text {
+    color: var(--gray-color);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.assign-courses-modal-content .modal-footer {
+    justify-content: flex-end; /* Align confirm button to the right */
+}

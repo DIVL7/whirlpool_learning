@@ -608,3 +608,189 @@
     margin-bottom: 15px;
     color: var(--light-gray-color);
 }
+
+/* General List Item Styling */
+.list-item {
+    display: flex;
+    align-items: center; /* Vertically align content */
+    justify-content: space-between; /* Push actions to the end */
+    padding: 10px 15px; /* Add some padding */
+    border-bottom: 1px solid #eee; /* Separator */
+    gap: 10px; /* Space between main content and actions */
+    background-color: #fff; /* Ensure background for hover effects */
+    transition: background-color 0.2s;
+}
+
+.list-item:hover {
+    background-color: #f8f9fa; /* Subtle hover effect */
+}
+
+.list-item:last-child {
+    border-bottom: none; /* Remove border for the last item */
+}
+
+.list-item .item-main {
+    flex-grow: 1; /* Allow main content to take available space */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between position and title */
+    min-width: 0; /* Prevent overflow issues */
+}
+
+.list-item .item-position {
+    font-weight: bold;
+    color: var(--primary-color);
+    min-width: 20px; /* Ensure position number has space */
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.list-item .item-title {
+     white-space: nowrap; /* Prevent title wrapping */
+     overflow: hidden;
+     text-overflow: ellipsis; /* Add ellipsis if title is too long */
+}
+
+.list-item .item-meta {
+    font-size: 0.9em;
+    color: var(--gray-color);
+    margin-left: 8px;
+    white-space: nowrap; /* Prevent meta wrapping */
+    flex-shrink: 0;
+}
+
+
+/* Styles for Icon Buttons in Modals */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 6px; /* Adjust padding for icon size */
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-flex; /* Use inline-flex for alignment */
+    align-items: center;
+    justify-content: center;
+    line-height: 1; /* Ensure icon is centered vertically */
+    width: 30px; /* Fixed width */
+    height: 30px; /* Fixed height */
+}
+
+.btn-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.btn-icon-danger:hover {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.1); /* Light red background on hover */
+}
+
+.btn-icon-xs {
+    padding: 4px;
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em; /* Make icon slightly smaller if needed */
+}
+
+/* Adjust spacing within list items if needed */
+.list-item .item-actions {
+    /* margin-left: auto; /* No longer needed with justify-content: space-between */
+    display: flex;
+    gap: 5px; /* Space between icons */
+    flex-shrink: 0; /* Prevent actions from shrinking */
+}
+
+.quiz-item .item-actions,
+.question-item .item-actions {
+    align-items: center; /* Vertically align icons with text */
+}
+
+.answer-item {
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Vertically align items */
+    gap: 8px; /* Space between text, icon, and actions */
+}
+
+.answer-item .item-title {
+    flex-grow: 1; /* Allow title to take available space */
+}
+
+.answer-item .correct-icon {
+    color: var(--success-color);
+    font-size: 1.1em;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.answer-item .item-actions {
+    margin-left: 0; /* Reset margin-left for answer actions */
+    flex-shrink: 0; /* Prevent actions container from shrinking */
+}
+
+.answer-sublist {
+    margin-left: 20px; /* Indent answers */
+    margin-top: 8px;
+    padding-left: 15px;
+    border-left: 2px solid #eee; /* Add a visual separator */
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Space between answers */
+}
+
+.empty-sublist-message {
+    font-style: italic;
+    color: var(--gray-color);
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+/* Styles for True/False Answer Options */
+.true-false-item {
+    /* Inherits .list-item styles */
+    cursor: default; /* Default cursor as the label is the clickable part */
+}
+
+.tf-radio {
+    display: none; /* Hide the actual radio button */
+}
+
+.tf-label {
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+    color: var(--gray-color);
+    border: 1px solid transparent; /* Add border for spacing consistency */
+}
+
+.tf-label:hover {
+    background-color: #f1f3f5; /* Light hover effect */
+}
+
+.tf-label i {
+    font-size: 1.1em; /* Adjust icon size */
+}
+
+.tf-label .incorrect-icon {
+    color: var(--light-gray-color); /* Color for the empty circle */
+}
+
+.tf-label.correct {
+    color: var(--success-color); /* Green text for correct label */
+    font-weight: 500;
+    /* background-color: rgba(40, 167, 69, 0.1); /* Optional light green background */
+    /* border-color: rgba(40, 167, 69, 0.2); /* Optional subtle border */
+}
+
+.tf-label.correct .correct-icon {
+    color: var(--success-color); /* Ensure check icon is green */
+}
+
+/* Ensure no delete button shows for T/F items if accidentally rendered */
+.true-false-item .item-actions {
+    display: none;
+}

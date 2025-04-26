@@ -16,19 +16,16 @@
 @import 'components/admin-modules.css'; /* Nuevo archivo de estilos para módulos */
 @import 'components/notifications.css';
 
+/* Importar componentes específicos que faltaban */
+@import 'components/buttons.css';
+@import 'components/dashboard.css';
+
 /* Importar utilidades */
 @import 'components/responsive.css';
 @import 'components/dark-mode.css';
 @import 'components/print.css';
 
-/* Esplico componentes */
-@import url('components/layout.css');
-@import url('components/dashboard.css'); /* Agregamos el nuevo componente */
-@import url('components/forms.css');
-@import url('components/tables.css');
-@import url('components/buttons.css');
-@import url('components/modals.css');
-@import url('components/notifications.css');
+/* Eliminar importaciones duplicadas con url() */
 
 /* Estilos específicos para imágenes en tablas */
 table img {

@@ -34,18 +34,18 @@ app.use(session(sessionConfig));
 app.use('/api', routes);
 
 // Add the log routes directly to ensure they're accessible
-app.use('/api/log', logRoutes); // Add this line to register log routes
+app.use('/api/log', logRoutes);
 
 // Add the technician routes
-app.use('/api/technician', technicianRoutes); // Add this line to register technician routes
+app.use('/api/technician', technicianRoutes);
 
 // Add the forum routes
 app.use('/api/forum', require('./routes/forum'));
 
 // Add the quiz/question/answer routes
-app.use('/api/quizzes', quizRouter); // Mount quiz-specific routes
-app.use('/api/questions', questionRouter); // Mount question-specific routes
-app.use('/api/answers', answerRouter); // Mount answer-specific routes
+app.use('/api/quizzes', quizRouter);
+app.use('/api/questions', questionRouter);
+app.use('/api/answers', answerRouter);
 
 // Compatibility routes to keep the frontend working
 // These can be removed once the frontend is updated to use the new API endpoints
@@ -70,7 +70,15 @@ app.get('/api/notifications', (req, res) => {
     technicianRoutes(req, res);
 });
 
-// Error handling middleware
+// Importar las rutas de API
+const userRoutes = require('./routes/api/users');
+const courseApiRoutes = require('./routes/api/courses'); // Import course API routes
+
+// Registrar las rutas de API
+app.use('/api/users', userRoutes);
+app.use('/api/courses', courseApiRoutes); // Mount course API routes
+
+// Error handling middleware (debe ser el último middleware)
 app.use(errorHandler);
 
 // Start server
