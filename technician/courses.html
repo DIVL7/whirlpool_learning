@@ -1,26 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Cursos - Plataforma Técnicos Whirlpool</title>
-    <link rel="stylesheet" href="../css/technician-styles.css">
+    <!-- Rutas de estilos corregidas -->
+    <link rel="stylesheet" href="../css/technician/technician-common.css">
+    <link rel="stylesheet" href="../css/technician/courses.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 </head>
+
 <body>
     <div class="admin-container">
         <aside class="sidebar">
+            <!-- Sidebar -->
             <div class="sidebar-header">
                 <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
                 <h3>Plataforma de Técnicos</h3>
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> Mis Cursos</a></li>
-                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
-                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
-                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> <span>Cursos</span></a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> <span>Foro</span></a></li>
+                    <li><a href="certificates.html"><i class="fas fa-certificate"></i> <span>Certificados</span></a>
+                    </li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -30,15 +37,12 @@
 
         <main class="main-content">
             <header class="top-nav">
+                <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
                     <input type="text" id="course-search" placeholder="Buscar cursos...">
                 </div>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge notification-count">0</span>
-                    </div>
                     <div class="user-profile">
                         <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
                         <span id="user-name">Usuario</span>
@@ -90,46 +94,34 @@
                     </div>
                 </div>
 
-                <div class="courses-grid" id="courses-container">
-                    <div class="loader-container">
-                        <div class="loader"></div>
-                        <p>Cargando cursos...</p>
-                    </div>
-                </div>
-
-                <!-- Template para las tarjetas de cursos -->
-                <template id="course-card-template">
-                    <div class="course-card" data-status="">
-                        <div class="course-image">
-                            <img src="../images/course-default.jpg" alt="Imagen del curso">
-                            <span class="course-status"></span>
-                        </div>
-                        <div class="course-content">
-                            <h3 class="course-title"></h3>
-                            <p class="course-description"></p>
-                            <div class="course-footer">
-                                <div class="progress-container">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill"></div>
-                                    </div>
-                                    <span class="progress-text"></span>
-                                </div>
-                                <div class="course-actions">
-                                    <button class="course-button"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-
-                <!-- Paginación para cursos -->
-                <div class="pagination-container" id="pagination-container">
-                    <!-- Paginación generada dinámicamente -->
+                <div class="courses-list">
+                    <table class="data-table" id="courses-table">
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Progreso</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courses-list-body">
+                            <tr>
+                                <td colspan="5" class="loader-container">
+                                    <div class="loader"></div> Cargando cursos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div id="pagination-container" class="pagination-container"></div>
                 </div>
             </div>
         </main>
     </div>
-    
+    </div>
+    </main>
+    </div>
+
     <!-- Modal para visualizar certificados -->
     <div class="modal" id="certificate-modal">
         <div class="modal-content">
@@ -170,7 +162,10 @@
     </div>
 
     <div class="notification-container" id="notification-container"></div>
-    
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/technician-common.js"></script>
     <script src="../js/technician-courses.js"></script>
 </body>
+
 </html>

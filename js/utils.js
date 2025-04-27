@@ -72,7 +72,35 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Format date for display
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Fecha inválida';
+    
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Format date for API
+function formatDateForAPI(date) {
+    if (!date) return '';
+    
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    
+    return d.toISOString().split('T')[0];
+}
+
 // Exportar las funciones para que estén disponibles globalmente
 window.showError = showError;
 window.showSuccess = showSuccess;
 window.showNotification = showNotification;
+window.formatDate = formatDate;
+window.formatDateForAPI = formatDateForAPI;

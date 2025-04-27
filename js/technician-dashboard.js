@@ -1,42 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Comprobar si el usuario está autenticado
-    checkUserSession();
-    
+    // Inicializar la página del técnico (maneja sesión, UI, logout)
+    initTechnicianPage();
+
     // Inicializar los componentes del dashboard
     initializeDashboard();
-    
-    // Configurar el botón de cerrar sesión
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
 });
-
-// Función para comprobar la sesión del usuario
-async function checkUserSession() {
-    try {
-        const response = await fetch('/api/check-session');
-        const data = await response.json();
-        
-        if (!data.loggedIn) {
-            // Redirigir al inicio de sesión si no hay sesión
-            window.location.href = '../index.html';
-            return;
-        }
-        
-        // Si el usuario no es técnico, redirigir a la página adecuada
-        if (data.user.role !== 'technician') {
-            window.location.href = `../${data.user.role}/dashboard.html`;
-            return;
-        }
-        
-        // Actualizar la interfaz con los datos del usuario
-        updateUserInterface(data.user);
-    } catch (error) {
-        console.error('Error checking session:', error);
-        showNotification('Error al verificar la sesión. Por favor, recarga la página.', 'error');
-    }
-}
-
-// Añade esta función al archivo technician-dashboard.js
-// Después de la función checkUserSession()
 
 // Función para inicializar notificaciones
 async function initializeNotifications() {
@@ -320,53 +288,29 @@ async function initializeDashboard() {
     // Cargar próximos cursos
     loadUpcomingCourses();
     
+    // Cargar cursos en progreso
+    loadInProgressCourses();
+
     // Inicializar notificaciones
     initializeNotifications();
-}
-
-// Función para actualizar la interfaz con los datos del usuario
-function updateUserInterface(user) {
-    document.getElementById('user-name').textContent = user.username;
-    document.getElementById('welcome-name').textContent = user.full_name || user.username;
-    
-    // Si hay una imagen de perfil, actualizarla
-    if (user.profile_picture) {
-        document.getElementById('user-avatar').src = `../images/${user.profile_picture}`;
-    }
-}
-
-// Función para manejar el cierre de sesión
-async function handleLogout(event) {
-    event.preventDefault();
-    
-    try {
-        const response = await fetch('/api/logout');
-        const data = await response.json();
-        
-        if (data.success) {
-            window.location.href = '../index.html';
-        } else {
-            showNotification('Error al cerrar sesión', 'error');
-        }
-    } catch (error) {
-        console.error('Error during logout:', error);
-        showNotification('Error al cerrar sesión', 'error');
-    }
 }
 
 // Función para inicializar el dashboard
 async function initializeDashboard() {
     // Cargar datos del usuario
     await loadUserStats();
-    
+
     // Inicializar gráficos
     initializeCharts();
-    
+
     // Cargar actividad reciente
     loadRecentActivity();
-    
+
     // Cargar próximos cursos
     loadUpcomingCourses();
+
+    // Cargar cursos en progreso
+    await loadInProgressCourses();
 }
 
 // Función para cargar estadísticas del usuario
@@ -829,8 +773,56 @@ function addSimulatedCourses(container) {
     });
 }
 
+// Carga los últimos cursos en progreso y los muestra en la lista
+async function loadInProgressCourses() {
+    try {
+        const resp = await fetch('/api/technician/courses', {
+            credentials: 'same-origin'
+        });
+        const data = await resp.json();
+        if (!data.success) return;
+
+        const inProg = data.courses.filter(c => c.status === 'in_progress');
+        const ul = document.getElementById('in-progress-list');
+        ul.innerHTML = ''; // Limpiar lista existente
+
+        if (inProg.length === 0) {
+            ul.innerHTML = '<li class="no-courses">No tienes cursos en progreso.</li>';
+            return;
+        }
+
+        inProg.slice(0, 4).forEach(c => { // Mostrar máximo 4
+            const li = document.createElement('li');
+            li.className = 'in-progress-item'; // Asegúrate que esta clase exista en CSS
+            li.innerHTML = `
+                <span class="course-title">${c.title}</span>
+                <div class="small-progress-bar">
+                    <div class="small-progress-fill" style="width: ${c.progress}%"></div>
+                </div>
+                <span class="progress-percent">${c.progress}%</span>
+            `;
+
+            // Añadir evento para ir al curso
+            li.addEventListener('click', () => {
+                window.location.href = `course-content.html?id=${c.id}`;
+            });
+
+            ul.appendChild(li);
+        });
+    } catch (err) {
+        console.error('Error cargando cursos en progreso:', err);
+        // Opcional: Mostrar mensaje de error en la UI
+        const ul = document.getElementById('in-progress-list');
+        if (ul) {
+            ul.innerHTML = '<li class="error-message">Error al cargar cursos en progreso.</li>';
+        }
+    }
+}
+
+
 // Función para mostrar notificaciones
 function showNotification(message, type = 'info') {
+    // Asegurarse que esta función exista, ya sea aquí o en un archivo común como technician-common.js
     const container = document.getElementById('notification-container');
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;

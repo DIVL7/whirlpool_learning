@@ -1,0 +1,359 @@
+/* ===== MIS CURSOS ===== */
+
+/* — Estilo de tabla tipo admin: filas con zebra-striping y hover — */
+.courses-list table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .95rem;
+}
+
+.courses-list thead th {
+    padding: 12px 15px;
+    text-align: left;
+    color: var(--dark-color);
+    font-weight: 600;
+    border-bottom: 2px solid var(--light-gray-color);
+    background: transparent;
+}
+
+.courses-list tbody tr {
+    transition: background .2s;
+}
+
+.courses-list tbody tr:nth-child(odd) {
+    background: #fff;
+}
+
+.courses-list tbody tr:nth-child(even) {
+    background: var(--light-color);
+}
+
+.courses-list tbody tr:hover {
+    background: var(--light-gray-color);
+}
+
+.courses-list th,
+.courses-list td {
+    border: none;
+}
+
+.courses-list td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+/* Primera columna en negrita */
+.courses-list td:first-child {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Descripción en gris */
+.courses-list td:nth-child(2) {
+    color: var(--gray-color);
+    font-size: .9rem;
+}
+
+/* Progreso y acción centrados */
+.courses-list td:nth-child(3),
+.courses-list td:nth-child(4) {
+    text-align: center;
+}
+
+/* ===== RESTO DE ESTILOS ===== */
+
+/* — Filtros (dropdowns) — */
+.filter-controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.filter-controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--light-gray-color);
+    border-radius: 4px;
+    background: #fff;
+    font-size: .9rem;
+}
+
+/* — Estadísticas superiores — */
+.course-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.stat-content p {
+    color: var(--gray-color);
+    font-size: .9rem;
+}
+
+/* — Ocultar grid antiguo — */
+.courses-grid,
+.course-card-grid-wrapper {
+    display: none !important;
+}
+
+.content-body>table {
+    display: none !important;
+}
+
+/* — Badges de estado dentro de la tabla — */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-published {
+    background: var(--success-color);
+}
+
+.status-in-progress {
+    background: var(--accent-color);
+}
+
+.status-completed {
+    background: var(--primary-color);
+}
+
+/* ===== PAGINACIÓN ===== */
+.pagination-container {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.pagination-button {
+    min-width: 36px;
+    height: 36px;
+    border: 1px solid var(--light-gray-color);
+    background: #fff;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.pagination-button.active {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.pagination-button:not(.active):hover {
+    background: var(--light-color);
+}
+
+.pagination-button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    padding: 0 5px;
+    color: var(--gray-color);
+}
+
+/* ===== LOADER ===== */
+.loader-container {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.loader {
+    border: 4px solid var(--light-gray-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin .8s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==== BOTÓN “Ver curso” ==== */
+.courses-list .btn-view {
+    padding: 6px 12px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.courses-list .btn-view:hover {
+    background: var(--secondary-color);
+}
+
+/* — Modal certificado — */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+  .modal.show {
+    display: flex;
+  }
+  
+  /* — Estilo del contenedor interno del modal — */
+  .modal-content {
+    background: var(--white-color);
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* — Encabezado del modal — */
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  .modal-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  .modal-header .close-modal {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  
+  /* — Cuerpo del modal — */
+  .modal-body {
+    color: var(--dark-color);
+    line-height: 1.4;
+  }
+  .certificate-container {
+    margin-bottom: 20px;
+  }
+  .certificate-header h2 {
+    margin: 10px 0;
+    font-size: 1.25rem;
+  }
+  .certificate-body p,
+  .certificate-footer p {
+    margin: 8px 0;
+  }
+  
+  /* — Botones de acción dentro del modal alineados a la derecha — */
+  .certificate-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  /* — Separación y estilo uniforme para botón “Ver Certificado” en la tabla — */
+  .courses-list .btn-certificate {
+    padding: 6px 12px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .2s;
+}
+  .courses-list .btn-certificate:hover {
+    background: var(--secondary-color);
+  }
+
+  /* ===== MEJORAR DISTRIBUCIÓN DE BOTONES DE ACCIÓN ===== */
+.course-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.course-actions button,
+.course-actions a {
+    width: 150px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.course-actions .btn-view {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+}
+
+.course-actions .btn-view:hover {
+    background: var(--secondary-color);
+}
+
+.course-actions .btn-certificate {
+    background: var(--secondary-color);
+    color: #fff;
+    border: none;
+}
+
+.course-actions .btn-certificate:hover {
+    background: var(--accent-color);
+}

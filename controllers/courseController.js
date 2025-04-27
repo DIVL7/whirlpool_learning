@@ -631,43 +631,103 @@ async function updateCourse(req, res) {
     }
 }
 
-// Delete a course
+// Delete a course, cascada manual sobre tablas hijas
 async function deleteCourse(req, res) {
     try {
-        const courseId = req.params.id;
-        
-        // Verify the course exists
-        const [courses] = await pool.query(
-            'SELECT * FROM courses WHERE course_id = ?',
-            [courseId]
-        );
-        
-        if (courses.length === 0) {
-            return res.status(404).json({ error: 'Curso no encontrado' });
-        }
-        
-        const course = courses[0];
-        
-        // Delete the thumbnail file if it exists
-        if (course.thumbnail) {
-            const filePath = path.join(coursesImageDir, course.thumbnail);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        }
-        
-        // Delete all modules associated with this course
-        await pool.query('DELETE FROM modules WHERE course_id = ?', [courseId]);
-        
-        // Delete the course
-        await pool.query('DELETE FROM courses WHERE course_id = ?', [courseId]);
-        
-        res.json({ message: 'Curso eliminado correctamente' });
+      const courseId = req.params.id;
+
+      // Verificar que el curso existe
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE course_id = ?',
+        [courseId]
+      );
+      if (courses.length === 0) {
+        return res.status(404).json({ error: 'Curso no encontrado' });
+      }
+      const course = courses[0];
+
+      // Borrar el archivo de miniatura si existe
+      if (course.thumbnail) {
+        const filePath = path.join(coursesImageDir, course.thumbnail);
+        // Use the helper function for safe deletion
+        deleteFile(filePath);
+      }
+
+      // **Borrado manual en tablas hijas**
+      // Referencian directamente course_id:
+      await pool.query(
+        'DELETE FROM user_course_progress WHERE course_id = ?',
+        [courseId]
+      );
+
+      //  Módulos de ese curso.
+      //  (User-content-progress → Contents → Modules)
+      // Need to delete content files first
+      const [contentsToDelete] = await pool.query(
+        `SELECT c.content_id, c.content_type_id, c.content_data
+         FROM contents c
+         JOIN modules m ON c.module_id = m.module_id
+         WHERE m.course_id = ? AND c.content_type_id IN (3, 4) AND c.content_data IS NOT NULL`, // Only file types
+        [courseId]
+      );
+      for (const content of contentsToDelete) {
+          const contentFilePath = path.join(__dirname, '..', content.content_data); // Path includes subdir
+          deleteFile(contentFilePath);
+      }
+
+      // Now delete related records
+      await pool.query(
+        `DELETE ucp
+         FROM user_content_progress ucp
+         JOIN contents c ON ucp.content_id = c.content_id
+         JOIN modules m  ON c.module_id   = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+      await pool.query(
+        `DELETE c
+         FROM contents c
+         JOIN modules m ON c.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+
+      // Intentos de quiz y quizzes asociados:
+      await pool.query(
+        `DELETE qa
+         FROM quiz_attempts qa
+         JOIN quizzes q ON qa.quiz_id = q.quiz_id
+         JOIN modules m ON q.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+      await pool.query(
+        `DELETE q
+         FROM quizzes q
+         JOIN modules m ON q.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+
+      // Borrar los módulos del curso
+      await pool.query(
+        'DELETE FROM modules WHERE course_id = ?',
+        [courseId]
+      );
+
+      // Borrar el curso
+      await pool.query(
+        'DELETE FROM courses WHERE course_id = ?',
+        [courseId]
+      );
+
+      res.json({ message: 'Curso eliminado correctamente' });
     } catch (error) {
-        console.error('Error deleting course:', error);
-        res.status(500).json({ error: 'Error al eliminar el curso' });
+      console.error('Error deleting course:', error);
+      res.status(500).json({ error: 'Error al eliminar el curso' });
     }
 }
+
 
 module.exports = {
     getAllCourses,

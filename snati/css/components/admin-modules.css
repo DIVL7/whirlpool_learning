@@ -1,0 +1,796 @@
+/* Estilos para la gestión de módulos */
+
+/* Layout principal de la página de módulos */
+.course-modules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.course-info-card {
+    width: 100%;
+    height: fit-content;
+    margin-bottom: 20px;
+}
+
+/* Modificar el estilo de la metadata del curso */
+.course-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    justify-content: flex-start; /* Alinear a la izquierda */
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.modules-container {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Estilos para las tarjetas de cursos en la selección */
+.course-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.course-thumbnail {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+}
+
+.course-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    font-size: 48px;
+}
+
+.course-info {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-title {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 18px;
+    line-height: 1.3;
+    height: 46px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.course-description {
+    margin-bottom: 16px;
+    color: #6c757d;
+    flex-grow: 1;
+    height: 60px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.course-actions {
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    margin-top: auto;
+}
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* Estilos para la paginación */
+.pagination-container {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.pagination-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    color: #6c757d;
+}
+
+/* Estilos para estados vacíos y errores */
+.empty-state, .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 24px 0;
+}
+
+.empty-state i, .error-state i {
+    font-size: 48px;
+    color: #adb5bd;
+    margin-bottom: 16px;
+}
+
+.error-state i {
+    color: #dc3545;
+}
+
+.empty-state p, .error-state p {
+    margin-bottom: 16px;
+    color: #6c757d;
+}
+
+.error-message {
+    font-family: monospace;
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+/* Ajustes específicos para las miniaturas en la tabla de cursos */
+.data-table .course-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.data-table .course-thumbnail {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid var(--light-gray-color);
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-table .course-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.data-table .placeholder-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 24px;
+}
+
+.data-table .course-details {
+    flex: 1;
+    min-width: 0; /* Importante para que el texto se ajuste correctamente */
+}
+
+.data-table .course-details h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.data-table .course-details p {
+    margin: 0 0 5px 0;
+    color: #6c757d;
+    font-size: 14px;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.data-table .course-category {
+    display: inline-block;
+    font-size: 12px;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+/* Estilos para los módulos individuales */
+.module-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    width: 100%;
+}
+
+.module-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.module-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.module-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.module-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    margin-right: 12px;
+}
+
+.module-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.module-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.module-actions button:hover {
+    background-color: #f1f3f5;
+    color: var(--primary-color);
+}
+
+.module-actions .add-content-btn {
+    color: var(--success-color);
+}
+
+.module-actions .add-content-btn:hover {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: var(--success-color);
+}
+.module-content {
+    padding: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+.module-contents-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.module-contents-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: #495057;
+}
+
+.content-container {
+    padding: 8px 0;
+}
+
+/* Mejorar la apariencia de los botones de acción */
+.btn-danger {
+    color: #dc3545 !important;
+}
+
+.btn-danger:hover {
+    background-color: #ffebee !important;
+    border-color: #dc3545 !important;
+}
+
+/* Mejorar la apariencia del botón de nuevo módulo */
+#add-module-btn {
+    margin-bottom: 20px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 992px) {
+    .course-modules-container {
+        flex-direction: column;
+    }
+    
+    .module-actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .module-header {
+        flex-wrap: wrap;
+    }
+    
+    .module-title {
+        width: 100%;
+        margin: 8px 0;
+    }
+    
+    .module-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+}
+
+/* Estilos adicionales para módulos */
+.modules-list {
+    margin-top: 20px;
+}
+
+.module-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.module-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #eee;
+}
+
+.module-position {
+    width: 30px;
+    height: 30px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.module-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.module-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.module-actions button {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.module-actions button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.module-content {
+    padding: 15px;
+    background-color: #fff;
+}
+
+.module-description {
+    color: var(--gray-color);
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.content-container {
+    margin-bottom: 15px;
+}
+
+.content-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.content-item {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 10px 15px;
+}
+
+.content-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-type {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    width: 80px;
+}
+
+.content-position {
+    width: 24px;
+    height: 24px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.content-title {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.content-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.content-actions button {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.content-actions button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.content-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.add-content-btn {
+    background-color: var(--light-color);
+    color: var(--primary-color);
+    border: 1px dashed var(--primary-color);
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.add-content-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: var(--gray-color);
+}
+
+.loading-indicator i {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+.empty-state i {
+    font-size: 36px;
+    margin-bottom: 15px;
+    color: var(--light-gray-color);
+}
+
+/* General List Item Styling */
+.list-item {
+    display: flex;
+    align-items: center; /* Vertically align content */
+    justify-content: space-between; /* Push actions to the end */
+    padding: 10px 15px; /* Add some padding */
+    border-bottom: 1px solid #eee; /* Separator */
+    gap: 10px; /* Space between main content and actions */
+    background-color: #fff; /* Ensure background for hover effects */
+    transition: background-color 0.2s;
+}
+
+.list-item:hover {
+    background-color: #f8f9fa; /* Subtle hover effect */
+}
+
+.list-item:last-child {
+    border-bottom: none; /* Remove border for the last item */
+}
+
+.list-item .item-main {
+    flex-grow: 1; /* Allow main content to take available space */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between position and title */
+    min-width: 0; /* Prevent overflow issues */
+}
+
+.list-item .item-position {
+    font-weight: bold;
+    color: var(--primary-color);
+    min-width: 20px; /* Ensure position number has space */
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.list-item .item-title {
+     white-space: nowrap; /* Prevent title wrapping */
+     overflow: hidden;
+     text-overflow: ellipsis; /* Add ellipsis if title is too long */
+}
+
+.list-item .item-meta {
+    font-size: 0.9em;
+    color: var(--gray-color);
+    margin-left: 8px;
+    white-space: nowrap; /* Prevent meta wrapping */
+    flex-shrink: 0;
+}
+
+
+/* Styles for Icon Buttons in Modals */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 6px; /* Adjust padding for icon size */
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-flex; /* Use inline-flex for alignment */
+    align-items: center;
+    justify-content: center;
+    line-height: 1; /* Ensure icon is centered vertically */
+    width: 30px; /* Fixed width */
+    height: 30px; /* Fixed height */
+}
+
+.btn-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.btn-icon-danger:hover {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.1); /* Light red background on hover */
+}
+
+.btn-icon-xs {
+    padding: 4px;
+    width: 24px;
+    height: 24px;
+    font-size: 0.8em; /* Make icon slightly smaller if needed */
+}
+
+/* Adjust spacing within list items if needed */
+.list-item .item-actions {
+    /* margin-left: auto; /* No longer needed with justify-content: space-between */
+    display: flex;
+    gap: 5px; /* Space between icons */
+    flex-shrink: 0; /* Prevent actions from shrinking */
+}
+
+.quiz-item .item-actions,
+.question-item .item-actions {
+    align-items: center; /* Vertically align icons with text */
+}
+
+.answer-item {
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Vertically align items */
+    gap: 8px; /* Space between text, icon, and actions */
+}
+
+.answer-item .item-title {
+    flex-grow: 1; /* Allow title to take available space */
+}
+
+.answer-item .correct-icon {
+    color: var(--success-color);
+    font-size: 1.1em;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.answer-item .item-actions {
+    margin-left: 0; /* Reset margin-left for answer actions */
+    flex-shrink: 0; /* Prevent actions container from shrinking */
+}
+
+.answer-sublist {
+    margin-left: 20px; /* Indent answers */
+    margin-top: 8px;
+    padding-left: 15px;
+    border-left: 2px solid #eee; /* Add a visual separator */
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Space between answers */
+}
+
+.empty-sublist-message {
+    font-style: italic;
+    color: var(--gray-color);
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+/* Styles for True/False Answer Options */
+.true-false-item {
+    /* Inherits .list-item styles */
+    cursor: default; /* Default cursor as the label is the clickable part */
+}
+
+.tf-radio {
+    display: none; /* Hide the actual radio button */
+}
+
+.tf-label {
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+    color: var(--gray-color);
+    border: 1px solid transparent; /* Add border for spacing consistency */
+}
+
+.tf-label:hover {
+    background-color: #f1f3f5; /* Light hover effect */
+}
+
+.tf-label i {
+    font-size: 1.1em; /* Adjust icon size */
+}
+
+.tf-label .incorrect-icon {
+    color: var(--light-gray-color); /* Color for the empty circle */
+}
+
+.tf-label.correct {
+    color: var(--success-color); /* Green text for correct label */
+    font-weight: 500;
+    /* background-color: rgba(40, 167, 69, 0.1); /* Optional light green background */
+    /* border-color: rgba(40, 167, 69, 0.2); /* Optional subtle border */
+}
+
+.tf-label.correct .correct-icon {
+    color: var(--success-color); /* Ensure check icon is green */
+}
+
+/* Ensure no delete button shows for T/F items if accidentally rendered */
+.true-false-item .item-actions {
+    display: none;
+}

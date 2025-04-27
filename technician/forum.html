@@ -1,47 +1,49 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Foro - Plataforma Whirlpool</title>
-    <link rel="stylesheet" href="../css/technician-styles.css">
-    <link rel="stylesheet" href="../css/technician-forum.css">
+    <!-- Estilos actualizados -->
+    <link rel="stylesheet" href="../css\technician\technician-common.css">
+    <link rel="stylesheet" href="../css\technician\forum.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 </head>
+
 <body>
     <div class="admin-container">
         <aside class="sidebar">
             <div class="sidebar-header">
                 <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
-                <h3>Plataforma Whirlpool</h3>
+                <h3>Plataforma de Técnicos</h3>
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li><a href="courses.html"><i class="fas fa-book"></i> Cursos</a></li>
-                    <li class="active"><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
-                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
-                    <li><a href="settings.html"><i class="fas fa-cog"></i> Configuración</a></li>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    <li><a href="courses.html"><i class="fas fa-book"></i> <span>Cursos</span></a></li>
+                    <li class="active"><a href="forum.html"><i class="fas fa-comments"></i> <span>Foro</span></a></li>
+                    <li><a href="certificates.html"><i class="fas fa-certificate"></i> <span>Certificados</span></a>
+                    </li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                <a href="#" id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
             </div>
         </aside>
 
         <main class="main-content">
             <header class="top-nav">
+                <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
                     <input type="text" id="forum-search" placeholder="Buscar temas en el foro...">
                 </div>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
                     <div class="user-profile">
-                        <img src="../images/admin-avatar.jpg" alt="Avatar">
+                        <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
                         <span id="username-display">Usuario</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
@@ -53,9 +55,9 @@
                     <h1>Foro de Discusión</h1>
                     <p>Participa en las discusiones y comparte tus conocimientos.</p>
                 </div>
-                
+
                 <!-- Categorías del foro -->
-                <div class="card">
+                <div class="card card-base">
                     <h3>Categorías</h3>
                     <div class="categories-container" id="forum-categories">
                         <div class="category-loading">Cargando categorías...</div>
@@ -63,7 +65,7 @@
                 </div>
 
                 <!-- Temas activos -->
-                <div class="card">
+                <div class="card card-base">
                     <div class="card-header">
                         <h3>Temas Activos</h3>
                         <div class="category-filter">
@@ -73,7 +75,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div id="forum-container">
                         <table class="data-table" id="forum-topics-table">
                             <thead>
@@ -98,7 +100,7 @@
                 </div>
 
                 <!-- Nuevo tema -->
-                <div class="card">
+                <div class="card card-base">
                     <form class="new-topic-form" id="new-topic-form">
                         <h4>Crear un Nuevo Tema</h4>
                         <div class="form-group">
@@ -110,16 +112,18 @@
                         </div>
                         <div class="form-group">
                             <label for="topic-title">Título del Tema:</label>
-                            <input type="text" id="topic-title" name="topic-title" required placeholder="Introduce el título de tu tema">
+                            <input type="text" id="topic-title" name="topic-title" required
+                                placeholder="Introduce el título de tu tema">
                         </div>
                         <div class="form-group">
                             <label for="topic-content">Contenido:</label>
-                            <textarea id="topic-content" name="topic-content" rows="5" required placeholder="Escribe el contenido de tu mensaje"></textarea>
+                            <textarea id="topic-content" name="topic-content" rows="5" required
+                                placeholder="Escribe el contenido de tu mensaje"></textarea>
                         </div>
                         <button type="submit" class="btn-primary">Publicar Tema</button>
                     </form>
                 </div>
-                
+
                 <!-- Modal para ver tema completo y respuestas -->
                 <div class="topic-modal" id="topic-modal">
                     <div class="topic-modal-content">
@@ -137,7 +141,8 @@
                             <h4>Tu Respuesta</h4>
                             <form id="new-answer-form">
                                 <div class="form-group">
-                                    <textarea id="answer-content" name="answer-content" rows="4" required placeholder="Escribe tu respuesta aquí..."></textarea>
+                                    <textarea id="answer-content" name="answer-content" rows="4" required
+                                        placeholder="Escribe tu respuesta aquí..."></textarea>
                                 </div>
                                 <button type="submit" class="btn-primary">Publicar Respuesta</button>
                             </form>
@@ -148,6 +153,11 @@
         </main>
     </div>
 
+    <div class="notification-container" id="notification-container"></div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/technician-common.js"></script>
     <script src="../js/technician-forum.js"></script>
 </body>
+
 </html>

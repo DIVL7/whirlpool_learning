@@ -64,12 +64,6 @@ app.get('/api/logout', (req, res) => {
     routes(req, res);
 });
 
-// Add notifications endpoint
-app.get('/api/notifications', (req, res) => {
-    req.url = '/technician/notifications';
-    technicianRoutes(req, res);
-});
-
 // Importar las rutas de API
 const userRoutes = require('./routes/api/users');
 const courseApiRoutes = require('./routes/api/courses'); // Import course API routes

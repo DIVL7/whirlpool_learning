@@ -1,0 +1,37 @@
+/* Variables y configuración global */
+:root {
+    /* Colores principales */
+    --primary-color: #0066cc;
+    --secondary-color: #00a3e0;
+    --accent-color: #ff6b00;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    
+    /* Colores neutros */
+    --dark-color: #333333;
+    --gray-color: #6c757d;
+    --light-gray-color: #e9ecef;
+    --light-color: #f5f5f5;
+    --white-color: #ffffff;
+    
+    /* Colores adicionales */
+    --blue-color: #007bff;
+    --green-color: #28a745;
+    --orange-color: #fd7e14;
+    --red-color: #dc3545;
+    --purple-color: #6f42c1;
+    
+    /* Dimensiones */
+    --sidebar-width: 250px;
+    
+    /* Variables para modo oscuro */
+    --dark-bg: #1a1a1a;
+    --dark-card-bg: #222222;
+    --dark-header-bg: #2a2a2a;
+    --dark-border: #333333;
+    --dark-input-bg: #333333;
+    --dark-input-border: #444444;
+    --dark-hover: #2c2c2c;
+    --dark-text: #f5f5f5;
+    --dark-text-muted: #aaaaaa;
+}

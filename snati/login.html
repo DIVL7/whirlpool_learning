@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Whirlpool Learning Platform</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-logo">
+            <img src="images/whirlpool-logo.png" alt="Whirlpool Logo">
+        </div>
+        <div class="login-form-container">
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required>
+                    <span class="password-toggle" onclick="togglePassword()">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+                <div class="form-group remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Recordarme</label>
+                </div>
+                <div id="errorMessage" style="color: red; display: none;"></div>
+                <div class="form-group">
+                    <button type="submit" class="btn-primary btn-login-submit">Iniciar Sesión</button>
+                </div>
+            </form>
+        </div>
+        <div class="login-footer">
+            <a href="index.html" class="back-to-home"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+        </div>
+    </div>
+    
+    <script src="js/login.js"></script>
+</body>
+</html>

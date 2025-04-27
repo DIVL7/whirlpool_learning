@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Whirlpool Learning Platform</title>
+    <link rel="stylesheet" href="../css/admin-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Panel de Administración</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Inicio</a>
+                    </li>
+                    <li>
+                        <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
+                    </li>
+                    <li>
+                        <a href="users.html"><i class="fas fa-users"></i> Usuarios</a>
+                    </li>
+                    <!-- Removed forum button as this functionality will be for technicians only -->
+                    <li>
+                        <a href="reports.html"><i class="fas fa-chart-bar"></i> Reportes</a>
+                    </li>
+                    <li>
+                        <a href="settings.html"><i class="fas fa-cog"></i> Configuración</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <!-- Eliminamos la barra de búsqueda -->
+                <div class="user-info">
+                    <div class="user-profile">
+                        <img src="../images/default-admin.png" alt="Admin Avatar">
+                        <span>Admin User</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Inicio</h1>
+                    <p>Bienvenido al panel de administración</p>
+                </div>
+
+                <!-- Stats Overview - Redesigned for better visibility -->
+                <div class="stats-overview">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-card-icon blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-card-content">
+                                <h3>Técnicos</h3>
+                                <p class="stat-number" id="total-users">--</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon green">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="stat-card-content">
+                                <h3>Cursos</h3>
+                                <p class="stat-number" id="active-courses">--</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon purple">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="stat-card-content">
+                                <h3>Certificaciones</h3>
+                                <p class="stat-number" id="total-certifications">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Panels -->
+                <div class="dashboard-panels">
+                    <!-- Left Panel: Performance Overview -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h3>Rendimiento General</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="completion-stats">
+                                <div class="completion-stat">
+                                    <span class="stat-label">Tasa de Finalización</span>
+                                    <span class="stat-value" id="completion-rate">--</span>
+                                </div>
+                                <div class="completion-stat">
+                                    <span class="stat-label">Promedio de Calificación</span>
+                                    <span class="stat-value" id="avg-score">--</span>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="courseCompletionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Panel: Recent Activity -->
+                    <div class="dashboard-panel">
+                        <div class="panel-header">
+                            <h3>Actividad Reciente</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="activity-list" id="activity-list">
+                                <div class="loading-indicator">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Cargando actividad...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Contenedor de notificaciones -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

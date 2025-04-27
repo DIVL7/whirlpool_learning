@@ -1,31 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Plataforma Técnicos Whirlpool</title>
-    <link rel="stylesheet" href="../css/technician-styles.css">
+    <!-- Rutas de estilos actualizadas -->
+    <link rel="stylesheet" href="../css\technician\technician-common.css">
+    <link rel="stylesheet" href="../css\technician\dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 </head>
+
 <body>
     <div class="admin-container">
         <aside class="sidebar">
+            <!-- Sidebar sin cambios -->
             <div class="sidebar-header">
                 <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
                 <h3>Plataforma de Técnicos</h3>
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li class="active">
-                        <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Inicio</a>
+                    <li class="active"><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span></a></li>
+                    <li><a href="courses.html"><i class="fas fa-book"></i> <span>Cursos</span></a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> <span>Foro</span></a></li>
+                    <li><a href="certificates.html"><i class="fas fa-certificate"></i> <span>Certificados</span></a>
                     </li>
-                    <li>
-                        <a href="courses.html"><i class="fas fa-book"></i> Cursos</a>
-                    </li>
-                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
-                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
-                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -35,15 +38,12 @@
 
         <main class="main-content">
             <header class="top-nav">
+                <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Buscar cursos...">
                 </div>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge notification-count">0</span>
-                    </div>
                     <div class="user-profile">
                         <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
                         <span id="user-name">Usuario</span>
@@ -52,74 +52,52 @@
                 </div>
             </header>
 
-            <div class="dashboard-content">
+            <div class="content-body">
                 <div class="page-header">
-                    <h1>Inicio</h1>
+                    <h1>Dashboard</h1>
                     <p>Bienvenido a tu panel de técnico, <span id="welcome-name">Usuario</span></p>
                 </div>
 
+                <!-- Widget de estadísticas -->
                 <div class="dashboard-widgets">
                     <div class="widget">
-                        <div class="widget-icon" style="background-color: #3b82f6;"><i class="fas fa-graduation-cap"></i></div>
+                        <div class="widget-icon" style="background-color: #3b82f6;"><i
+                                class="fas fa-graduation-cap"></i></div>
                         <div class="widget-info">
                             <h3 id="courses-count">0</h3>
                             <p>Cursos Asignados</p>
-                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="courses-trend">0%</span> desde el mes pasado</span>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i>
+                                <span id="courses-trend">0%</span> desde el mes pasado</span>
                         </div>
                     </div>
 
                     <div class="widget">
-                        <div class="widget-icon" style="background-color: #16a34a;"><i class="fas fa-check-circle"></i></div>
+                        <div class="widget-icon" style="background-color: #16a34a;"><i class="fas fa-check-circle"></i>
+                        </div>
                         <div class="widget-info">
                             <h3 id="completed-count">0</h3>
                             <p>Cursos Completados</p>
-                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="completed-trend">0%</span> desde el mes pasado</span>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i>
+                                <span id="completed-trend">0%</span> desde el mes pasado</span>
                         </div>
                     </div>
 
                     <div class="widget">
-                        <div class="widget-icon" style="background-color: #eab308;"><i class="fas fa-certificate"></i></div>
+                        <div class="widget-icon" style="background-color: #eab308;"><i class="fas fa-certificate"></i>
+                        </div>
                         <div class="widget-info">
                             <h3 id="certification-count">0</h3>
                             <p>Certificaciones</p>
-                            <span class="trend up"><i class="fas fa-arrow-up"></i> <span id="certification-trend">0%</span> desde el mes pasado</span>
+                            <span class="trend up"><i class="fas fa-arrow-up"></i>
+                                <span id="certification-trend">0%</span> desde el mes pasado</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-charts">
-                    <div class="chart-card">
-                        <h3>Mi Progreso (Último Mes)</h3>
-                        <div style="position: relative; height: 350px; width: 100%;">
-                            <canvas id="progressChart"></canvas>
-                        </div>
-                    </div>
-                
-                    <div class="chart-card">
-                        <h3>Estado de Cursos</h3>
-                        <div class="doughnut-chart-container">
-                            <canvas id="courseStatusChart"></canvas>
-                        </div>
-                        <div class="chart-legend">
-                            <div class="legend-item"><span class="legend-color not-started"></span> No Iniciado</div>
-                            <div class="legend-item"><span class="legend-color in-progress"></span> En Progreso</div>
-                            <div class="legend-item"><span class="legend-color completed"></span> Completado</div>
-                        </div>
-                    </div>
-
-                <div class="recent-activity">
-                    <h3>Actividad Reciente</h3>
-                    <ul class="activity-list" id="activity-list">
-                        <li class="loading-item">Cargando actividades...</li>
-                    </ul>
-                    <div class="view-all"><a href="activity.html">Ver Todo <i class="fas fa-arrow-right"></i></a></div>
-                </div>
-                
-                <div class="next-courses">
-                    <h3>Próximos Cursos</h3>
-                    <div class="courses-container" id="upcoming-courses">
-                        <div class="loading-card">Cargando cursos...</div>
-                    </div>
+                <!-- Nueva sección: Últimos Cursos en Progreso -->
+                <div class="card">
+                    <h3>Últimos Cursos en Progreso</h3>
+                    <ul id="in-progress-list" class="recent-progress-list"></ul>
                 </div>
             </div>
         </main>
@@ -127,8 +105,9 @@
 
     <div class="notification-container" id="notification-container"></div>
 
-    <!-- Incluir utils.js antes de technician-dashboard.js -->
     <script src="../js/utils.js"></script>
+    <script src="../js/technician-common.js"></script>
     <script src="../js/technician-dashboard.js"></script>
 </body>
+
 </html>
