@@ -66,11 +66,13 @@ app.get('/api/logout', (req, res) => {
 
 // Importar las rutas de API
 const userRoutes = require('./routes/api/users');
-const courseApiRoutes = require('./routes/api/courses'); // Import course API routes
+// const courseApiRoutes = require('./routes/api/courses'); // No longer needed here, handled below
+const courseRoutes = require('./routes/courses'); // Import the main course routes
 
 // Registrar las rutas de API
 app.use('/api/users', userRoutes);
-app.use('/api/courses', courseApiRoutes); // Mount course API routes
+// app.use('/api/courses', courseApiRoutes); // Remove this line
+app.use('/api/courses', courseRoutes); // Mount the main course routes under /api/courses
 
 // Error handling middleware (debe ser el último middleware)
 app.use(errorHandler);

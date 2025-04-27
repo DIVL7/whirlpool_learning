@@ -43,7 +43,16 @@ router.get('/', courseController.getAllCourses);
 router.get('/:id', courseController.getCourseById);
 
 // Protected routes (admin only)
-router.post('/', isAdmin, courseUpload.single('thumbnail'), courseController.createCourse);
+router.post('/', isAdmin, (req, res, next) => {
+    courseUpload.single('thumbnail')(req, res, function(err) {
+        if (err) {
+            // Handle Multer errors specifically for JSON response
+            return res.status(400).json({ error: err.message });
+        }
+        next(); // Proceed to controller if no Multer error
+    });
+}, courseController.createCourse); // Controller function after middleware
+
 router.put('/:id', isAdmin, (req, res, next) => {
     courseUpload.single('thumbnail')(req, res, function(err) {
         if (err) {
