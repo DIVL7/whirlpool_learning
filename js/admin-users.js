@@ -8,13 +8,15 @@ const AdminUsers = (() => {
     let currentUsers = [];
     let selectedUserId = null; // Used for single edit/view/delete actions
     let selectedUserIds = new Set(); // Used for bulk actions like assigning courses
+    let initialAssignedCourseIds = new Set(); // To track courses for unassignment in edit mode
+    let coursesMarkedForUnassignment = new Set(); // Tracks courses marked for deletion in the edit modal
 
     // Elementos DOM
     const userTable = document.querySelector('table tbody');
     const paginationContainer = document.querySelector('.pagination');
     const userModal = document.getElementById('userModal');
     const userForm = document.getElementById('userForm');
-    const userDetailsModal = document.getElementById('userDetailsModal');
+    // const userDetailsModal = document.getElementById('userDetailsModal'); // Removed
     const deleteConfirmModal = document.getElementById('deleteConfirmModal');
     const addUserBtn = document.getElementById('addUserBtn');
     const modalTitle = document.getElementById('modalTitle');
@@ -23,7 +25,12 @@ const AdminUsers = (() => {
     const assignCoursesModal = document.getElementById('assignCoursesModal');
     const assignCoursesForm = document.getElementById('assignCoursesForm');
     const selectedUsersList = document.getElementById('selectedUsersList');
-    const availableCoursesList = document.getElementById('availableCoursesList');
+    // Updated elements for course selection (now checkboxes)
+    const availableCoursesCheckboxList = document.getElementById('availableCoursesCheckboxList'); // Changed from availableCoursesDropdown
+    const coursesLoadingText = document.getElementById('coursesLoadingText');
+    // Updated elements for the new custom list in Edit Modal
+    const assignedCoursesList = document.getElementById('assignedCoursesList'); // Changed from assignedCoursesDropdown
+    const assignedCoursesLoadingText = document.getElementById('assignedCoursesLoadingText');
 
 
     // Inicialización
@@ -47,6 +54,11 @@ const AdminUsers = (() => {
         // Formulario de usuario (Add/Edit)
         if (userForm) {
             userForm.addEventListener('submit', handleUserFormSubmit);
+        }
+        // Listener for delete buttons within the assigned courses list (using delegation)
+        const assignedCoursesContainer = document.querySelector('.assigned-courses-container'); // Get the container
+        if (assignedCoursesContainer) {
+            assignedCoursesContainer.addEventListener('click', handleDeleteCourseClick);
         }
         // Formulario de asignación de cursos
         if (assignCoursesForm) {
@@ -173,7 +185,6 @@ const AdminUsers = (() => {
                 <td>
                     <div class="action-buttons">
                         <button class="btn-icon edit-btn" title="Editar" data-id="${user.user_id}"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon view-btn" title="Ver detalles" data-id="${user.user_id}"><i class="fas fa-eye"></i></button>
                         <button class="btn-icon delete-btn" title="Eliminar" data-id="${user.user_id}"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
@@ -278,8 +289,8 @@ const AdminUsers = (() => {
 
             if (btn.classList.contains('edit-btn')) {
                 showEditUserModal(userId);
-            } else if (btn.classList.contains('view-btn')) {
-                showUserDetails(userId);
+            // } else if (btn.classList.contains('view-btn')) { // Removed view button logic
+            //     showUserDetails(userId);
             } else if (btn.classList.contains('delete-btn')) {
                 showDeleteConfirmation(userId);
             }
@@ -393,6 +404,54 @@ const AdminUsers = (() => {
                 confirmPasswordInput.required = false; // Not required for edit
             }
 
+            // --- Load and populate assigned courses ---
+            initialAssignedCourseIds.clear(); // Clear previous initial state
+            coursesMarkedForUnassignment.clear(); // Clear courses marked for deletion
+            if (assignedCoursesList && assignedCoursesLoadingText) {
+                assignedCoursesLoadingText.style.display = 'block';
+                assignedCoursesList.innerHTML = ''; // Clear previous list items
+
+                try {
+                    const assignedCourses = await fetchAssignedCourses(userId); // Fetch assigned courses
+                    assignedCoursesLoadingText.style.display = 'none';
+
+                    if (assignedCourses.length === 0) {
+                        assignedCoursesList.innerHTML = '<p class="no-courses-message">Este usuario no tiene cursos asignados.</p>';
+                    } else {
+                        assignedCourses.forEach(course => {
+                            const courseItem = document.createElement('div');
+                            courseItem.classList.add('course-list-item');
+                            courseItem.dataset.courseId = course.course_id; // Store course ID on the item
+
+                            const courseTitle = document.createElement('span');
+                            courseTitle.textContent = course.title;
+                            courseItem.appendChild(courseTitle);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.type = 'button'; // Prevent form submission
+                            deleteButton.classList.add('btn-icon', 'delete-course-btn');
+                            deleteButton.dataset.courseId = course.course_id;
+                            deleteButton.title = 'Marcar para desasignar';
+                            deleteButton.innerHTML = '<i class="fas fa-times"></i>'; // Use 'times' icon for deletion marking
+                            courseItem.appendChild(deleteButton);
+
+                            assignedCoursesList.appendChild(courseItem);
+                            initialAssignedCourseIds.add(course.course_id.toString()); // Store initial state
+                        });
+                    }
+                } catch (fetchError) {
+                    console.error("Error fetching assigned courses:", fetchError);
+                    assignedCoursesLoadingText.textContent = 'Error al cargar cursos asignados.';
+                    assignedCoursesLoadingText.style.display = 'block'; // Show error in loading text area
+                    assignedCoursesList.innerHTML = ''; // Clear list on error
+                    showNotification('Error al cargar cursos asignados.', 'error');
+                }
+            } else {
+                 console.error("Assigned courses list container or loading text element not found.");
+            }
+            // --- End Load and populate assigned courses ---
+
+
             openModal(userModal);
             hideLoader();
         } catch (error) {
@@ -401,6 +460,82 @@ const AdminUsers = (() => {
             hideLoader();
         }
     }
+
+    // --- Course Assignment/Unassignment Logic ---
+    async function unassignCourses(userId, courseIds) {
+        if (!userId || !courseIds || courseIds.length === 0) {
+            console.log("Unassignment skipped: No user ID or course IDs provided.");
+            return; // Nothing to unassign
+        }
+
+        console.log(`Attempting to unassign courses [${courseIds.join(', ')}] for user ${userId}`); // Debug log
+
+        try {
+            const response = await fetch('/api/users/unassign-courses', { // Use actual endpoint
+                method: 'POST', // Or PUT/DELETE depending on API design
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, courseIds }) // Send user ID and courses to unassign
+            });
+
+            const result = await response.json(); // Try to parse JSON response
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error al desasignar cursos');
+            }
+
+            console.log(`Successfully unassigned courses for user ${userId}:`, result.message); // Debug log
+            // Notification is handled in the caller function (handleUserFormSubmit) to avoid double notifications
+        } catch (error) {
+            console.error(`Error unassigning courses for user ${userId}:`, error);
+            // Propagate the error to be handled in the calling function
+            throw error;
+        }
+    }
+
+    // --- Handle clicking the delete button next to an assigned course ---
+    function handleDeleteCourseClick(e) {
+        const deleteButton = e.target.closest('.delete-course-btn');
+        if (!deleteButton) return; // Click wasn't on a delete button
+
+        const courseItem = deleteButton.closest('.course-list-item');
+        const courseId = deleteButton.dataset.courseId;
+
+        if (!courseItem || !courseId) return;
+
+        // Toggle visual state
+        courseItem.classList.toggle('marked-for-deletion');
+
+        // Update the set of courses marked for unassignment
+        if (courseItem.classList.contains('marked-for-deletion')) {
+            coursesMarkedForUnassignment.add(courseId);
+            deleteButton.title = 'Cancelar desasignación'; // Update tooltip
+        } else {
+            coursesMarkedForUnassignment.delete(courseId);
+            deleteButton.title = 'Marcar para desasignar'; // Reset tooltip
+        }
+
+        console.log("Courses marked for unassignment:", coursesMarkedForUnassignment); // Debug log
+    }
+
+
+    // --- Course Fetching Logic ---
+    async function fetchAssignedCourses(userId) {
+        try {
+            const response = await fetch(`/api/users/${userId}/courses`); // Use actual endpoint
+            if (!response.ok) {
+                let errorMsg = 'Error al cargar cursos asignados';
+                try { const errorData = await response.json(); errorMsg = errorData.error || errorMsg; } catch(e) {}
+                throw new Error(errorMsg);
+            }
+            const courses = await response.json();
+            return courses;
+        } catch (error) {
+            console.error(`Error fetching assigned courses for user ${userId}:`, error);
+            // Propagate the error to be handled in the calling function
+            throw error;
+        }
+    }
+
 
     // --- Assign Courses Modal Logic ---
 
@@ -455,7 +590,8 @@ const AdminUsers = (() => {
 
         // Clear previous content
         selectedUsersList.innerHTML = '';
-        availableCoursesList.innerHTML = '<p>Cargando cursos...</p>';
+        if (availableCoursesCheckboxList) availableCoursesCheckboxList.innerHTML = ''; // Clear checkbox list
+        if (coursesLoadingText) coursesLoadingText.textContent = 'Cargando cursos...'; // Reset loading text
         openModal(assignCoursesModal); // Open modal early to show loading state
         showLoader(); // Show loader inside modal potentially
 
@@ -469,22 +605,40 @@ const AdminUsers = (() => {
             }
         });
 
-        // Fetch and populate available courses
-        const courses = await fetchAvailableCourses();
-        availableCoursesList.innerHTML = ''; // Clear loading message
+        // Fetch and populate available courses checkbox list
+        if (availableCoursesCheckboxList && coursesLoadingText) {
+            coursesLoadingText.style.display = 'block'; // Show loading text
+            availableCoursesCheckboxList.innerHTML = ''; // Clear previous checkboxes
 
-        if (courses.length === 0) {
-            availableCoursesList.innerHTML = '<p>No hay cursos disponibles.</p>';
+            const courses = await fetchAvailableCourses();
+
+            if (courses.length === 0) {
+                coursesLoadingText.textContent = 'No hay cursos disponibles.';
+                coursesLoadingText.style.display = 'block';
+            } else {
+                courses.forEach(course => {
+                    const listItem = document.createElement('div');
+                    listItem.classList.add('checkbox-list-item');
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `course-checkbox-${course.course_id}`; // Associate label with checkbox
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `course-checkbox-${course.course_id}`;
+                    checkbox.value = course.course_id;
+                    checkbox.name = 'courseSelection'; // Use a common name for the group
+
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(` ${course.title}`)); // Add space before title
+
+                    listItem.appendChild(label);
+                    availableCoursesCheckboxList.appendChild(listItem);
+                });
+                coursesLoadingText.style.display = 'none'; // Hide loading text
+            }
         } else {
-            courses.forEach(course => {
-                const div = document.createElement('div');
-                div.className = 'checkbox-item';
-                div.innerHTML = `
-                    <input type="checkbox" id="course-${course.course_id}" name="courseIds" value="${course.course_id}">
-                    <label for="course-${course.course_id}">${course.title}</label>
-                `;
-                availableCoursesList.appendChild(div);
-            });
+            console.error("Available courses checkbox list or loading text element not found.");
         }
         hideLoader();
     }
@@ -493,8 +647,11 @@ const AdminUsers = (() => {
         e.preventDefault();
         showLoader();
 
-        const selectedCourseCheckboxes = availableCoursesList.querySelectorAll('input[name="courseIds"]:checked');
-        const courseIds = Array.from(selectedCourseCheckboxes).map(cb => cb.value);
+        // Get selected courses from the checkboxes
+        const selectedCheckboxes = availableCoursesCheckboxList
+            ? availableCoursesCheckboxList.querySelectorAll('input[type="checkbox"]:checked')
+            : [];
+        const courseIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
         const userIds = Array.from(selectedUserIds);
 
         if (userIds.length === 0) {
@@ -540,39 +697,8 @@ const AdminUsers = (() => {
     // --- End Assign Courses Modal Logic ---
 
 
-    // Mostrar detalles del usuario
-    async function showUserDetails(userId) {
-        try {
-            showLoader();
-            
-            const response = await fetch(`/api/users/${userId}`);
-            if (!response.ok) throw new Error('Error al cargar detalles del usuario');
-            
-            const user = await response.json();
-            
-            // Actualizar modal con datos del usuario
-            document.getElementById('detailsName').textContent = `${user.first_name} ${user.last_name}`;
-            document.getElementById('detailsEmail').textContent = user.email;
-            
-            const roleElement = document.getElementById('detailsRole');
-            roleElement.textContent = user.role === 'admin' ? 'Administrador' : 'Técnico';
-            roleElement.className = `badge-role ${user.role === 'admin' ? 'admin' : 'technician'}`;
-            
-            document.getElementById('detailsProfileImage').src = user.profile_picture 
-                ? `../images/${user.profile_picture}` 
-                : '../images/default-avatar.jpg';
-            
-            // Cargar actividad reciente (esto podría ser otra llamada API)
-            // Por ahora usamos datos de ejemplo
-            
-            openModal(userDetailsModal);
-            hideLoader();
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification('Error al cargar detalles del usuario', 'error');
-            hideLoader();
-        }
-    }
+    // // Mostrar detalles del usuario - REMOVED
+    // async function showUserDetails(userId) { ... }
 
     // Mostrar confirmación de eliminación
     function showDeleteConfirmation(userId) {
@@ -588,7 +714,11 @@ const AdminUsers = (() => {
     // Manejar envío del formulario de usuario
     async function handleUserFormSubmit(e) {
         e.preventDefault();
-        
+
+        let courseIdsToUnassign = []; // Declare here for broader scope
+        let unassignError = null; // Declare here to store potential unassignment error
+        let unassignmentSuccessful = true; // Keep track of unassignment success
+
         try {
             showLoader();
 
@@ -632,10 +762,20 @@ const AdminUsers = (() => {
                 }
                 // Role cannot be edited from this form
                 delete dataToSend.role;
+
+                // --- Course Unassignment Logic (Edit Mode Only) ---
+                // Populate the previously declared variable
+                courseIdsToUnassign = Array.from(coursesMarkedForUnassignment);
+
+                // Remove assignedCourses from dataToSend if it exists (it shouldn't with the new structure)
+                delete dataToSend.assignedCourses;
+                // --- End Course Unassignment Logic ---
+
             }
             // --- End Password and Role Handling ---
 
 
+            // *** User Update API Call ***
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -656,21 +796,53 @@ const AdminUsers = (() => {
             // Reset password field requirement for next time modal opens
             const passwordInput = document.getElementById('password');
             const confirmPasswordInput = document.getElementById('confirmPassword');
-             if (passwordInput) passwordInput.required = true;
-             if (confirmPasswordInput) confirmPasswordInput.required = true;
+                 if (passwordInput) passwordInput.required = true;
+                 if (confirmPasswordInput) confirmPasswordInput.required = true;
 
+            // --- Handle Unassignment After Successful User Update (Edit Mode Only) ---
+            if (mode === 'edit' && courseIdsToUnassign.length > 0) {
+                try {
+                    console.log(`Attempting unassignment for user ${userForm.dataset.userId}, courses: ${courseIdsToUnassign.join(', ')}`); // Debug log
+                    await unassignCourses(userForm.dataset.userId, courseIdsToUnassign);
+                    console.log("Unassignment call successful."); // Debug log
+                    // Success notification is handled below based on overall success
+                } catch (errorCaughtDuringUnassign) {
+                    unassignmentSuccessful = false; // Mark as failed
+                    unassignError = errorCaughtDuringUnassign; // Store the error object
+                    // Log the error but don't necessarily stop the flow if user update was successful
+                    console.error("Error during course unassignment:", unassignError);
+                    // The notification will be shown after closing the modal, using the stored error.
+                }
+            }
+            // --- End Handle Unassignment ---
 
-            closeAllModals();
+            closeAllModals(); // Close modal before showing final notification
             loadUsers(currentPage);
-            showNotification(
-                mode === 'add' ? 'Usuario creado exitosamente' : 'Usuario actualizado exitosamente', 
-                'success'
-            );
-            
+                    // Determine the final notification message based on update and unassignment success
+                    let finalMessage = '';
+                    let messageType = 'success';
+
+                    if (mode === 'add') {
+                        finalMessage = 'Usuario creado exitosamente';
+                    } else { // mode === 'edit'
+                        if (unassignmentSuccessful) {
+                            finalMessage = 'Usuario actualizado exitosamente';
+                            if (courseIdsToUnassign.length > 0) { // Check if unassignment was attempted
+                                finalMessage += ' y cursos desasignados.';
+                            }
+                        } else {
+                            // User update was OK, but unassignment failed
+                            // Use the stored unassignError object
+                            finalMessage = `Usuario actualizado, pero ${unassignError?.message || 'error al desasignar cursos.'}`;
+                            messageType = 'warning';
+                        }
+                    }
+                    showNotification(finalMessage, messageType);
+
             hideLoader();
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification(error.message, 'error');
+        } catch (error) { // Catches errors from the main user update fetch or other logic before unassignment
+            console.error('Error during user form submission:', error);
+            showNotification(error.message || 'Error al guardar usuario', 'error');
             hideLoader();
         }
     }

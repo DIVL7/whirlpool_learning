@@ -140,6 +140,20 @@
                         <label for="confirmPassword">Confirmar Contraseña</label>
                         <input type="password" id="confirmPassword" name="confirmPassword"> <!-- Removed required -->
                     </div>
+
+                    <!-- Assigned Courses Section -->
+                    <hr class="section-divider">
+                    <div class="form-section assigned-courses-section">
+                        <h3>Cursos Asignados:</h3>
+                        <div class="form-group assigned-courses-container">
+                            <!-- Changed: Replaced select with a div container -->
+                            <div id="assignedCoursesList" class="custom-course-list">
+                                <!-- Course items will be populated by JavaScript -->
+                            </div>
+                            <p class="loading-text" id="assignedCoursesLoadingText" style="display: none;">Cargando cursos asignados...</p>
+                        </div>
+                    </div>
+
                     <!-- Role and Status fields removed from edit modal -->
                     <!-- Profile image upload removed -->
                     <div class="form-actions">
@@ -147,83 +161,6 @@
                         <button type="submit" class="btn-primary">Guardar Usuario</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- User Details Modal -->
-    <div class="modal" id="userDetailsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detalles del Usuario</h2>
-                <span class="close-modal">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="user-details">
-                    <div class="user-profile-header">
-                        <img src="../images/user-avatar-1.jpg" alt="User Profile" id="detailsProfileImage">
-                        <div class="user-profile-info">
-                            <h3 id="detailsName">John Doe</h3>
-                            <p id="detailsRole" class="badge-role technician">Técnico</p>
-                            <p id="detailsEmail">tech1@whirlpool.com</p>
-                            <!-- Eliminamos la referencia al estado -->
-                        </div>
-                    </div>
-                    <div class="user-stats">
-                        <div class="stat-item">
-                            <h4>Cursos Completados</h4>
-                            <p>8</p>
-                        </div>
-                        <div class="stat-item">
-                            <h4>Certificaciones</h4>
-                            <p>3</p>
-                        </div>
-                        <div class="stat-item">
-                            <h4>Fecha de Registro</h4>
-                            <p>15/02/2023</p>
-                        </div>
-                        <div class="stat-item">
-                            <h4>Última Actividad</h4>
-                            <p>Hace 1 día</p>
-                        </div>
-                    </div>
-                    <div class="user-activity">
-                        <h3>Actividad Reciente</h3>
-                        <div class="activity-timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-icon green">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <h4>Completó el curso "Refrigerator Repair Basics"</h4>
-                                    <p>Hace 3 días</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon blue">
-                                    <i class="fas fa-certificate"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <h4>Obtuvo la certificación "Refrigeration Technician Level 1"</h4>
-                                    <p>Hace 1 semana</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon orange">
-                                    <i class="fas fa-question-circle"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <h4>Realizó una pregunta en el foro</h4>
-                                    <p>Hace 2 semanas</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary close-modal">Cerrar</button>
-                <button class="btn-primary edit-user-btn">Editar Usuario</button>
             </div>
         </div>
     </div>
@@ -263,10 +200,14 @@
                     </div>
                     <hr class="section-divider">
                     <div class="form-section available-courses-section">
-                        <h3>Cursos Disponibles (Publicados):</h3>
-                        <div id="availableCoursesList" class="checkbox-list styled-checkbox-list">
-                            <!-- Available courses with checkboxes will be listed here -->
-                            <p class="loading-text">Cargando cursos...</p>
+                        <h3>Cursos Disponibles:</h3>
+                        <div class="form-group">
+                            <label>Seleccionar Cursos:</label> <!-- Removed 'for' attribute -->
+                            <!-- Replaced select with a div for checkboxes -->
+                            <div id="availableCoursesCheckboxList" class="checkbox-list-container">
+                                <!-- Checkboxes will be populated by JavaScript -->
+                            </div>
+                            <p class="loading-text" id="coursesLoadingText">Cargando cursos...</p>
                         </div>
                     </div>
                     <div class="form-actions modal-footer"> <!-- Re-using modal-footer for consistency -->

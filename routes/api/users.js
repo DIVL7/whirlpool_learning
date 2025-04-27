@@ -231,6 +231,32 @@ function formatLastActivity(dateString) {
     }
 }
 
+// GET /api/users/:id/courses - Get courses assigned to a specific user
+router.get('/:id/courses', isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // Query to get course IDs and titles assigned to the user
+        const [assignedCourses] = await pool.query(`
+            SELECT c.course_id, c.title
+            FROM courses c
+            JOIN user_course_progress ucp ON c.course_id = ucp.course_id
+            WHERE ucp.user_id = ?
+            ORDER BY c.title ASC
+        `, [userId]);
+
+        if (assignedCourses.length === 0) {
+            // It's not an error if the user has no courses, return empty array
+            return res.json([]);
+        }
+
+        res.json(assignedCourses);
+
+    } catch (error) {
+        console.error(`Error fetching assigned courses for user ${userId}:`, error);
+        res.status(500).json({ error: 'Error al obtener los cursos asignados del usuario.' });
+    }
+});
+
 
 // POST /api/users/assign-courses - Assign multiple courses to multiple users
 router.post('/assign-courses', isAdmin, async (req, res) => {
@@ -278,6 +304,49 @@ router.post('/assign-courses', isAdmin, async (req, res) => {
             connection.release();
         }
         res.status(500).json({ error: 'Error al asignar cursos a los usuarios.' });
+    }
+});
+
+// POST /api/users/unassign-courses - Unassign multiple courses from a single user
+router.post('/unassign-courses', isAdmin, async (req, res) => {
+    const { userId, courseIds } = req.body;
+
+    // Validate input
+    if (!userId || !Array.isArray(courseIds) || courseIds.length === 0) {
+        return res.status(400).json({ error: 'Se requieren ID de usuario y un array de IDs de curso válidos.' });
+    }
+
+    // Ensure courseIds are integers to prevent SQL injection issues if they weren't already numbers
+    const validCourseIds = courseIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+
+    if (validCourseIds.length === 0) {
+        return res.status(400).json({ error: 'No se proporcionaron IDs de curso válidos.' });
+    }
+
+    try {
+        const connection = await pool.getConnection(); // Use connection for potential transaction if needed later
+        
+        // Construct the placeholder string (?, ?, ...) for the IN clause
+        const placeholders = validCourseIds.map(() => '?').join(',');
+        
+        // Prepare the parameters array: [userId, courseId1, courseId2, ...]
+        const params = [parseInt(userId), ...validCourseIds];
+
+        // Execute the delete query
+        const sql = `DELETE FROM user_course_progress WHERE user_id = ? AND course_id IN (${placeholders})`;
+        const [result] = await connection.query(sql, params);
+        
+        connection.release();
+
+        res.json({
+            success: true,
+            message: `${result.affectedRows} asignaciones de curso eliminadas correctamente para el usuario ${userId}.`
+        });
+
+    } catch (error) {
+        console.error(`Error unassigning courses for user ${userId}:`, error);
+        if (connection) connection.release(); // Ensure connection is released on error
+        res.status(500).json({ error: 'Error al desasignar cursos del usuario.' });
     }
 });
 
