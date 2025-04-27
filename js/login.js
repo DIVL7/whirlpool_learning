@@ -77,10 +77,7 @@ function handleLogin(event) {
 
 // Display error message
 function showError(message) {
-    // Usar la función centralizada de utils.js
-    window.showNotification(message, 'error');
-    
-    // Mantener la visualización en el formulario de login para mejor visibilidad
+    // Check if error message already exists
     let errorElement = document.getElementById('errorMessage');
     
     if (!errorElement) {

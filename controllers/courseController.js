@@ -1,20 +1,7 @@
 const { pool } = require('../config/database');
-// Import both directories from multer config
-const { coursesImageDir, contentFilesDir } = require('../config/multer'); 
+const { coursesImageDir } = require('../config/multer');
 const path = require('path');
 const fs = require('fs');
-
-// Helper function to safely delete files
-const deleteFile = (filePath) => {
-    if (filePath && fs.existsSync(filePath)) {
-        try {
-            fs.unlinkSync(filePath);
-            console.log(`Successfully deleted file: ${filePath}`);
-        } catch (err) {
-            console.error(`Error deleting file ${filePath}:`, err);
-        }
-    }
-};
 
 // Get all courses
 async function getAllCourses(req, res) {
@@ -254,7 +241,21 @@ async function enrollInCourse(req, res) {
     }
 }
 
-// Get course modules
+// Export all functions
+exports.getAllCourses = getAllCourses;
+exports.getCourseById = getCourseById;
+exports.getAvailableCourses = getAvailableCourses;
+exports.getCourseDetails = getCourseDetails;
+exports.enrollInCourse = enrollInCourse;
+exports.getCourseModules = getCourseModules;
+exports.createModule = createModule;
+exports.updateModule = updateModule;
+exports.deleteModule = deleteModule;
+exports.getAllCategories = getAllCategories;
+
+/**
+ * Get all modules for a specific course
+ */
 async function getCourseModules(req, res) {
     try {
         const courseId = req.params.id;
@@ -293,48 +294,26 @@ async function getCourseModules(req, res) {
     }
 }
 
-// Get module contents
-async function getModuleContents(req, res) {
-    try {
-        const courseId = req.params.id;
-        const moduleId = req.params.moduleId;
-        
-        // Verify the module exists and belongs to the course
-        const [modules] = await pool.query(
-            'SELECT * FROM modules WHERE module_id = ? AND course_id = ?',
-            [moduleId, courseId]
-        );
-        
-        if (modules.length === 0) {
-            return res.status(404).json({ error: 'Módulo no encontrado' });
-        }
-        
-        // Get contents for this module - CORREGIDO: usar la tabla 'contents' en lugar de 'module_contents'
-        const [contents] = await pool.query(
-            'SELECT * FROM contents WHERE module_id = ? ORDER BY position',
-            [moduleId]
-        );
-        
-        // Format contents for frontend
-        const formattedContents = contents.map(content => ({
-            content_id: content.content_id,
-            title: content.title,
-            content_type_id: content.content_type_id,
-            content_data: content.content_data,
-            position: content.position,
-            module_id: content.module_id,
-            created_at: content.created_at,
-            updated_at: content.updated_at
-        }));
-        
-        res.json(formattedContents);
-    } catch (error) {
-        console.error('Error fetching module contents:', error);
-        res.status(500).json({ error: 'Error al cargar los contenidos del módulo' });
-    }
-}
+// Make sure to add these methods to the exports
+module.exports = {
+    getAllCourses,
+    getCourseById,
+    updateCourse,
+    createCourse,
+    deleteCourse,
+    getAllCategories,
+    getAvailableCourses,
+    getCourseDetails,
+    enrollInCourse,
+    getCourseModules,  // Add this line
+    createModule,      // Make sure this exists
+    updateModule,      // Make sure this exists
+    deleteModule       // Make sure this exists
+};
 
-// Create a module
+/**
+ * Create a new module for a course
+ */
 async function createModule(req, res) {
     try {
         const courseId = req.params.id;
@@ -384,7 +363,9 @@ async function createModule(req, res) {
     }
 }
 
-// Update a module
+/**
+ * Update an existing module
+ */
 async function updateModule(req, res) {
     try {
         const courseId = req.params.id;
@@ -425,7 +406,9 @@ async function updateModule(req, res) {
     }
 }
 
-// Delete a module
+/**
+ * Delete a module
+ */
 async function deleteModule(req, res) {
     try {
         const courseId = req.params.id;
@@ -444,10 +427,9 @@ async function deleteModule(req, res) {
         // Delete the module
         await pool.query('DELETE FROM modules WHERE module_id = ?', [moduleId]);
         
-        // Reorder remaining modules - make sure these are executed as separate queries
-        await pool.query('SET @pos := 0');
+        // Reorder remaining modules
         await pool.query(
-            'UPDATE modules SET position = (@pos := @pos + 1) WHERE course_id = ? ORDER BY position',
+            'SET @pos := 0; UPDATE modules SET position = (@pos := @pos + 1) WHERE course_id = ? ORDER BY position',
             [courseId]
         );
         
@@ -458,7 +440,11 @@ async function deleteModule(req, res) {
     }
 }
 
-// Create a course
+/**
+ * Create a new course
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 async function createCourse(req, res) {
     try {
         const { title, description, category_id, status } = req.body;
@@ -535,7 +521,11 @@ async function createCourse(req, res) {
     }
 }
 
-// Update a course
+/**
+ * Update an existing course
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 async function updateCourse(req, res) {
     try {
         const courseId = req.params.id;
@@ -631,237 +621,91 @@ async function updateCourse(req, res) {
     }
 }
 
-// Delete a course
+/**
+ * Delete a course, cascada manual sobre tablas hijas
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 async function deleteCourse(req, res) {
     try {
-        const courseId = req.params.id;
-        
-        // Verify the course exists
-        const [courses] = await pool.query(
-            'SELECT * FROM courses WHERE course_id = ?',
-            [courseId]
-        );
-        
-        if (courses.length === 0) {
-            return res.status(404).json({ error: 'Curso no encontrado' });
+      const courseId = req.params.id;
+  
+      // Verificar que el curso existe
+      const [courses] = await pool.query(
+        'SELECT * FROM courses WHERE course_id = ?',
+        [courseId]
+      );
+      if (courses.length === 0) {
+        return res.status(404).json({ error: 'Curso no encontrado' });
+      }
+      const course = courses[0];
+  
+      // Borrar el archivo de miniatura si existe
+      if (course.thumbnail) {
+        const filePath = path.join(coursesImageDir, course.thumbnail);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
         }
-        
-        const course = courses[0];
-        
-        // Delete the thumbnail file if it exists
-        if (course.thumbnail) {
-            const filePath = path.join(coursesImageDir, course.thumbnail);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        }
-        
-        // Delete all modules associated with this course
-        await pool.query('DELETE FROM modules WHERE course_id = ?', [courseId]);
-        
-        // Delete the course
-        await pool.query('DELETE FROM courses WHERE course_id = ?', [courseId]);
-        
-        res.json({ message: 'Curso eliminado correctamente' });
+      }
+  
+      // **Borrado manual en tablas hijas**  
+      // Referencian directamente course_id:
+      await pool.query(
+        'DELETE FROM user_course_progress WHERE course_id = ?',
+        [courseId]
+      );
+  
+      //  Módulos de ese curso.
+      //  (User-content-progress → Contents → Modules)
+      await pool.query(
+        `DELETE ucp
+         FROM user_content_progress ucp
+         JOIN contents c ON ucp.content_id = c.content_id
+         JOIN modules m  ON c.module_id   = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+      await pool.query(
+        `DELETE c
+         FROM contents c
+         JOIN modules m ON c.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+  
+      // Intentos de quiz y quizzes asociados:
+      await pool.query(
+        `DELETE qa
+         FROM quiz_attempts qa
+         JOIN quizzes q ON qa.quiz_id = q.quiz_id
+         JOIN modules m ON q.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+      await pool.query(
+        `DELETE q
+         FROM quizzes q
+         JOIN modules m ON q.module_id = m.module_id
+         WHERE m.course_id = ?`,
+        [courseId]
+      );
+  
+      // Borrar los módulos del curso
+      await pool.query(
+        'DELETE FROM modules WHERE course_id = ?',
+        [courseId]
+      );
+  
+      // Borrar el curso
+      await pool.query(
+        'DELETE FROM courses WHERE course_id = ?',
+        [courseId]
+      );
+  
+      res.json({ message: 'Curso eliminado correctamente' });
     } catch (error) {
-        console.error('Error deleting course:', error);
-        res.status(500).json({ error: 'Error al eliminar el curso' });
+      console.error('Error deleting course:', error);
+      res.status(500).json({ error: 'Error al eliminar el curso' });
     }
-}
-
-module.exports = {
-    getAllCourses,
-    getAllCategories,
-    getCourseById,
-    getAvailableCourses,
-    getCourseDetails,
-    enrollInCourse,
-    getCourseModules,
-    getModuleContents,
-    createModule,
-    updateModule,
-    deleteModule,
-    createCourse,
-    updateCourse,
-    deleteCourse,
-    createContent, // Add new functions
-    updateContent,
-    deleteContent
-};
-
-// --- Content CRUD Functions ---
-
-// Create content for a module
-async function createContent(req, res) {
-    try {
-        const { moduleId } = req.params;
-        const { title, content_type_id, position } = req.body;
-
-        // Validate required fields
-        if (!title || !content_type_id || !position) {
-            return res.status(400).json({ error: 'Faltan campos obligatorios (título, tipo, posición)' });
-        }
-
-        let contentDataValue;
-        const contentType = parseInt(content_type_id);
-
-        // Handle file upload or text/URL data
-        if (req.file) { // PDF or Image uploaded
-            if (contentType !== 3 && contentType !== 4) {
-                // Clean up uploaded file if type doesn't match
-                deleteFile(req.file.path); 
-                return res.status(400).json({ error: 'Tipo de contenido no coincide con el archivo subido' });
-            }
-            // Determine subdirectory and store the relative path
-            const subDir = req.file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
-            contentDataValue = `/uploads/content/${subDir}/${req.file.filename}`; 
-        } else { // Video or Text
-            if (contentType !== 1 && contentType !== 2) {
-                return res.status(400).json({ error: 'Tipo de contenido requiere un archivo (PDF o Imagen)' });
-            }
-            contentDataValue = req.body.content_data;
-            if (!contentDataValue) {
-                return res.status(400).json({ error: 'El contenido (URL o texto) es obligatorio' });
-            }
-        }
-
-        // Insert content into database
-        const [result] = await pool.query(
-            'INSERT INTO contents (module_id, title, content_type_id, content_data, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
-            [moduleId, title, contentType, contentDataValue, position]
-        );
-
-        res.status(201).json({
-            content_id: result.insertId,
-            module_id: moduleId,
-            title,
-            content_type_id: contentType,
-            content_data: contentDataValue,
-            position
-        });
-
-    } catch (error) {
-        console.error('Error creating content:', error);
-        // Clean up uploaded file if database insertion fails
-        if (req.file) {
-            deleteFile(req.file.path);
-        }
-        res.status(500).json({ error: 'Error al crear el contenido' });
-    }
-}
-
-// Update content for a module
-async function updateContent(req, res) {
-    try {
-        const { moduleId, contentId } = req.params;
-        const { title, content_type_id, position } = req.body;
-
-        // Validate required fields
-        if (!title || !content_type_id || !position) {
-            return res.status(400).json({ error: 'Faltan campos obligatorios (título, tipo, posición)' });
-        }
-
-        // Verify content exists
-        const [existingContents] = await pool.query(
-            'SELECT * FROM contents WHERE content_id = ? AND module_id = ?',
-            [contentId, moduleId]
-        );
-
-        if (existingContents.length === 0) {
-            // Clean up uploaded file if content not found
-            if (req.file) deleteFile(req.file.path);
-            return res.status(404).json({ error: 'Contenido no encontrado' });
-        }
-        const existingContent = existingContents[0];
-        const contentType = parseInt(content_type_id);
-        let contentDataValue = existingContent.content_data; // Default to existing data
-
-        // Handle file upload or text/URL data
-        if (req.file) { // New PDF or Image uploaded
-            if (contentType !== 3 && contentType !== 4) {
-                deleteFile(req.file.path); // Clean up if type mismatch
-                return res.status(400).json({ error: 'Tipo de contenido no coincide con el archivo subido' });
-            }
-            // Delete old file if it was a file type (using its stored path)
-            if ((existingContent.content_type_id === 3 || existingContent.content_type_id === 4) && existingContent.content_data) {
-                const oldFilePath = path.join(__dirname, '..', existingContent.content_data); // Path includes subdir
-                deleteFile(oldFilePath);
-            }
-            // Determine subdirectory and store the new relative path
-            const subDir = req.file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
-            contentDataValue = `/uploads/content/${subDir}/${req.file.filename}`;
-        } else { // No new file uploaded
-            if (contentType === 1 || contentType === 2) { // Video or Text
-                contentDataValue = req.body.content_data;
-                if (!contentDataValue) {
-                    return res.status(400).json({ error: 'El contenido (URL o texto) es obligatorio' });
-                }
-                // If type changed from file to text/URL, delete old file (using its stored path)
-                if ((existingContent.content_type_id === 3 || existingContent.content_type_id === 4) && existingContent.content_data) {
-                     const oldFilePath = path.join(__dirname, '..', existingContent.content_data); // Path includes subdir
-                     deleteFile(oldFilePath);
-                }
-            } else if (contentType === 3 || contentType === 4) {
-                // Keep existing file path if type is file and no new file uploaded
-                contentDataValue = existingContent.content_data; 
-            }
-        }
-
-        // Update content in database
-        await pool.query(
-            'UPDATE contents SET title = ?, content_type_id = ?, content_data = ?, position = ?, updated_at = NOW() WHERE content_id = ?',
-            [title, contentType, contentDataValue, position, contentId]
-        );
-
-        res.json({
-            content_id: contentId,
-            module_id: moduleId,
-            title,
-            content_type_id: contentType,
-            content_data: contentDataValue,
-            position
-        });
-
-    } catch (error) {
-        console.error('Error updating content:', error);
-         // Clean up uploaded file if database update fails
-        if (req.file) {
-            deleteFile(req.file.path);
-        }
-        res.status(500).json({ error: 'Error al actualizar el contenido' });
-    }
-}
-
-// Delete content from a module
-async function deleteContent(req, res) {
-    try {
-        const { contentId } = req.params;
-
-        // Verify content exists and get its details
-        const [existingContents] = await pool.query(
-            'SELECT * FROM contents WHERE content_id = ?',
-            [contentId]
-        );
-
-        if (existingContents.length === 0) {
-            return res.status(404).json({ error: 'Contenido no encontrado' });
-        }
-        const contentToDelete = existingContents[0];
-
-        // If content is PDF or Image, delete the associated file (using its stored path)
-        if ((contentToDelete.content_type_id === 3 || contentToDelete.content_type_id === 4) && contentToDelete.content_data) {
-             // Construct the absolute path from the project root
-             const filePath = path.join(__dirname, '..', contentToDelete.content_data); // Path includes subdir
-             deleteFile(filePath);
-        }
-
-        // Delete content from database
-        await pool.query('DELETE FROM contents WHERE content_id = ?', [contentId]);
-
-        res.json({ message: 'Contenido eliminado correctamente' });
-
-    } catch (error) {
-        console.error('Error deleting content:', error);
-        res.status(500).json({ error: 'Error al eliminar el contenido' });
-    }
-}
+  }
+  

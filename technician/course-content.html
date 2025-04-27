@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contenido del Curso - Plataforma Técnicos Whirlpool</title>
-    <link rel="stylesheet" href="../css/technician-styles.css">
+    <!-- Rutas de estilos actualizadas -->
+    <link rel="stylesheet" href="../css/technician/technician-common.css">
+    <link rel="stylesheet" href="../css/technician/course-content.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 </head>
 
 <body>
@@ -18,11 +21,12 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> Mis Cursos</a></li>
-                    <li><a href="forum.html"><i class="fas fa-comments"></i> Foro</a></li>
-                    <li><a href="grades.html"><i class="fas fa-star"></i> Calificaciones</a></li>
-                    <li><a href="settings.html"><i class="fas fa-cog"></i> Mi Perfil</a></li>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    <li class="active"><a href="courses.html"><i class="fas fa-book"></i> <span>Cursos</span></a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> <span>Foro</span></a></li>
+                    <li><a href="certificates.html"><i class="fas fa-certificate"></i> <span>Certificados</span></a>
+                    </li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -32,15 +36,14 @@
 
         <main class="main-content">
             <header class="top-nav">
-                <div class="course-breadcrumb">
-                    <a href="courses.html"><i class="fas fa-arrow-left"></i> Volver a mis cursos</a>
-                    <span id="course-name">Cargando curso...</span>
+                <div class="left-nav">
+                    <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
+                    <div class="course-breadcrumb">
+                        <a href="courses.html"><i class="fas fa-arrow-left"></i> Volver a mis cursos</a>
+                        <span id="course-name">Cargando curso...</span>
+                    </div>
                 </div>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="far fa-bell"></i>
-                        <span class="badge notification-count">0</span>
-                    </div>
                     <div class="user-profile">
                         <img src="../images/default-avatar.jpg" alt="Avatar" id="user-avatar">
                         <span id="user-name">Usuario</span>
@@ -56,7 +59,7 @@
                 </div>
 
                 <div id="course-container" class="course-container" style="display:none;">
-                    <div class="course-header">
+                    <div class="course-header card-base">
                         <div class="course-info">
                             <h1 id="course-title"></h1>
                             <p id="course-description"></p>
@@ -113,11 +116,11 @@
         </main>
     </div>
 
-    <!-- Contenedor de notificaciones -->
     <div class="notification-container" id="notification-container"></div>
 
-    <!-- Incluir utils.js antes de los scripts específicos -->
     <script src="../js/utils.js"></script>
+    <script src="../js/technician-common.js"></script>
     <script src="../js/technician-course-content.js"></script>
 </body>
+
 </html>

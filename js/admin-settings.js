@@ -327,3 +327,60 @@ function changeLanguage(language) {
     // For now, we'll just show a message
     showSuccess(`Idioma cambiado a: ${language === 'es' ? 'Español' : 'English'}`);
 }
+
+// Show success message
+function showSuccess(message) {
+    const successContainer = document.createElement('div');
+    successContainer.className = 'success-message';
+    successContainer.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+    `;
+    
+    // Remove any existing success messages
+    const existingSuccess = document.querySelector('.success-message');
+    if (existingSuccess) {
+        existingSuccess.remove();
+    }
+    
+    // Insert success at the top of the content
+    const contentContainer = document.querySelector('.dashboard-content');
+    contentContainer.insertBefore(successContainer, contentContainer.firstChild);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        successContainer.classList.add('fade-out');
+        setTimeout(() => {
+            successContainer.remove();
+        }, 500);
+    }, 5000);
+}
+
+// Show error message
+// Eliminar la función showError existente (líneas 360-385)
+// function showError(message) {
+//     const errorContainer = document.createElement('div');
+//     errorContainer.className = 'error-message';
+//     errorContainer.innerHTML = `
+//         <i class="fas fa-exclamation-circle"></i>
+//         <span>${message}</span>
+//     `;
+//     
+//     // Remove any existing error messages
+//     const existingError = document.querySelector('.error-message');
+//     if (existingError) {
+//         existingError.remove();
+//     }
+//     
+//     // Insert error at the top of the content
+//     const contentContainer = document.querySelector('.dashboard-content');
+//     contentContainer.insertBefore(errorContainer, contentContainer.firstChild);
+//     
+//     // Auto-remove after 5 seconds
+//     setTimeout(() => {
+//         errorContainer.classList.add('fade-out');
+//         setTimeout(() => {
+//             errorContainer.remove();
+//         }, 500);
+//     }, 5000);
+// }

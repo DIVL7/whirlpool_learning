@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificados - Plataforma Técnicos Whirlpool</title>
+    <!-- Estilos para Certificados -->
+    <link rel="stylesheet" href="../css\technician\technician-common.css">
+    <link rel="stylesheet" href="../css\technician\certificates.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
+</head>
+
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="logo">
+                <h3>Plataforma de Técnicos</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    <li><a href="courses.html"><i class="fas fa-book"></i> <span>Cursos</span></a></li>
+                    <li><a href="forum.html"><i class="fas fa-comments"></i> <span>Foro</span></a></li>
+                    <li class="active"><a href="certificates.html"><i class="fas fa-certificate"></i>
+                            <span>Certificados</span></a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar certificados...">
+                </div>
+                <div class="user-info">
+                    <div class="user-profile">
+                        <img src="../images/default-avatar.jpg" alt="Avatar">
+                        <span>Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="page-header">
+                    <h1>Mis Certificados</h1>
+                    <p>Estos son los certificados que has obtenido en tus cursos completados.</p>
+                </div>
+
+                <div class="certificates-container">
+                    <!-- Ejemplo de tarjeta de certificado -->
+                    <div class="certificate-card card-base">
+                        <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="certificate-logo">
+                        <h3 class="certificate-course">Nombre del Curso</h3>
+                        <p class="certificate-date">Fecha de emisión: 15 de Abril, 2025</p>
+                        <button class="btn-primary">Descargar PDF</button>
+                    </div>
+                    <!-- Más tarjetas generadas dinámicamente -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="notification-container" id="notification-container"></div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/technician-common.js"></script>
+    <script src="../js/technician-certificates.js"></script>
+</body>
+
+</html>

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authRoutes = require('./auth');
-// const courseRoutes = require('./courses'); // Remove this - API routes handled separately
+const courseRoutes = require('./courses'); // Using only the courses.js file
 const settingsRoutes = require('./settings');
 const dashboardRoutes = require('./dashboard');
 const reportRoutes = require('./reports');
@@ -16,27 +16,11 @@ router.get('/health', (req, res) => {
 
 // Register routes
 router.use('/auth', authRoutes);
-// router.use('/courses', courseRoutes); // Remove this - API routes handled separately
+router.use('/courses', courseRoutes); // All course routes under /api/courses
 router.use('/settings', settingsRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
 router.use('/technician', technicianRoutes); // Add technician routes
 router.use('/forum', forumRoutes); // Add forum routes
-
-// Make sure the course categories endpoint is properly registered
-router.get('/courses/categories', (req, res, next) => {
-    // This is a fallback in case the route isn't properly registered in courseRoutes
-    const courseController = require('../controllers/courseController');
-    courseController.getAllCategories(req, res);
-});
-
-// Remove the fallback route as it's no longer needed here
-/*
-router.get('/courses/categories', (req, res, next) => {
-    // This is a fallback in case the route isn't properly registered in courseRoutes
-    const courseController = require('../controllers/courseController');
-    courseController.getAllCategories(req, res);
-});
-*/
 
 module.exports = router;

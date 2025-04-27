@@ -1,0 +1,39 @@
+/* ===== ESTILOS PARA CERTIFICADOS ===== */
+.certificates-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+    gap: 20px;
+    /* el padding lo maneja .content-body del common */
+  }
+  
+  .certificate-card {
+    /* hereda .card-base en el HTML */
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .certificate-logo {
+    width: 60px;
+    opacity: .8;
+  }
+  
+  .certificate-course {
+    font-size: 1.2rem;
+    margin: 10px 0 5px;
+    color: var(--dark-color);
+  }
+  
+  .certificate-date {
+    font-size: .9rem;
+    color: var(--gray-color);
+  }
+  
+  .certificate-card .btn-primary {
+    margin-top: 15px;
+    width: 100%;
+  }
+  
