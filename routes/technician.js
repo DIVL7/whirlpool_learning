@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const technicianController = require('../controllers/technicianController');
+const quizController = require('../controllers/quizController');
 const { isAuthenticated } = require('../middleware/auth');
 
 // Middleware para asegurar que todas las rutas requieren autenticación
@@ -21,5 +22,10 @@ router.post('/courses/content/:contentId/complete', technicianController.markCon
 // Rutas de certificados
 router.get('/certificates', technicianController.getCertificates);
 router.get('/certificates/:courseId/download', technicianController.downloadCertificate);
+
+// Rutas de quizzes dentro de un módulo para técnicos
+router.route('/courses/:courseId/modules/:moduleId/quizzes/:quizId')
+  .get(quizController.getQuizById)
+  .post(technicianController.submitQuiz);
 
 module.exports = router;

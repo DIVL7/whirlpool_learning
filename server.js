@@ -74,6 +74,20 @@ app.use('/api/users', userRoutes);
 // app.use('/api/courses', courseApiRoutes); // Remove this line
 app.use('/api/courses', courseRoutes); // Mount the main course routes under /api/courses
 
+app.use('/technician', express.static(path.join(__dirname, 'technician')));
+  
+  // permitir URLs sin “.html”
+  app.get('/technician/:page', (req, res, next) => {
+    const filePath = path.join(
+      __dirname,
+      'technician',
+      `${req.params.page}.html`
+    );
+    res.sendFile(filePath, err => {
+      if (err) next();  // si no existe, pasa al 404
+    });
+  });
+
 // Error handling middleware (debe ser el último middleware)
 app.use(errorHandler);
 
