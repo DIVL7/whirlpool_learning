@@ -1,0 +1,473 @@
+/* ===== FORO ===== */
+.categories-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.forum-category {
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+}
+
+.forum-category:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.forum-category h4 {
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.forum-category p {
+    color: var(--gray-color);
+    font-size: .9rem;
+}
+
+.category-loading {
+    grid-column: 1/-1;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+/* ===== TABLA DE TEMAS ===== */
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2rem;
+    color: var(--dark-color);
+}
+
+.category-filter select {
+    padding: 8px 12px;
+    border: 1px solid var(--light-gray-color);
+    border-radius: 4px;
+    background: #fff;
+    font-size: .9rem;
+    min-width: 200px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: .95rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--light-gray-color);
+}
+
+.data-table th {
+    background: var(--light-color);
+    font-weight: 600;
+}
+
+.data-table tbody tr:hover {
+    background: var(--light-color);
+}
+
+/* ===== TEMAS ===== */
+.topic-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topic-link {
+    color: var(--primary-color);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.topic-link:hover {
+    text-decoration: underline;
+}
+
+.solved-badge {
+    background: var(--success-color);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.category-tag {
+    background: rgba(0, 102, 204, 0.1);
+    color: var(--primary-color);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: .8rem;
+}
+
+/* ===== MENSAJES DE ESTADO ===== */
+.loading-message,
+.empty-message,
+.error-message {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 20px;
+}
+
+.error-message {
+    color: var(--error-color);
+}
+
+/* ===== FORMULARIO NUEVO TEMA ===== */
+.new-topic-form {
+    background: var(--light-color);
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--light-gray-color);
+    border-radius: 4px;
+    font-size: .95rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+/* ===== MODAL TEMA ===== */
+.topic-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    overflow-y: auto;
+}
+
+.topic-modal-content {
+    background: #fff;
+    margin: 30px auto;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 800px;
+    position: relative;
+    animation: modalFadeIn .3s;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.topic-modal .close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
+    color: var(--gray-color);
+    cursor: pointer;
+}
+
+/* ===== DETALLE DE TEMA ===== */
+.topic-header {
+    border-bottom: 1px solid var(--light-gray-color);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.topic-header h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--dark-color);
+}
+
+.topic-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topic-author,
+.answer-author {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.author-name {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.topic-date,
+.answer-date {
+    color: var(--gray-color);
+    font-size: .85rem;
+}
+
+.topic-content,
+.answer-content {
+    line-height: 1.7;
+    margin-bottom: 15px;
+    overflow-wrap: break-word;
+}
+
+/* ===== RESPUESTAS ===== */
+#topic-answers h4 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+.no-answers {
+    background: var(--light-color);
+    color: var(--gray-color);
+    text-align: center;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.answer {
+    background: var(--light-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.answer.accepted-answer {
+    border: 2px solid var(--success-color);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.answer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.vote-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vote-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-color);
+    font-size: 1.1rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    transition: background-color .2s;
+}
+
+.vote-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.vote-btn.voted {
+    color: var(--primary-color);
+}
+
+.vote-count {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.accept-answer-btn {
+    background: var(--light-color);
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.accept-answer-btn:hover {
+    background: var(--success-color);
+    color: #fff;
+}
+
+.accepted-mark {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+/* ===== NUEVO FORM RESPUESTA ===== */
+#new-answer-form-container h4 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* ===== RESPONSIVE FORO (max-width:768px) ===== */
+@media (max-width: 768px) {
+    .categories-container {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+/* ===== BOTONES DE ELIMINAR FORO ===== */
+.delete-question-btn,
+.delete-answer-btn {
+    background: var(--error-color);
+    color: #fff;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-question-btn:hover,
+.delete-answer-btn:hover {
+    background: #b52a37;
+    /* un rojo más oscuro al pasar el mouse */
+}
+
+/* ===== MODAL DE CONFIRMACIÓN DE ELIMINACIÓN ===== */
+.confirmation-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.confirmation-content {
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: modalFadeIn 0.3s ease;
+}
+
+.confirmation-content h4 {
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+    color: var(--dark-color);
+}
+
+.confirmation-content p {
+    margin-bottom: 20px;
+    color: var(--gray-color);
+}
+
+.confirmation-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.btn-confirm-delete {
+    background: var(--error-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-confirm-delete:hover {
+    background: #b52a37;
+}
+
+.btn-cancel {
+    background: var(--gray-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}

@@ -3,73 +3,10 @@ let currentPage = 1;
 const coursesPerPage = 6;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Comprobar si el usuario está autenticado
-    checkUserSession();
-
-    // Inicializar componentes
+    initTechnicianPage();
     initializeEventListeners();
-
-    // Configurar el botón de cerrar sesión
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    loadUserCourses();
 });
-
-// Función para comprobar la sesión del usuario
-async function checkUserSession() {
-    try {
-        const response = await fetch('/api/check-session');
-        const data = await response.json();
-
-        if (!data.loggedIn) {
-            // Redirigir al inicio de sesión si no hay sesión
-            window.location.href = '../index.html';
-            return;
-        }
-
-        // Si el usuario no es técnico, redirigir a la página adecuada
-        if (data.user.role !== 'technician') {
-            window.location.href = `../${data.user.role}/dashboard.html`;
-            return;
-        }
-
-        // Actualizar la interfaz con los datos del usuario
-        updateUserInterface(data.user);
-
-        // Cargar los cursos del usuario
-        loadUserCourses();
-    } catch (error) {
-        console.error('Error checking session:', error);
-        showNotification('Error al verificar la sesión. Por favor, recarga la página.', 'error');
-    }
-}
-
-// Función para actualizar la interfaz con los datos del usuario
-function updateUserInterface(user) {
-    document.getElementById('user-name').textContent = user.username;
-
-    // Si hay una imagen de perfil, actualizarla
-    if (user.profile_picture) {
-        document.getElementById('user-avatar').src = `../images/${user.profile_picture}`;
-    }
-}
-
-// Función para manejar el cierre de sesión
-async function handleLogout(event) {
-    event.preventDefault();
-
-    try {
-        const response = await fetch('/api/logout');
-        const data = await response.json();
-
-        if (data.success) {
-            window.location.href = '../index.html';
-        } else {
-            showNotification('Error al cerrar sesión', 'error');
-        }
-    } catch (error) {
-        console.error('Error during logout:', error);
-        showNotification('Error al cerrar sesión', 'error');
-    }
-}
 
 // Función para inicializar los event listeners
 function initializeEventListeners() {
@@ -90,19 +27,19 @@ function initializeEventListeners() {
 
 // Función para cargar los cursos del usuario
 async function loadUserCourses() {
-    console.log('Intentando cargar cursos desde:', '/api/technician/courses');
+    console.log('Cargando cursos desde:', '/api/technician/courses');
 
     // Mostrar estado de carga
-    document.getElementById('courses-container').innerHTML = `
-        <div class="loader-container">
-            <div class="loader"></div>
-            <p>Cargando cursos...</p>
-        </div>
-    `;
+    document.getElementById('courses-list-body').innerHTML = `
+  <tr>
+    <td colspan="4" class="loader-container">
+      <div class="loader"></div>
+      Cargando cursos...
+    </td>
+  </tr>
+`;
 
     try {
-        console.log('Solicitando cursos a la API...');
-        
         // Forzar petición fresca, sin caché
         const response = await fetch('/api/technician/courses', {
             method: 'GET',
@@ -122,111 +59,41 @@ async function loadUserCourses() {
         }
 
         const data = await response.json();
-        console.log('Datos recibidos en el frontend:', JSON.stringify(data));
+        console.log('Datos recibidos:', data);
 
         // Verificar que la respuesta tenga el formato esperado
         if (data && data.success === true && Array.isArray(data.courses)) {
             allCourses = data.courses;
             console.log('Datos cargados correctamente:', allCourses);
-            
+
             // Actualizar interfaz con los datos
             updateCourseStats(allCourses);
             displayCourses(allCourses, currentPage);
-            
+
             // Mostrar notificación de éxito
             showNotification(`Se han cargado ${allCourses.length} cursos de la base de datos`, 'success');
         } else {
             console.error('Formato de respuesta incorrecto:', data);
-            throw new Error('Formato de respuesta incorrecto');
+            throw new Error('La API devolvió un formato incorrecto');
         }
     } catch (error) {
         console.error('Error al cargar los cursos:', error);
-        showNotification('Error al cargar los cursos. Mostrando datos de ejemplo.', 'warning');
-        
-        // Cargar datos de ejemplo como fallback
-        loadFallbackCourses();
+
+        // Mostrar mensaje de error en la interfaz
+        document.getElementById('courses-list-body').innerHTML = `
+  <tr>
+    <td colspan="4" class="error-container">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3>Error al cargar los cursos</h3>
+      <p>${error.message || 'No se pudieron cargar los cursos desde el servidor.'}</p>
+    </td>
+  </tr>
+`;
+
+        showNotification('Error al cargar los cursos del servidor', 'error');
     }
-}
-
-// Función para cargar cursos de ejemplo en caso de error
-function loadFallbackCourses() {
-    console.log('Cargando cursos de ejemplo como fallback');
-    
-    // Cursos de ejemplo
-    const fallbackCourses = [
-        {
-            id: 1,
-            title: 'Introducción a Whirlpool',
-            description: 'Conoce los fundamentos de nuestra empresa, productos y valores.',
-            thumbnail: null,
-            status: 'completed',
-            progress: 100,
-            score: 95
-        },
-        {
-            id: 2,
-            title: 'Mantenimiento de Lavadoras',
-            description: 'Guía completa para el mantenimiento básico y avanzado de lavadoras.',
-            thumbnail: null,
-            status: 'in_progress',
-            progress: 65,
-            score: null
-        },
-        {
-            id: 3,
-            title: 'Reparación de Refrigeradores',
-            description: 'Aprende a solucionar problemas comunes en refrigeradores.',
-            thumbnail: null,
-            status: 'not_started',
-            progress: 0,
-            score: null
-        },
-        {
-            id: 4,
-            title: 'Atención al Cliente Whirlpool',
-            description: 'Mejora tus habilidades de atención al cliente y resolución de problemas.',
-            thumbnail: null,
-            status: 'completed',
-            progress: 100,
-            score: 90
-        },
-        {
-            id: 5,
-            title: 'Diagnóstico de Hornos',
-            description: 'Técnicas avanzadas para diagnosticar y reparar hornos.',
-            thumbnail: null,
-            status: 'not_started',
-            progress: 0,
-            score: null
-        },
-        {
-            id: 6,
-            title: 'Instalación de Lavavajillas',
-            description: 'Guía paso a paso para la correcta instalación de lavavajillas.',
-            thumbnail: null,
-            status: 'in_progress',
-            progress: 30,
-            score: null
-        },
-        {
-            id: 7,
-            title: 'Reparación de Secadoras',
-            description: 'Diagnóstico y solución de problemas comunes en secadoras.',
-            thumbnail: null,
-            status: 'not_started',
-            progress: 0,
-            score: null
-        }
-    ];
-
-    // Actualizar la variable global de cursos
-    allCourses = fallbackCourses;
-
-    // Actualizar estadísticas de cursos
-    updateCourseStats(allCourses);
-
-    // Mostrar los cursos
-    displayCourses(allCourses, currentPage);
 }
 
 // Función para actualizar las estadísticas de cursos
@@ -240,96 +107,75 @@ function updateCourseStats(courses) {
     document.getElementById('completed-courses').textContent = completedCourses;
 }
 
-// Función para mostrar los cursos en la interfaz
+// Función para mostrar los cursos en forma de lista
 function displayCourses(courses, page) {
-    const container = document.getElementById('courses-container');
+    const tbody = document.getElementById('courses-list-body');
+    const paginationContainer = document.getElementById('pagination-container');
 
-    console.log('Mostrando cursos:', courses);
-
-    // Calcular los índices de inicio y fin para la paginación
+    // paginación
     const startIndex = (page - 1) * coursesPerPage;
     const endIndex = startIndex + coursesPerPage;
-    const paginatedCourses = courses.slice(startIndex, endIndex);
+    const paginated = courses.slice(startIndex, endIndex);
 
-    console.log('Cursos paginados:', paginatedCourses);
-
-    // Limpiar el contenedor
-    container.innerHTML = '';
-
+    // sin cursos
     if (courses.length === 0) {
-        container.innerHTML = `
-            <div class="no-courses-message">
-                <i class="fas fa-search"></i>
-                <h3>No se encontraron cursos</h3>
-                <p>Intenta con otra búsqueda o consulta con tu administrador.</p>
-            </div>
-        `;
+        tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="no-courses-message">
+            No tienes cursos asignados. Contacta con tu administrador.
+          </td>
+        </tr>`;
+        paginationContainer.innerHTML = '';
         return;
     }
 
-    // Obtener el template
-    const template = document.getElementById('course-card-template');
-    console.log('Template encontrado:', template !== null);
+    // genera filas
+    const rows = paginated.map(c => {
+        const statusMap = {
+            not_started: ['No iniciado', 'status-published'],
+            in_progress: ['En Progreso', 'status-in-progress'],
+            completed: ['Completado', 'status-completed']
+        };
+        const [statusLabel, statusCls] = statusMap[c.status] || ['Desconocido', 'status-published'];
 
-    // Crear una tarjeta para cada curso
-    paginatedCourses.forEach(course => {
-        const card = template.content.cloneNode(true);
+        return `
+          <tr>
+            <td>${c.title}</td>
+            <td>${c.description || ''}</td>
+            <td><span class="status-badge ${statusCls}">${statusLabel}</span></td>
+            <td>${c.progress}%</td>
+            <td>
+  <div class="course-actions">
+    <button class="btn-view" data-id="${c.id}">Ver curso</button>
+    ${c.status === 'completed'
+                ? `<button class="btn-certificate" data-id="${c.id}">Ver Certificado</button>`
+                : ``}
+  </div>
+</td>
+          </tr>
+        `;
+    }).join('');
 
-        // Configurar los datos del curso
-        card.querySelector('.course-card').dataset.status = course.status;
+    tbody.innerHTML = rows;
 
-        // Imagen del curso
-        const courseImage = card.querySelector('.course-image img');
-        courseImage.src = course.thumbnail ? `../images/courses/${course.thumbnail}` : '../images/course-default.jpg';
-        courseImage.alt = course.title;
-
-        // Estado del curso
-        const statusElement = card.querySelector('.course-status');
-        switch (course.status) {
-            case 'completed':
-                statusElement.textContent = 'Completado';
-                statusElement.classList.add('status-completed');
-                break;
-            case 'in_progress':
-                statusElement.textContent = 'En progreso';
-                statusElement.classList.add('status-in-progress');
-                break;
-            default:
-                statusElement.textContent = 'No iniciado';
-                statusElement.classList.add('status-not-started');
-        }
-
-        // Detalles del curso
-        card.querySelector('.course-title').textContent = course.title;
-        card.querySelector('.course-description').textContent = course.description;
-
-        // Progreso
-        const progressFill = card.querySelector('.progress-fill');
-        progressFill.style.width = `${course.progress}%`;
-        card.querySelector('.progress-text').textContent = `${course.progress}%`;
-
-        // Botón de acción
-        const actionButton = card.querySelector('.course-button');
-        if (course.status === 'completed') {
-            actionButton.textContent = 'Ver Certificado';
-            actionButton.classList.add('btn-certificate');
-            actionButton.dataset.courseId = course.id;
-            actionButton.addEventListener('click', () => showCertificate(course));
-        } else if (course.status === 'in_progress') {
-            actionButton.textContent = 'Continuar';
-            actionButton.classList.add('btn-continue');
-            actionButton.addEventListener('click', () => continueCourse(course.id));
-        } else {
-            actionButton.textContent = 'Empezar';
-            actionButton.classList.add('btn-start');
-            actionButton.addEventListener('click', () => startCourse(course.id));
-        }
-
-        // Añadir la tarjeta al contenedor
-        container.appendChild(card);
+    // Ver cursos
+    tbody.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            window.location.href = `course-content.html?id=${id}`;
+        });
     });
 
-    // Actualizar la paginación
+    // Certificado
+    tbody.querySelectorAll('.btn-certificate').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // busca el curso por su id
+            const course = allCourses.find(c => c.id == btn.dataset.id);
+            // rellena y muestra el modal
+            showCertificate(course);
+        });
+    });
+
     updatePagination(courses.length, page);
 }
 
@@ -451,7 +297,7 @@ function getFilteredCourses() {
     let filteredCourses = allCourses.filter(course => {
         const matchesSearch =
             course.title.toLowerCase().includes(searchTerm) ||
-            course.description.toLowerCase().includes(searchTerm);
+            (course.description && course.description.toLowerCase().includes(searchTerm));
 
         const matchesStatus =
             statusFilter === 'all' ||
@@ -521,56 +367,4 @@ function startCourse(courseId) {
     }
     // Redirigir al contenido del curso e indicar que es inicio
     window.location.href = `course-content.html?id=${courseId}&start=true`;
-}
-
-// Función para mostrar notificaciones
-function showNotification(message, type = 'info') {
-    console.log(`Notificación (${type}): ${message}`); // Log para depuración
-
-    const container = document.getElementById('notification-container');
-    if (!container) {
-        console.error('No se encontró el contenedor de notificaciones');
-        return;
-    }
-
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-
-    // Determinar el icono según el tipo
-    let icon = 'info-circle';
-    if (type === 'success') icon = 'check-circle';
-    if (type === 'error') icon = 'exclamation-circle';
-    if (type === 'warning') icon = 'exclamation-triangle';
-
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${icon}"></i>
-            <p>${message}</p>
-        </div>
-        <button class="notification-close">&times;</button>
-    `;
-
-    // Agregar la notificación al contenedor
-    container.appendChild(notification);
-
-    // Configurar el botón de cierre
-    const closeButton = notification.querySelector('.notification-close');
-    closeButton.addEventListener('click', () => {
-        notification.classList.add('fade-out');
-        setTimeout(() => {
-            container.removeChild(notification);
-        }, 300);
-    });
-
-    // Eliminar automáticamente después de 5 segundos
-    setTimeout(() => {
-        if (container.contains(notification)) {
-            notification.classList.add('fade-out');
-            setTimeout(() => {
-                if (container.contains(notification)) {
-                    container.removeChild(notification);
-                }
-            }, 300);
-        }
-    }, 5000);
 }

@@ -6,126 +6,41 @@ const { pool } = require('../config/database');
 // Get dashboard stats
 router.get('/stats', isAuthenticated, async (req, res) => {
     try {
-        // Get total technician users
-        const [userRows] = await pool.query('SELECT COUNT(*) as total FROM users WHERE role = ?', ['technician']); // Corrected role value
-        const totalUsers = userRows[0].total; // This now holds the count of technicians
-
-        // Get total courses - Modificado para manejar errores silenciosamente
-        let totalCourses = 0;
-        let activeCourses = 0;
-        try {
-            const [courseRows] = await pool.query('SELECT COUNT(*) as total FROM courses');
-            totalCourses = courseRows[0].total || 0;
-            
-            // Get active courses
-            const [activeRows] = await pool.query('SELECT COUNT(*) as total FROM courses WHERE status = ?', ['published']);
-            activeCourses = activeRows[0].total || 0;
-        } catch (err) {
-            console.error('Error al consultar cursos:', err);
-            // Continuar con la ejecución en caso de error
-        }
+        // Get total users
+        const [userRows] = await pool.query('SELECT COUNT(*) as total FROM users');
+        const totalUsers = userRows[0].total;
+        
+        // Get total courses
+        const [courseRows] = await pool.query('SELECT COUNT(*) as total FROM courses');
+        const totalCourses = courseRows[0].total;
+        
+        // Get active courses - Fix: Check the actual value in your database
+        // Looking at your schema, it should be "published" not published
+        const [activeRows] = await pool.query('SELECT COUNT(*) as total FROM courses WHERE status = ?', ['published']);
+        const activeCourses = activeRows[0].total;
         
         // Get total completed courses
-        let totalCompleted = 0;
-        try {
-            const [completedRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['completed']);
-            totalCompleted = completedRows[0].total || 0;
-        } catch (err) {
-            console.error('Error al consultar cursos completados:', err);
-            // Continuar con la ejecución en caso de error
-        }
+        const [completedRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['completed']);
+        const totalCompleted = completedRows[0].total;
         
         // Get total modules
-        let totalModules = 0;
-        try {
-            const [moduleRows] = await pool.query('SELECT COUNT(*) as total FROM modules');
-            totalModules = moduleRows[0].total || 0;
-        } catch (err) {
-            console.error('Error al consultar módulos:', err);
-            // Continuar con la ejecución en caso de error
-        }
+        const [moduleRows] = await pool.query('SELECT COUNT(*) as total FROM modules');
+        const totalModules = moduleRows[0].total;
         
-        // Get total certifications (from user_badges table)
-        let totalCertifications = 0;
-        try {
-            const [certRows] = await pool.query(`
-                SELECT COUNT(*) as total 
-                FROM user_badges 
-                JOIN badges ON user_badges.badge_id = badges.badge_id 
-                WHERE badges.name LIKE '%certificación%' OR badges.name LIKE '%certification%'
-            `);
-            totalCertifications = certRows[0].total || 0;
-        } catch (err) {
-            console.error('Error al consultar certificaciones:', err);
-            // Continuar con la ejecución en caso de error
-        }
+        // Remove the nested route handler that's causing issues
         
-        // Send response
+        // Send response without avgRating
         res.json({
-            totalUsers: totalUsers, // Keep the key as totalUsers for now to match frontend ID
+            totalUsers,
             totalCourses,
             activeCourses,
             totalCompleted,
-            totalModules,
-            totalCertifications
+            totalModules
+            // Removed avgRating from here
         });
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
         res.status(500).json({ error: 'Error al cargar estadísticas del dashboard' });
-    }
-});
-
-// Get completion statistics
-router.get('/completion-stats', isAuthenticated, async (req, res) => {
-    try {
-        // Get completion rate
-        const [totalRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress');
-        const totalEnrollments = totalRows[0].total;
-        
-        const [completedRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['completed']);
-        const completedEnrollments = completedRows[0].total;
-        
-        const completionRate = totalEnrollments > 0 
-            ? Math.round((completedEnrollments / totalEnrollments) * 100) 
-            : 0;
-        
-        // Get average quiz score
-        const [scoreRows] = await pool.query('SELECT AVG(score) as average FROM quiz_attempts');
-        const averageScore = scoreRows[0].average && !isNaN(scoreRows[0].average) 
-            ? parseFloat(scoreRows[0].average).toFixed(1) 
-            : 'N/A';
-        
-        res.json({
-            completionRate,
-            averageScore
-        });
-    } catch (error) {
-        console.error('Error fetching completion stats:', error);
-        res.status(500).json({ error: 'Error al cargar estadísticas de finalización' });
-    }
-});
-
-// Get course completion data for chart
-router.get('/course-completion', isAuthenticated, async (req, res) => {
-    try {
-        // Get counts for each status
-        const [completedRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['completed']);
-        const completed = completedRows[0].total;
-        
-        const [inProgressRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['in_progress']);
-        const inProgress = inProgressRows[0].total;
-        
-        const [notStartedRows] = await pool.query('SELECT COUNT(*) as total FROM user_course_progress WHERE status = ?', ['not_started']);
-        const notStarted = notStartedRows[0].total;
-        
-        res.json({
-            completed,
-            inProgress,
-            notStarted
-        });
-    } catch (error) {
-        console.error('Error fetching course completion data:', error);
-        res.status(500).json({ error: 'Error al cargar datos de finalización de cursos' });
     }
 });
 
@@ -151,7 +66,7 @@ router.get('/recent-activity', isAuthenticated, async (req, res) => {
                 courses c ON ucp.course_id = c.course_id
             ORDER BY 
                 activity_date DESC
-            LIMIT 5
+            LIMIT 10
         `);
         
         // Format activities for frontend
