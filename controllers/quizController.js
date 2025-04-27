@@ -366,3 +366,46 @@ exports.deleteAnswer = async (req, res, next) => {
         next(error);
     }
 };
+
+// Nuevo método: registrar intento de quiz
+exports.submitQuizAttempt = async (req, res, next) => {
+    try {
+      const userId    = req.session.user.user_id;
+      const { quizId } = req.params;
+      const answers    = req.body.answers; // [{questionId, answerId}, ...]
+  
+      // Obtener datos del quiz (puntos y passing_score)
+      const [quizRows] = await pool.query(
+        'SELECT passing_score FROM quizzes WHERE quiz_id = ?',
+        [quizId]
+      );
+      if (!quizRows.length) return res.status(404).json({ message: 'Quiz no encontrado' });
+      const passingScore = quizRows[0].passing_score;
+  
+      // Calcular score total
+      let correctCount = 0;
+      for (let resp of answers) {
+        const [ansRows] = await pool.query(
+          'SELECT is_correct FROM answers WHERE question_id = ? AND answer_id = ?',
+          [resp.questionId, resp.answerId]
+        );
+        if (ansRows[0]?.is_correct) correctCount++;
+      }
+      const score = Math.round((correctCount / answers.length) * 100);
+      const passed = score >= passingScore;
+  
+      // Insertar intento
+      await pool.query(
+        `INSERT INTO quiz_attempts
+           (quiz_id, user_id, score, passed, completed_at)
+         VALUES (?, ?, ?, ?, NOW())`,
+        [quizId, userId, score, passed]
+      );
+  
+      res.status(200).json({ success: true, score, passed });
+    } catch (error) {
+      console.error('Error submitQuizAttempt:', error);
+      next(error);
+    }
+  };
+  

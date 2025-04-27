@@ -624,84 +624,110 @@ exports.markContentCompleted = async (req, res) => {
 // Función auxiliar para actualizar el progreso de un curso
 async function updateCourseProgress(userId, courseId) {
     try {
-        // Obtener total de contenidos y cuestionarios del curso
-        const [totalItems] = await pool.query(`
-            SELECT
-                (SELECT COUNT(*) FROM contents c
-                 JOIN modules m ON c.module_id = m.module_id
-                 WHERE m.course_id = ?)
-                +
-                (SELECT COUNT(*) FROM quizzes q
-                 JOIN modules m ON q.module_id = m.module_id
-                 WHERE m.course_id = ?) as total
-        `, [courseId, courseId]);
+        // totale items: contents + quizzes
+        const [[{ total }]] = await pool.query(
+            `SELECT
+           (SELECT COUNT(*) FROM contents c JOIN modules m ON c.module_id=m.module_id WHERE m.course_id=?)
+           +
+           (SELECT COUNT(*) FROM quizzes q JOIN modules m ON q.module_id=m.module_id WHERE m.course_id=?)
+           AS total`,
+            [courseId, courseId]
+        );
 
-        // Obtener contenidos completados
-        const [completedContents] = await pool.query(`
-            SELECT
-                COUNT(*) as completed
-            FROM
-                user_content_progress ucp
-            JOIN
-                contents c ON ucp.content_id = c.content_id
-            JOIN
-                modules m ON c.module_id = m.module_id
-            WHERE
-                ucp.user_id = ?
-                AND m.course_id = ?
-                AND ucp.completed = 1
-        `, [userId, courseId]);
+        // completed contents
+        const [[{ completedContents }]] = await pool.query(
+            `SELECT COUNT(*) AS completedContents
+           FROM user_content_progress ucp
+           JOIN contents c ON ucp.content_id=c.content_id
+           JOIN modules m ON c.module_id=m.module_id
+           WHERE ucp.user_id=? AND m.course_id=? AND ucp.completed=1`,
+            [userId, courseId]
+        );
 
-        // Obtener cuestionarios completados
-        const [completedQuizzes] = await pool.query(`
-            SELECT
-                COUNT(*) as completed
-            FROM
-                quiz_attempts qa
-            JOIN
-                quizzes q ON qa.quiz_id = q.quiz_id
-            JOIN
-                modules m ON q.module_id = m.module_id
-            WHERE
-                qa.user_id = ?
-                AND m.course_id = ?
-                AND qa.passed = 1
-        `, [userId, courseId]);
+        // completed quizzes
+        const [[{ completedQuizzes }]] = await pool.query(
+            `SELECT COUNT(*) AS completedQuizzes
+           FROM quiz_attempts qa
+           JOIN quizzes q ON qa.quiz_id=q.quiz_id
+           JOIN modules m ON q.module_id=m.module_id
+           WHERE qa.user_id=? AND m.course_id=? AND qa.passed=1`,
+            [userId, courseId]
+        );
 
-        // Calcular progreso porcentual
-        const totalCount = totalItems[0].total;
-        const completedCount = completedContents[0].completed + completedQuizzes[0].completed;
-        const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0; // Round progress
+        const done = completedContents + completedQuizzes;
+        const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+        let status = 'not_started';
+        if (progress === 100) status = 'completed';
+        else if (done > 0) status = 'in_progress';
 
-        // Determinar estado
-        let newStatus = 'in_progress';
-        if (progressPercent >= 100) {
-            newStatus = 'completed';
-        } else if (progressPercent <= 0 && completedCount === 0) { // Ensure status is not_started only if nothing is done
-             newStatus = 'not_started';
-        }
-
-
-        // Actualizar el progreso
-        await pool.query(`
-            INSERT INTO user_course_progress
-            (user_id, course_id, status, progress_percentage,
-             started_at, completed_at)
-            VALUES
-            (?, ?, ?, ?, COALESCE((SELECT started_at FROM user_course_progress WHERE user_id = ? AND course_id = ?), NOW()), ${newStatus === 'completed' ? 'NOW()' : 'NULL'})
-            ON DUPLICATE KEY UPDATE
-            status = ?,
-            progress_percentage = ?,
-            completed_at = IF(? = 'completed' AND completed_at IS NULL, NOW(), completed_at)
-        `, [userId, courseId, newStatus, progressPercent, userId, courseId, newStatus, progressPercent, newStatus]);
-
+        // update or insert progress
+        await pool.query(
+            `INSERT INTO user_course_progress
+           (user_id, course_id, status, progress_percentage, started_at, completed_at)
+         VALUES (?, ?, ?, ?, NOW(), ?)
+         ON DUPLICATE KEY UPDATE
+           status=VALUES(status),
+           progress_percentage=VALUES(progress_percentage),
+           completed_at=CASE
+             WHEN VALUES(status)='completed' AND completed_at IS NULL THEN NOW()
+             ELSE completed_at END`,
+            [userId, courseId, status, progress, status === 'completed' ? new Date() : null]
+        );
 
         return true;
-    } catch (error) {
-        console.error('Error updating course progress:', error);
+    } catch (err) {
+        console.error('Error updating course progress:', err);
         return false;
     }
 }
+
+exports.submitQuiz = async (req, res) => {
+    try {
+        const userId = req.session.user?.user_id;
+        const { courseId, moduleId, quizId } = req.params;
+        const answers = req.body.answers; // [{questionId, answerId}, ...]
+
+        if (!userId) return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+        if (!Array.isArray(answers) || answers.length === 0) {
+            return res.status(400).json({ success: false, error: 'No se proporcionaron respuestas' });
+        }
+
+        // get passing score
+        const [[{ passing_score }]] = await pool.query(
+            'SELECT passing_score FROM quizzes WHERE quiz_id=?',
+            [quizId]
+        );
+
+        // get correct answers for those questionIds
+        const questionIds = answers.map(a => a.questionId);
+        const [correctRows] = await pool.query(
+            'SELECT answer_id FROM answers WHERE question_id IN (?) AND is_correct=1',
+            [questionIds]
+        );
+        const correctSet = new Set(correctRows.map(r => r.answer_id));
+
+        // score calculation
+        const total = answers.length;
+        const correctCount = answers.reduce((sum, a) => sum + (correctSet.has(a.answerId) ? 1 : 0), 0);
+        const score = Math.round((correctCount / total) * 100);
+        const passed = score >= passing_score;
+
+        // insert quiz_attempt
+        await pool.query(
+            'INSERT INTO quiz_attempts (user_id, quiz_id, score, passed, completed_at) VALUES (?, ?, ?, ?, NOW())',
+            [userId, quizId, score, passed ? 1 : 0]
+        );
+
+        // update course progress
+        await updateCourseProgress(userId, courseId);
+
+        res.json({ success: true, score, passed });
+    } catch (err) {
+        console.error('Error in submitQuiz:', err);
+        res.status(500).json({ success: false, error: 'Error al procesar el quiz' });
+    }
+};
+
 
 exports.getCertificates = async (req, res) => {
     try {
