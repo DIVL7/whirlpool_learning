@@ -16,7 +16,7 @@ let currentModule = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Verifica sesión y despliega UI
-    initTechnicianPage(); 
+    initTechnicianPage();
 
     const params = new URLSearchParams(window.location.search);
     courseId = params.get('id');
@@ -212,7 +212,7 @@ function showModule(module, idx, total) {
         : `<button class="btn-primary" disabled>Siguiente</button>`;
     html += `</div>`;
 
-    moduleContentEl.innerHTML = html;
+    moduleContentEl.innerHTML = html
 
     // --- Inicio: Listeners para los quizzes ---
     moduleContentEl.querySelectorAll('.quiz-item').forEach(el => {
@@ -284,7 +284,6 @@ function showModule(module, idx, total) {
         });
     });
 
-
     // Interacción: marcar contenido como completado y mostrar su data
     moduleContentEl.querySelectorAll('.content-item').forEach(el => {
         el.addEventListener('click', async () => {
@@ -316,6 +315,10 @@ function showModule(module, idx, total) {
             }
         });
     });
+
+    // Auto-abrir primer contenido
+    const firstContentItem = moduleContentEl.querySelector('.content-item');
+    if (firstContentItem) { firstContentItem.click(); }
 
     // Botones Prev/Next
     const prevBtn = moduleContentEl.querySelector('.prev-module');

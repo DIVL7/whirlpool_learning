@@ -307,3 +307,13 @@
   font-size: 1.5rem;
   cursor: pointer;
 }
+
+/* --- Estilo para el visor de contenido de texto --- */
+.content-viewer {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--light-color);
+  border-left: 4px solid var(--primary-color);
+  white-space: pre-line; /* respeta saltos de línea */
+  border-radius: 4px;
+}
