@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const path = require('path');
 
 // Get technician statistics
 exports.getStats = async (req, res) => {
@@ -269,44 +270,35 @@ exports.getRecentActivity = async (req, res) => {
 // Get upcoming courses
 exports.getUpcomingCourses = async (req, res) => {
     try {
-        // Get user ID from session
         const userId = req.session.user?.user_id;
-
         if (!userId) {
             return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
         }
 
-        // Obtener cursos no iniciados o con poco progreso
-        const [upcomingCourses] = await pool.query(`
-            SELECT
-                c.course_id as id,
-                c.title,
-                c.description,
-                c.thumbnail,
-                COALESCE(ucp.status, 'not_started') as status,
-                COALESCE(ucp.progress_percentage, 0) as progress,
-                ucp.started_at as startDate
-            FROM
-                courses c
-            LEFT JOIN
-                user_course_progress ucp ON c.course_id = ucp.course_id AND ucp.user_id = ?
-            WHERE
-                c.status = 'published'
-                AND (ucp.status = 'not_started' OR ucp.status IS NULL OR
-                    (ucp.status = 'in_progress' AND ucp.progress_percentage < 20))
-            ORDER BY
-                FIELD(COALESCE(ucp.status, 'not_started'), 'in_progress', 'not_started'),
-                c.created_at DESC
-            LIMIT 3
-        `, [userId]);
+        // Traer sólo los cursos en estado "in_progress"
+        const [upcomingCourses] = await pool.query(
+            `SELECT
+           c.course_id   AS id,
+           c.title,
+           c.description,
+           COALESCE(ucp.status, 'not_started') AS status,
+           COALESCE(ucp.progress_percentage, 0) AS progress,
+           ucp.started_at AS startDate
+         FROM courses c
+         JOIN user_course_progress ucp
+           ON c.course_id = ucp.course_id
+          AND ucp.user_id   = ?
+         WHERE c.status = 'published'
+           AND ucp.status = 'in_progress'
+         ORDER BY ucp.started_at DESC
+         LIMIT 3`,
+            [userId]
+        );
 
-        res.json({
-            success: true,
-            courses: upcomingCourses
-        });
+        return res.json({ success: true, courses: upcomingCourses });
     } catch (error) {
         console.error('Error fetching upcoming courses:', error);
-        res.status(500).json({ success: false, error: 'Error al cargar próximos cursos' });
+        return res.status(500).json({ success: false, error: 'Error al cargar próximos cursos' });
     }
 };
 
@@ -448,124 +440,97 @@ exports.getCourseDetails = async (req, res) => {
 };
 
 // Obtener módulos de un curso específico con su contenido
+// controllers/technicianController.js
 exports.getCourseModules = async (req, res) => {
     try {
         const userId = req.session.user?.user_id;
         const courseId = req.params.id;
+        if (!userId) return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
+        if (!courseId) return res.status(400).json({ success: false, error: 'ID de curso no proporcionado' });
 
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Usuario no autenticado' });
-        }
+        // 1) Traer módulos básicos
+        const [modules] = await pool.query(
+            `SELECT module_id, title, description, position
+           FROM modules
+          WHERE course_id = ?
+          ORDER BY position`,
+            [courseId]
+        );
 
-        if (!courseId) {
-            return res.status(400).json({ success: false, error: 'ID de curso no proporcionado' });
-        }
+        // 2) Por cada módulo, traer sus contenidos y quizzes
+        const detailed = await Promise.all(modules.map(async m => {
+            // CONTENIDOS con estado completed=0|1
+            const [contents] = await pool.query(
+                `SELECT
+             c.content_id,
+             c.title,
+             c.content_type_id,
+             c.content_data,
+             COALESCE(ucp.completed, 0) AS completed
+           FROM contents c
+           LEFT JOIN user_content_progress ucp
+             ON c.content_id = ucp.content_id
+            AND ucp.user_id   = ?
+           WHERE c.module_id = ?
+           ORDER BY c.position`,
+                [userId, m.module_id]
+            );
 
-        // Obtener módulos del curso
-        const [modules] = await pool.query(`
-            SELECT
-                m.module_id,
-                m.title,
-                m.description,
-                m.position
-            FROM
-                modules m
-            WHERE
-                m.course_id = ?
-            ORDER BY
-                m.position
-        `, [courseId]);
+            // QUIZZES con status: not_started|attempted|completed
+            const [quizzes] = await pool.query(
+                `SELECT
+             q.quiz_id    AS quiz_id,
+             q.title,
+             CASE
+               WHEN qa.passed  = 1 THEN 'completed'
+               WHEN qa.attempted = 1 THEN 'attempted'
+               ELSE 'not_started'
+             END AS status
+           FROM quizzes q
+           LEFT JOIN (
+             SELECT quiz_id, passed, 1 AS attempted
+               FROM quiz_attempts
+              WHERE user_id = ?
+           ) qa
+             ON q.quiz_id = qa.quiz_id
+           WHERE q.module_id = ?
+           ORDER BY q.position`,
+                [userId, m.module_id]
+            );
 
-        // Para cada módulo, obtener su contenido y calcular progreso
-        const formattedModules = [];
+            // 3) Calcular progreso y estado del módulo
+            const doneContents = contents.filter(c => c.completed === 1).length;
+            const doneQuizzes = quizzes.filter(q => q.status === 'completed').length;
+            const totalItems = contents.length + quizzes.length;
+            const progress = totalItems > 0
+                ? Math.round(((doneContents + doneQuizzes) / totalItems) * 100)
+                : 0;
 
-        for (const module of modules) {
-            // Obtener contenido del módulo
-            const [contents] = await pool.query(`
-                SELECT
-                    c.content_id,
-                    c.title,
-                    c.content_type_id,
-                    c.position,
-                    COALESCE(ucp.completed, 0) as completed
-                FROM
-                    contents c
-                LEFT JOIN
-                    user_content_progress ucp ON c.content_id = ucp.content_id AND ucp.user_id = ?
-                WHERE
-                    c.module_id = ?
-                ORDER BY
-                    c.position
-            `, [userId, module.module_id]);
-
-            // Obtener cuestionarios del módulo
-            const [quizzes] = await pool.query(`
-                SELECT
-                    q.quiz_id,
-                    q.title,
-                    q.description,
-                    q.passing_score,
-                    CASE
-                        WHEN qa.passed = 1 THEN 'completed'
-                        WHEN qa.attempt_id IS NOT NULL THEN 'attempted'
-                        ELSE 'not_started'
-                    END as status
-                FROM
-                    quizzes q
-                LEFT JOIN (
-                    SELECT
-                        quiz_id,
-                        MAX(attempt_id) as attempt_id,
-                        MAX(passed) as passed
-                    FROM
-                        quiz_attempts
-                    WHERE
-                        user_id = ?
-                    GROUP BY
-                        quiz_id
-                ) qa ON q.quiz_id = qa.quiz_id
-                WHERE
-                    q.module_id = ?
-                ORDER BY
-                    q.position
-            `, [userId, module.module_id]);
-
-            // Calcular progreso del módulo
-            let completedContents = contents.filter(c => c.completed).length;
-            let completedQuizzes = quizzes.filter(q => q.status === 'completed').length;
-            let totalItems = contents.length + quizzes.length;
-            let progress = totalItems > 0 ?
-                Math.round(((completedContents + completedQuizzes) / totalItems) * 100) : 0;
-
-            // Determinar el estado del módulo
             let status = 'not_started';
-            if (progress === 100) {
-                status = 'completed';
-            } else if (progress > 0) {
-                status = 'in_progress';
-            }
+            if (progress === 100) status = 'completed';
+            else if (progress > 0) status = 'in_progress';
 
-            formattedModules.push({
-                module_id: module.module_id,
-                title: module.title,
-                description: module.description,
-                position: module.position,
-                status: status,
-                progress: progress,
-                contents: contents,
-                quizzes: quizzes
-            });
-        }
+            return {
+                module_id: m.module_id,
+                title: m.title,
+                description: m.description,
+                position: m.position,
+                status,
+                progress,
+                contents,
+                quizzes
+            };
+        }));
 
-        res.json({
-            success: true,
-            modules: formattedModules
-        });
-    } catch (error) {
-        console.error('Error fetching course modules:', error);
-        res.status(500).json({ success: false, error: 'Error al cargar los módulos del curso' });
+        // 4) Devolver todo junto
+        return res.json({ success: true, modules: detailed });
+
+    } catch (err) {
+        console.error('Error fetching course modules:', err);
+        return res.status(500).json({ success: false, error: 'Error al cargar módulos' });
     }
 };
+
 
 // Marcar contenido como completado
 exports.markContentCompleted = async (req, res) => {
@@ -778,10 +743,9 @@ exports.downloadCertificate = async (req, res) => {
 
     // Aquí sirves o generas el PDF.
     // Placeholder: send a simple text response for now
-    res.type('text/plain').send(`Placeholder for certificate PDF for user ${userId}, course ${courseId}`);
-    // In a real scenario:
-    // const filePath = `/path/to/certs/${userId}_${courseId}.pdf`;
-    // return res.download(filePath, `certificado_${courseId}.pdf`);
+    // Ruta al PDF generado (ajusta según tu estructura)
+    const filePath = path.join(__dirname, '../uploads/certificates', `${userId}_${courseId}.pdf`);
+    return res.download(filePath, `certificado_${courseId}.pdf`);
 };
 
 // NOTE: formatTimeAgo function removed as it's expected to be available globally from utils.js
