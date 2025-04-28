@@ -148,7 +148,12 @@ function displayCourses(courses, page) {
 
         return `
           <tr>
-            <td>${c.title}</td>
+            <td class="course-title-cell">
+  ${c.thumbnail
+                ? `<img src="${c.thumbnail}" alt="Miniatura de ${c.title}" class="course-thumbnail"/>`
+                : ''}
+  <span>${c.title}</span>
+</td>
             <td>${c.description || ''}</td>
             <td><span class="status-badge ${statusCls}">${statusLabel}</span></td>
             <td>${c.progress}%</td>
@@ -343,19 +348,23 @@ function showCertificate(course) {
     document.getElementById('certificate-course').textContent = course.title;
     document.getElementById('certificate-score').textContent = `${course.score || 90}%`;
 
-    // Establecer la fecha
+    // Establecer la fecha de emisión
     const today = new Date();
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('certificate-date').textContent = `Fecha: ${today.toLocaleDateString('es-ES', options)}`;
+    document.getElementById('certificate-date').textContent =
+        `Fecha: ${today.toLocaleDateString('es-ES', options)}`;
+
+    // Configurar el botón de descarga
+    const downloadBtn = document.getElementById('download-certificate');
+    downloadBtn.onclick = () => {
+        // abre en pestaña nueva la ruta de tu API que entrega el PDF
+        window.open(`/api/technician/certificates/${course.id}/download`, '_blank');
+    };
 
     // Mostrar el modal
     document.getElementById('certificate-modal').classList.add('show');
-
-    // Configurar el botón de descarga
-    document.getElementById('download-certificate').onclick = () => {
-        window.location.href = `/api/technician/certificates/${course.id}/download`;
-    };
 }
+
 
 // Función para continuar un curso
 function continueCourse(courseId) {
