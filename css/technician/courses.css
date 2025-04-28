@@ -54,6 +54,20 @@
     font-size: .9rem;
 }
 
+/* ===== MINIATURAS EN LISTA DE CURSOS ===== */
+.course-title-cell {
+    display: flex;
+    align-items: center;
+}
+
+.course-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 8px;
+    border-radius: 4px;
+}
+
 /* Progreso y acción centrados */
 .courses-list td:nth-child(3),
 .courses-list td:nth-child(4) {
@@ -237,20 +251,22 @@
 .modal {
     display: none;
     position: fixed;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
-  }
-  .modal.show {
+}
+
+.modal.show {
     display: flex;
-  }
-  
-  /* — Estilo del contenedor interno del modal — */
-  .modal-content {
+}
+
+/* — Estilo del contenedor interno del modal — */
+.modal-content {
     background: var(--white-color);
     border-radius: 8px;
     padding: 20px;
@@ -259,53 +275,58 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  /* — Encabezado del modal — */
-  .modal-header {
+}
+
+/* — Encabezado del modal — */
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-  }
-  .modal-header h2 {
+}
+
+.modal-header h2 {
     font-size: 1.5rem;
     margin: 0;
-  }
-  .modal-header .close-modal {
+}
+
+.modal-header .close-modal {
     background: none;
     border: none;
     font-size: 1.2rem;
     cursor: pointer;
-  }
-  
-  /* — Cuerpo del modal — */
-  .modal-body {
+}
+
+/* — Cuerpo del modal — */
+.modal-body {
     color: var(--dark-color);
     line-height: 1.4;
-  }
-  .certificate-container {
+}
+
+.certificate-container {
     margin-bottom: 20px;
-  }
-  .certificate-header h2 {
+}
+
+.certificate-header h2 {
     margin: 10px 0;
     font-size: 1.25rem;
-  }
-  .certificate-body p,
-  .certificate-footer p {
+}
+
+.certificate-body p,
+.certificate-footer p {
     margin: 8px 0;
-  }
-  
-  /* — Botones de acción dentro del modal alineados a la derecha — */
-  .certificate-actions {
+}
+
+/* — Botones de acción dentro del modal alineados a la derecha — */
+.certificate-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
-  }
-  
-  /* — Separación y estilo uniforme para botón “Ver Certificado” en la tabla — */
-  .courses-list .btn-certificate {
+}
+
+/* — Separación y estilo uniforme para botón “Ver Certificado” en la tabla — */
+.courses-list .btn-certificate {
     padding: 6px 12px;
     background: var(--primary-color);
     color: #fff;
@@ -315,11 +336,12 @@
     cursor: pointer;
     transition: background .2s;
 }
-  .courses-list .btn-certificate:hover {
-    background: var(--secondary-color);
-  }
 
-  /* ===== MEJORAR DISTRIBUCIÓN DE BOTONES DE ACCIÓN ===== */
+.courses-list .btn-certificate:hover {
+    background: var(--secondary-color);
+}
+
+/* ===== MEJORAR DISTRIBUCIÓN DE BOTONES DE ACCIÓN ===== */
 .course-actions {
     display: flex;
     flex-direction: column;
