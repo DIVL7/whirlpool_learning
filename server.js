@@ -66,13 +66,13 @@ app.get('/api/logout', (req, res) => {
 
 // Importar las rutas de API
 const userRoutes = require('./routes/api/users');
-// const courseApiRoutes = require('./routes/api/courses'); // No longer needed here, handled below
-const courseRoutes = require('./routes/courses'); // Import the main course routes
+const courseApiRoutes = require('./routes/api/courses'); // Import the API course routes
+// const courseRoutes = require('./routes/courses'); // Keep if needed for other non-API routes, otherwise remove
 
 // Registrar las rutas de API
 app.use('/api/users', userRoutes);
-// app.use('/api/courses', courseApiRoutes); // Remove this line
-app.use('/api/courses', courseRoutes); // Mount the main course routes under /api/courses
+app.use('/api/courses', courseApiRoutes); // Mount the API course routes under /api/courses
+// app.use('/api/courses', courseRoutes); // Comment out or remove if courseApiRoutes handles everything needed under /api/courses
 
 app.use('/technician', express.static(path.join(__dirname, 'technician')));
   

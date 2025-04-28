@@ -37,7 +37,10 @@ async function getAllCourses(req, res) {
                 c.created_at,
                 c.updated_at,
                 COUNT(DISTINCT m.module_id) as lesson_count,
-                0 as student_count
+                (SELECT COUNT(DISTINCT ucp.user_id) 
+                 FROM user_course_progress ucp 
+                 JOIN users u ON ucp.user_id = u.user_id 
+                 WHERE ucp.course_id = c.course_id AND u.role = 'technician') as student_count
             FROM 
                 courses c
             LEFT JOIN 
@@ -45,7 +48,7 @@ async function getAllCourses(req, res) {
             LEFT JOIN
                 modules m ON c.course_id = m.course_id
             GROUP BY
-                c.course_id
+                c.course_id, cc.name -- Include cc.name in GROUP BY if used in SELECT outside aggregate
             ORDER BY
                 c.updated_at DESC
             LIMIT ? OFFSET ?
@@ -110,13 +113,22 @@ async function getCourseById(req, res) {
                 cc.name as category_name,
                 c.status,
                 c.created_at,
-                c.updated_at
+                c.updated_at,
+                COUNT(DISTINCT m.module_id) as lesson_count, -- Also add lesson count here
+                (SELECT COUNT(DISTINCT ucp.user_id) 
+                 FROM user_course_progress ucp 
+                 JOIN users u ON ucp.user_id = u.user_id 
+                 WHERE ucp.course_id = c.course_id AND u.role = 'technician') as student_count -- Add student count here
             FROM 
                 courses c
             LEFT JOIN
                 course_categories cc ON c.category_id = cc.category_id
+            LEFT JOIN 
+                modules m ON c.course_id = m.course_id -- Join modules to count lessons
             WHERE 
                 c.course_id = ?
+            GROUP BY -- Group by course details
+                c.course_id, cc.name 
         `, [courseId]);
         
         if (courses.length === 0) {
@@ -135,7 +147,9 @@ async function getCourseById(req, res) {
             category: course.category_name || 'General',
             status: course.status,
             created_at: course.created_at,
-            updated_at: course.updated_at
+            updated_at: course.updated_at,
+            lesson_count: course.lesson_count, // Include lesson count
+            student_count: course.student_count // Include student count
         };
         
         res.json(formattedCourse);
