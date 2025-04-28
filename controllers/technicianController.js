@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const fs = require('fs');
 const path = require('path');
 
 // Get technician statistics
@@ -731,21 +732,47 @@ exports.downloadCertificate = async (req, res) => {
     const userId = req.session.user?.user_id;
     const courseId = req.params.courseId;
 
-    // Verifico que el técnico completó ese curso
+    // Usuario autenticado
+    if (!userId) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    // ¿Completó el curso?
     const [[prog]] = await pool.query(
-        `SELECT status FROM user_course_progress
-       WHERE user_id = ? AND course_id = ?`,
+        `SELECT status 
+         FROM user_course_progress 
+        WHERE user_id   = ? 
+          AND course_id = ?`,
         [userId, courseId]
     );
     if (!prog || prog.status !== 'completed') {
-        return res.status(403).send('No tienes permiso para este certificado');
+        return res.status(403).json({ error: 'No tienes permiso para descargar este certificado' });
     }
 
-    // Aquí sirves o generas el PDF.
-    // Placeholder: send a simple text response for now
-    // Ruta al PDF generado (ajusta según tu estructura)
-    const filePath = path.join(__dirname, '../uploads/certificates', `${userId}_${courseId}.pdf`);
-    return res.download(filePath, `certificado_${courseId}.pdf`);
+    // Ruta al PDF
+    const filename = `${userId}_${courseId}.pdf`;
+    const filePath = path.join(__dirname, '..', 'uploads', 'certificates', filename);
+
+    // Existe el fichero?
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Certificado no encontrado' });
+    }
+
+    // Envío del PDF forzando descarga
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="certificado_${courseId}.pdf"`
+    );
+    res.sendFile(filePath, err => {
+        if (err) {
+            console.error('Error enviando certificado:', err);
+            // Si aún no se habían enviado cabeceras
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Error al enviar el certificado' });
+            }
+        }
+    });
 };
 
 // NOTE: formatTimeAgo function removed as it's expected to be available globally from utils.js
