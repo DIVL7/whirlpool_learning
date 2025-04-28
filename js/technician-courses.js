@@ -22,6 +22,14 @@ function initializeEventListeners() {
         button.addEventListener('click', () => {
             document.getElementById('certificate-modal').classList.remove('show');
         });
+
+        // Cerrar modal de certificado 
+        document.querySelectorAll('#certificate-modal .close-modal').forEach(btn =>
+            btn.addEventListener('click', () => {
+                document.getElementById('certificate-modal').classList.remove('show');
+            })
+        );
+
     });
 }
 
@@ -345,7 +353,7 @@ function showCertificate(course) {
 
     // Configurar el botón de descarga
     document.getElementById('download-certificate').onclick = () => {
-        showNotification('La funcionalidad de descarga estará disponible próximamente', 'info');
+        window.location.href = `/api/technician/certificates/${course.id}/download`;
     };
 }
 
