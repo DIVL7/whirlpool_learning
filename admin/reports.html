@@ -86,246 +86,44 @@
                     </div>
                 </div>
 
-                <!-- Overview Stats -->
-                <div class="stats-cards">
-                    <div class="stat-card">
-                        <div class="stat-card-icon blue">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Tasa de Finalización</h3>
-                            <p class="stat-number">78%</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 5% desde el período anterior</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon green">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Tiempo Promedio</h3>
-                            <p class="stat-number">4.2 horas</p>
-                            <p class="stat-change negative"><i class="fas fa-arrow-down"></i> 0.5 horas desde el período anterior</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon orange">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Calificación Promedio</h3>
-                            <p class="stat-number">4.7/5</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 0.2 desde el período anterior</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon purple">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <div class="stat-card-info">
-                            <h3>Certificaciones</h3>
-                            <p class="stat-number">42</p>
-                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 8 desde el período anterior</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
+                <!-- New Charts Section -->
                 <div class="charts-container">
-                    <!-- Course Completion Trends -->
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Tendencia de Finalización de Cursos</h3>
-                            <div class="chart-actions">
-                                <select id="completionTrendFilter">
-                                    <option value="all" selected>Todos los Cursos</option>
-                                    <option value="refrigerator">Refrigerador</option>
-                                    <option value="washing">Lavadora</option>
-                                    <option value="dryer">Secadora</option>
-                                </select>
+                    <!-- Top Row -->
+                    <div class="chart-row">
+                        <!-- Tasa de Error -->
+                        <div class="chart-card half-width"> <!-- Assuming half-width class or flex/grid handles sizing -->
+                            <div class="chart-header">
+                                <h3>Tasa de Error</h3>
+                                <!-- Add filters if needed -->
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="quizErrorRateChart"></canvas>
                             </div>
                         </div>
-                        <div class="chart-body">
-                            <canvas id="completionTrendChart"></canvas>
-                        </div>
-                    </div>
 
-                    <!-- User Engagement -->
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Participación por Categoría</h3>
-                            <div class="chart-actions">
-                                <select id="engagementFilter">
-                                    <option value="views">Vistas</option>
-                                    <option value="time" selected>Tiempo</option>
-                                    <option value="interactions">Interacciones</option>
-                                </select>
+                        <!-- Tasa de Éxito -->
+                        <div class="chart-card half-width"> <!-- Assuming half-width class or flex/grid handles sizing -->
+                            <div class="chart-header">
+                                <h3>Tasa de Éxito</h3>
+                                <!-- Add filters if needed -->
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="quizSuccessRateChart"></canvas>
                             </div>
                         </div>
+                    </div> <!-- End Top Row -->
+
+                    <!-- Bottom Row -->
+                    <div class="chart-card full-width"> <!-- Assuming full-width class or flex/grid handles sizing -->
+                        <div class="chart-header">
+                            <h3>Tasa de Abandono</h3>
+                            <!-- Add filters if needed -->
+                        </div>
                         <div class="chart-body">
-                            <canvas id="engagementChart"></canvas>
+                            <canvas id="abandonmentRateChart"></canvas>
                         </div>
                     </div>
-                </div>
-
-                <!-- Performance by Region -->
-                <div class="chart-card full-width">
-                    <div class="chart-header">
-                        <h3>Rendimiento por Región</h3>
-                        <div class="chart-actions">
-                            <select id="regionMetricFilter">
-                                <option value="completion">Tasa de Finalización</option>
-                                <option value="certification" selected>Certificaciones</option>
-                                <option value="engagement">Participación</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="chart-body">
-                        <canvas id="regionPerformanceChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Top Courses and Users -->
-                <div class="report-tables-container">
-                    <div class="report-table-card">
-                        <div class="report-table-header">
-                            <h3>Cursos Más Populares</h3>
-                            <a href="#" class="view-all">Ver Todo <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Curso</th>
-                                        <th>Categoría</th>
-                                        <th>Inscripciones</th>
-                                        <th>Finalización</th>
-                                        <th>Calificación</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Refrigerator Repair Basics</td>
-                                        <td>Refrigerador</td>
-                                        <td>124</td>
-                                        <td>85%</td>
-                                        <td>4.8/5</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Washing Machine Troubleshooting</td>
-                                        <td>Lavadora</td>
-                                        <td>98</td>
-                                        <td>78%</td>
-                                        <td>4.6/5</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dryer Maintenance</td>
-                                        <td>Secadora</td>
-                                        <td>87</td>
-                                        <td>72%</td>
-                                        <td>4.5/5</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Advanced Refrigeration Systems</td>
-                                        <td>Refrigerador</td>
-                                        <td>76</td>
-                                        <td>68%</td>
-                                        <td>4.7/5</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Electronic Controls Diagnostics</td>
-                                        <td>General</td>
-                                        <td>65</td>
-                                        <td>62%</td>
-                                        <td>4.9/5</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="report-table-card">
-                        <div class="report-table-header">
-                            <h3>Técnicos Más Activos</h3>
-                            <a href="#" class="view-all">Ver Todo <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Técnico</th>
-                                        <th>Cursos Completados</th>
-                                        <th>Certificaciones</th>
-                                        <th>Tiempo Total</th>
-                                        <th>Última Actividad</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <img src="../images/user-avatar-1.jpg" alt="John Doe">
-                                                <span>John Doe</span>
-                                            </div>
-                                        </td>
-                                        <td>12</td>
-                                        <td>4</td>
-                                        <td>48.5 horas</td>
-                                        <td>Hace 2 horas</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <img src="../images/user-avatar-2.jpg" alt="Jane Smith">
-                                                <span>Jane Smith</span>
-                                            </div>
-                                        </td>
-                                        <td>10</td>
-                                        <td>3</td>
-                                        <td>42.0 horas</td>
-                                        <td>Hace 5 horas</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <img src="../images/user-avatar-3.jpg" alt="Robert Johnson">
-                                                <span>Robert Johnson</span>
-                                            </div>
-                                        </td>
-                                        <td>9</td>
-                                        <td>3</td>
-                                        <td>38.5 horas</td>
-                                        <td>Hace 1 día</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <img src="../images/user-avatar-4.jpg" alt="Maria Garcia">
-                                                <span>Maria Garcia</span>
-                                            </div>
-                                        </td>
-                                        <td>8</td>
-                                        <td>2</td>
-                                        <td>36.0 horas</td>
-                                        <td>Hace 3 días</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <img src="../images/user-avatar-5.jpg" alt="David Lee">
-                                                <span>David Lee</span>
-                                            </div>
-                                        </td>
-                                        <td>7</td>
-                                        <td>2</td>
-                                        <td>32.5 horas</td>
-                                        <td>Hace 4 días</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                </div> <!-- End Charts Container -->
             </div>
         </main>
     </div>

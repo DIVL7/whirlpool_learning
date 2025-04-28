@@ -1,53 +1,73 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize date pickers
     initializeDatePickers();
-    
-    // Load initial reports
-    loadUserProgressReport();
-    loadCourseCompletionReport();
-    loadPopularContentReport();
-    
-    // Set up event listeners
-    document.getElementById('date-range-filter').addEventListener('change', function() {
-        updateReportsByDateRange(this.value);
-    });
-    
-    document.getElementById('apply-custom-date').addEventListener('click', function() {
-        applyCustomDateFilter();
-    });
-    
-    document.getElementById('export-user-progress').addEventListener('click', function() {
-        exportReport('user-progress');
-    });
-    
-    document.getElementById('export-course-completion').addEventListener('click', function() {
-        exportReport('course-completion');
-    });
-    
-    document.getElementById('export-popular-content').addEventListener('click', function() {
-        exportReport('popular-content');
-    });
-    
-    // Add event listeners for report tabs
-    const reportTabs = document.querySelectorAll('.report-tab');
-    reportTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            reportTabs.forEach(t => t.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Hide all report sections
-            document.querySelectorAll('.report-section').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Show selected report section
-            const targetId = this.getAttribute('data-target');
-            document.getElementById(targetId).style.display = 'block';
+
+    // Load initial charts
+    loadAbandonmentRateChart();
+    loadQuizErrorRateChart();
+    loadQuizSuccessRateChart();
+
+    // Set up event listeners for date filters
+    const dateRangeSelect = document.getElementById('dateRangeSelect');
+    const applyDateRangeBtn = document.getElementById('applyDateRange');
+    const customDateContainerHTML = document.getElementById('customDateRange'); // Get the container div from HTML
+
+    if (dateRangeSelect) {
+        dateRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                if (customDateContainerHTML) customDateContainerHTML.style.display = 'flex';
+            } else {
+                if (customDateContainerHTML) customDateContainerHTML.style.display = 'none';
+                updateReportsByDateRange(this.value);
+            }
         });
-    });
+    }
+
+    if (applyDateRangeBtn) {
+        applyDateRangeBtn.addEventListener('click', function() {
+            applyCustomDateFilter();
+        });
+    }
+
+    // Set up event listeners for action buttons
+    const exportBtn = document.getElementById('exportReportBtn');
+    const updateBtn = document.getElementById('generateReportBtn');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            // Logic to determine which report is active and export it
+            // This depends heavily on how report sections are shown/hidden.
+            // Assuming the detailed reports are within sections with IDs like 'user-progress-report' etc.
+            // And maybe the charts have IDs like 'completionTrendChart'
+            // We need a reliable way to know which report/chart is currently visible or selected.
+            // Let's assume for now it exports based on a visible section or a selected tab if tabs exist.
+            // TODO: Update export logic for new charts if needed.
+            // Currently, there's no table data to export easily.
+            // Maybe export chart data or generate PDF?
+            alert('La funcionalidad de exportación necesita ser actualizada para los nuevos gráficos.');
+            // exportReport('abandonment-rate'); // Example if export is implemented
+        });
+    }
+
+    if (updateBtn) {
+        updateBtn.addEventListener('click', function() {
+            // Re-apply current date filter to refresh chart data
+            const selectedRange = dateRangeSelect ? dateRangeSelect.value : '30days'; // Default if select not found
+            if (selectedRange === 'custom') {
+                applyCustomDateFilter();
+            } else {
+                updateReportsByDateRange(selectedRange);
+            }
+            // Optionally show a notification
+            if (typeof showNotification === 'function') {
+                showNotification('Datos actualizados.', 'success');
+            }
+        });
+    }
+
+    // Remove event listeners for report tabs if they are no longer used
+    // const reportTabs = document.querySelectorAll('.report-tab');
+    // reportTabs.forEach(tab => { ... });
 });
 
 // Initialize date pickers
@@ -56,7 +76,7 @@ function initializeDatePickers() {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     // Format dates for input fields
     const formatDate = (date) => {
         const year = date.getFullYear();
@@ -64,24 +84,27 @@ function initializeDatePickers() {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
-    
-    document.getElementById('start-date').value = formatDate(thirtyDaysAgo);
-    document.getElementById('end-date').value = formatDate(today);
-    
-    // Show/hide custom date inputs based on selected range
-    const dateRangeFilter = document.getElementById('date-range-filter');
-    const customDateContainer = document.getElementById('custom-date-container');
-    
-    dateRangeFilter.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            customDateContainer.style.display = 'flex';
-        } else {
-            customDateContainer.style.display = 'none';
-        }
-    });
+
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    if (startDateInput) {
+        startDateInput.value = formatDate(thirtyDaysAgo);
+    } else {
+        console.error("Element with ID 'startDate' not found.");
+    }
+    if (endDateInput) {
+        endDateInput.value = formatDate(today);
+    } else {
+        console.error("Element with ID 'endDate' not found.");
+    }
 }
 
-// Update reports based on selected date range
+
+// --- Removed loadSummaryStats function ---
+
+
+// Update charts based on selected date range
 function updateReportsByDateRange(range) {
     let startDate, endDate;
     const today = new Date();
@@ -120,573 +143,294 @@ function updateReportsByDateRange(range) {
         return date.toISOString().split('T')[0];
     };
     
-    // Update reports with new date range
-    loadUserProgressReport(formatDateForAPI(startDate), formatDateForAPI(endDate));
-    loadCourseCompletionReport(formatDateForAPI(startDate), formatDateForAPI(endDate));
-    loadPopularContentReport(formatDateForAPI(startDate), formatDateForAPI(endDate));
+    const apiStartDate = formatDateForAPI(startDate);
+    const apiEndDate = formatDateForAPI(endDate);
+
+    // Update charts with new date range
+    loadAbandonmentRateChart(apiStartDate, apiEndDate);
+    loadQuizErrorRateChart(apiStartDate, apiEndDate);
+    loadQuizSuccessRateChart(apiStartDate, apiEndDate);
 }
 
 // Apply custom date filter
 function applyCustomDateFilter() {
-    const startDate = document.getElementById('start-date').value;
-    const endDate = document.getElementById('end-date').value;
-    
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const startDate = startDateInput ? startDateInput.value : null;
+    const endDate = endDateInput ? endDateInput.value : null;
+
     if (!startDate || !endDate) {
         alert('Por favor, selecciona fechas de inicio y fin válidas.');
         return;
     }
-    
+
     if (new Date(startDate) > new Date(endDate)) {
         alert('La fecha de inicio debe ser anterior a la fecha de fin.');
         return;
     }
-    
-    // Update reports with custom date range
-    loadUserProgressReport(startDate, endDate);
-    loadCourseCompletionReport(startDate, endDate);
-    loadPopularContentReport(startDate, endDate);
+
+    // Update charts with custom date range
+    loadAbandonmentRateChart(startDate, endDate);
+    loadQuizErrorRateChart(startDate, endDate);
+    loadQuizSuccessRateChart(startDate, endDate);
 }
 
-// Load user progress report
-async function loadUserProgressReport(startDate, endDate) {
+
+// --- Removed old report loading and rendering functions ---
+// loadUserProgressReport, renderUserProgressReport
+// loadCourseCompletionReport, renderCourseCompletionReport
+// loadPopularContentReport, renderPopularContentReport
+
+
+// --- New Chart Loading Functions (Placeholders) ---
+
+// Load Abandonment Rate Chart
+async function loadAbandonmentRateChart(startDate, endDate) {
+    const canvas = document.getElementById('abandonmentRateChart');
+    if (!canvas) {
+        console.error("Element with ID 'abandonmentRateChart' not found.");
+        return;
+    }
+    const ctx = canvas.getContext('2d');
     try {
-        // Show loading state
-        document.getElementById('user-progress-report').innerHTML = '<div class="loading-spinner"></div>';
-        
-        // Build query parameters
         let queryParams = '';
         if (startDate && endDate) {
             queryParams = `?start_date=${startDate}&end_date=${endDate}`;
         }
-        
-        const response = await fetch(`/api/reports/user-progress${queryParams}`);
+        const response = await fetch(`/api/reports/abandonment-rate${queryParams}`);
         if (!response.ok) {
-            throw new Error('Error al cargar el reporte de progreso de usuarios');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al cargar datos de tasa de abandono');
         }
-        
         const data = await response.json();
-        renderUserProgressReport(data);
-        
+        // Call the new rendering function for the bar chart
+        renderAbandonmentBarChart(ctx, 'Tasa de Abandono', parseFloat(data.rate));
+
     } catch (error) {
-        console.error('Error loading user progress report:', error);
-        document.getElementById('user-progress-report').innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error al cargar el reporte</p>
-                <p class="error-message">${error.message}</p>
-            </div>
-        `;
+        console.error('Error loading abandonment rate chart:', error);
+        renderChartError(ctx, 'Error al cargar Tasa de Abandono');
     }
 }
 
-// Render user progress report
-function renderUserProgressReport(data) {
-    const container = document.getElementById('user-progress-report');
-    
-    if (!data || data.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-chart-line"></i>
-                <p>No hay datos disponibles para el período seleccionado</p>
-            </div>
-        `;
+// Load Quiz Error Rate Chart
+async function loadQuizErrorRateChart(startDate, endDate) {
+    const canvas = document.getElementById('quizErrorRateChart');
+    if (!canvas) {
+        console.error("Element with ID 'quizErrorRateChart' not found.");
         return;
     }
-    
-    // Create table
-    let html = `
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Curso</th>
-                    <th>Progreso</th>
-                    <th>Última Actividad</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    // Add rows
-    data.forEach(item => {
-        // Calculate progress percentage
-        const progressPercent = Math.round(item.progress * 100);
-        
-        // Determine status
-        let status = 'En progreso';
-        let statusClass = 'status-in-progress';
-        
-        if (progressPercent === 100) {
-            status = 'Completado';
-            statusClass = 'status-completed';
-        } else if (progressPercent === 0) {
-            status = 'No iniciado';
-            statusClass = 'status-not-started';
-        }
-        
-        html += `
-            <tr>
-                <td>${item.user_name}</td>
-                <td>${item.course_title}</td>
-                <td>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: ${progressPercent}%"></div>
-                        <span>${progressPercent}%</span>
-                    </div>
-                </td>
-                <td>${formatDate(item.last_activity)}</td>
-                <td><span class="status-badge ${statusClass}">${status}</span></td>
-            </tr>
-        `;
-    });
-    
-    html += `
-            </tbody>
-        </table>
-    `;
-    
-    container.innerHTML = html;
-}
-
-// Load course completion report
-async function loadCourseCompletionReport(startDate, endDate) {
-    try {
-        // Show loading state
-        document.getElementById('course-completion-report').innerHTML = '<div class="loading-spinner"></div>';
-        
-        // Build query parameters
+    const ctx = canvas.getContext('2d');
+     try {
         let queryParams = '';
         if (startDate && endDate) {
             queryParams = `?start_date=${startDate}&end_date=${endDate}`;
         }
-        
-        const response = await fetch(`/api/reports/course-completion${queryParams}`);
+        const response = await fetch(`/api/reports/quiz-error-rate${queryParams}`);
         if (!response.ok) {
-            throw new Error('Error al cargar el reporte de finalización de cursos');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al cargar datos de tasa de error');
         }
-        
         const data = await response.json();
-        renderCourseCompletionReport(data);
-        
+        renderRateChart(ctx, 'Tasa de Error', parseFloat(data.rate), ['Incorrectas', 'Correctas'], ['#DC3545', '#6C757D']); // Red for error
+
     } catch (error) {
-        console.error('Error loading course completion report:', error);
-        document.getElementById('course-completion-report').innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error al cargar el reporte</p>
-                <p class="error-message">${error.message}</p>
-            </div>
-        `;
+        console.error('Error loading quiz error rate chart:', error);
+        renderChartError(ctx, 'Error al cargar Tasa de Error');
     }
 }
 
-// Render course completion report
-function renderCourseCompletionReport(data) {
-    const container = document.getElementById('course-completion-report');
-    
-    if (!data || data.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-graduation-cap"></i>
-                <p>No hay datos disponibles para el período seleccionado</p>
-            </div>
-        `;
+// Load Quiz Success Rate Chart
+async function loadQuizSuccessRateChart(startDate, endDate) {
+    const canvas = document.getElementById('quizSuccessRateChart');
+    if (!canvas) {
+        console.error("Element with ID 'quizSuccessRateChart' not found.");
         return;
     }
-    
-    // Create chart
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-    chartContainer.innerHTML = '<canvas id="courseCompletionChart"></canvas>';
-    
-    // Create table
-    const tableContainer = document.createElement('div');
-    tableContainer.className = 'table-container';
-    
-    let tableHtml = `
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Curso</th>
-                    <th>Completados</th>
-                    <th>En Progreso</th>
-                    <th>No Iniciados</th>
-                    <th>Tasa de Finalización</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    // Prepare data for chart
-    const courseLabels = [];
-    const completedData = [];
-    const inProgressData = [];
-    const notStartedData = [];
-    
-    // Add rows and collect chart data
-    data.forEach(item => {
-        const completionRate = Math.round((item.completed / (item.completed + item.in_progress + item.not_started)) * 100);
-        
-        tableHtml += `
-            <tr>
-                <td>${item.course_title}</td>
-                <td>${item.completed}</td>
-                <td>${item.in_progress}</td>
-                <td>${item.not_started}</td>
-                <td>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: ${completionRate}%"></div>
-                        <span>${completionRate}%</span>
-                    </div>
-                </td>
-            </tr>
-        `;
-        
-        // Collect data for chart
-        courseLabels.push(item.course_title);
-        completedData.push(item.completed);
-        inProgressData.push(item.in_progress);
-        notStartedData.push(item.not_started);
-    });
-    
-    tableHtml += `
-            </tbody>
-        </table>
-    `;
-    
-    tableContainer.innerHTML = tableHtml;
-    
-    // Add chart and table to container
-    container.innerHTML = '';
-    container.appendChild(chartContainer);
-    container.appendChild(tableContainer);
-    
-    // Create chart
-    const ctx = document.getElementById('courseCompletionChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
+    const ctx = canvas.getContext('2d');
+    try {
+        let queryParams = '';
+        if (startDate && endDate) {
+            queryParams = `?start_date=${startDate}&end_date=${endDate}`;
+        }
+        const response = await fetch(`/api/reports/quiz-success-rate${queryParams}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al cargar datos de tasa de éxito');
+        }
+        const data = await response.json();
+        renderRateChart(ctx, 'Tasa de Éxito', parseFloat(data.rate), ['Correctas', 'Incorrectas'], ['#28A745', '#6C757D']); // Green for success
+
+    } catch (error) {
+        console.error('Error loading quiz success rate chart:', error);
+        renderChartError(ctx, 'Error al cargar Tasa de Éxito');
+    }
+}
+
+// --- Chart Rendering Functions ---
+
+let existingCharts = {}; // Keep track of existing chart instances
+
+// Renders a doughnut chart for a given rate (percentage) - Used for Error/Success
+function renderRateChart(ctx, title, rate, labels = ['Rate', 'Remaining'], colors = ['#007BFF', '#E9ECEF']) {
+    const canvasId = ctx.canvas.id;
+    // Ensure rate is within 0-100
+    rate = Math.max(0, Math.min(100, rate));
+    const remaining = 100 - rate;
+
+    // Destroy existing chart instance if it exists
+    if (existingCharts[canvasId]) {
+        existingCharts[canvasId].destroy();
+    }
+
+    // Create a new doughnut chart
+    existingCharts[canvasId] = new Chart(ctx, {
+        type: 'doughnut',
         data: {
-            labels: courseLabels,
-            datasets: [
-                {
-                    label: 'Completados',
-                    data: completedData,
-                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                    borderColor: 'rgba(40, 167, 69, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'En Progreso',
-                    data: inProgressData,
-                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                    borderColor: 'rgba(255, 193, 7, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'No Iniciados',
-                    data: notStartedData,
-                    backgroundColor: 'rgba(108, 117, 125, 0.7)',
-                    borderColor: 'rgba(108, 117, 125, 1)',
-                    borderWidth: 1
-                }
-            ]
+            labels: labels,
+            datasets: [{
+                data: [rate, remaining],
+                backgroundColor: colors,
+                borderColor: '#FFFFFF',
+                borderWidth: 2
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '70%', // Adjust doughnut thickness
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed.toFixed(1) + '%';
+                            }
+                            return label;
+                        }
+                    }
+                },
+                 // Display the percentage in the center
+                 datalabels: { // Requires chartjs-plugin-datalabels
+                    formatter: (value, ctx) => {
+                        if (ctx.dataIndex === 0) { // Show only the main rate
+                            return value.toFixed(1) + '%';
+                        } else {
+                            return '';
+                        }
+                    },
+                    color: '#333',
+                    font: {
+                        weight: 'bold',
+                        size: 16,
+                    }
+                 },
+                 title: { // Keep title if needed, though chart card has one
+                     display: false, // Set to true if you want title inside chart area
+                     text: title
+                 }
+            }
+        },
+        // If using chartjs-plugin-datalabels, register it globally or per chart
+        // plugins: [ChartDataLabels] // Example if using the plugin
+    });
+}
+
+// Renders a horizontal bar chart for the Abandonment Rate
+function renderAbandonmentBarChart(ctx, title, rate) {
+    const canvasId = ctx.canvas.id;
+     // Ensure rate is within 0-100
+    rate = Math.max(0, Math.min(100, rate));
+
+    // Destroy existing chart instance if it exists
+    if (existingCharts[canvasId]) {
+        existingCharts[canvasId].destroy();
+    }
+
+    existingCharts[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Tasa de Abandono'], // Single category
+            datasets: [{
+                label: 'Abandonaron (%)',
+                data: [rate],
+                backgroundColor: '#007BFF', // Blue color for abandonment
+                borderColor: '#0056b3',
+                borderWidth: 1,
+                barPercentage: 0.6, // Adjust bar thickness
+                categoryPercentage: 0.8 // Adjust spacing if multiple categories were present
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Make it horizontal
+            responsive: true,
+            maintainAspectRatio: false, // Allow chart to fill container height
             scales: {
                 x: {
-                    stacked: true
-                },
-                y: {
-                    stacked: true,
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-}
-
-// Load popular content report
-async function loadPopularContentReport(startDate, endDate) {
-    try {
-        // Show loading state
-        document.getElementById('popular-content-report').innerHTML = '<div class="loading-spinner"></div>';
-        
-        // Build query parameters
-        let queryParams = '';
-        if (startDate && endDate) {
-            queryParams = `?start_date=${startDate}&end_date=${endDate}`;
-        }
-        
-        const response = await fetch(`/api/reports/popular-content${queryParams}`);
-        if (!response.ok) {
-            throw new Error('Error al cargar el reporte de contenido popular');
-        }
-        
-        const data = await response.json();
-        renderPopularContentReport(data);
-        
-    } catch (error) {
-        console.error('Error loading popular content report:', error);
-        document.getElementById('popular-content-report').innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error al cargar el reporte</p>
-                <p class="error-message">${error.message}</p>
-            </div>
-        `;
-    }
-}
-
-// Render popular content report
-function renderPopularContentReport(data) {
-    const container = document.getElementById('popular-content-report');
-    
-    if (!data || data.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-star"></i>
-                <p>No hay datos disponibles para el período seleccionado</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Create chart
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'chart-container';
-    chartContainer.innerHTML = '<canvas id="popularContentChart"></canvas>';
-    
-    // Create table
-    const tableContainer = document.createElement('div');
-    tableContainer.className = 'table-container';
-    
-    let tableHtml = `
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Contenido</th>
-                    <th>Curso</th>
-                    <th>Módulo</th>
-                    <th>Tipo</th>
-                    <th>Vistas</th>
-                    <th>Tiempo Promedio (min)</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    // Prepare data for chart
-    const contentLabels = [];
-    const viewsData = [];
-    const avgTimeData = [];
-    
-    // Add rows and collect chart data
-    data.forEach(item => {
-        // Format content type
-        let contentType = 'Texto';
-        switch (item.content_type_id) {
-            case 1: contentType = 'Video'; break;
-            case 2: contentType = 'Texto'; break;
-            case 3: contentType = 'PDF'; break;
-            case 4: contentType = 'Imagen'; break;
-            case 5: contentType = 'Interactivo'; break;
-        }
-        
-        tableHtml += `
-            <tr>
-                <td>${item.content_title}</td>
-                <td>${item.course_title}</td>
-                <td>${item.module_title}</td>
-                <td>${contentType}</td>
-                <td>${item.views}</td>
-                <td>${Math.round(item.avg_time_spent / 60)}</td>
-            </tr>
-        `;
-        
-        // Collect data for chart (top 10 only for readability)
-        if (contentLabels.length < 10) {
-            contentLabels.push(item.content_title);
-            viewsData.push(item.views);
-            avgTimeData.push(Math.round(item.avg_time_spent / 60));
-        }
-    });
-    
-    tableHtml += `
-            </tbody>
-        </table>
-    `;
-    
-    tableContainer.innerHTML = tableHtml;
-    
-    // Add chart and table to container
-    container.innerHTML = '';
-    container.appendChild(chartContainer);
-    container.appendChild(tableContainer);
-    
-    // Create chart
-    const ctx = document.getElementById('popularContentChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: contentLabels,
-            datasets: [
-                {
-                    label: 'Vistas',
-                    data: viewsData,
-                    backgroundColor: 'rgba(0, 123, 255, 0.7)',
-                    borderColor: 'rgba(0, 123, 255, 1)',
-                    borderWidth: 1,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Tiempo Promedio (min)',
-                    data: avgTimeData,
-                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                    borderColor: 'rgba(220, 53, 69, 1)',
-                    borderWidth: 1,
-                    type: 'line',
-                    yAxisID: 'y1'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
                     beginAtZero: true,
+                    max: 100, // Scale up to 100%
                     title: {
                         display: true,
-                        text: 'Vistas'
+                        text: 'Porcentaje (%)'
                     }
                 },
-                y1: {
-                    beginAtZero: true,
-                    position: 'right',
-                    grid: {
-                        drawOnChartArea: false
-                    },
-                    title: {
-                        display: true,
-                        text: 'Tiempo (min)'
+                y: {
+                   display: false // Hide the category axis label if only one bar
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false // Hide legend as label is clear
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.dataset.label}: ${context.parsed.x.toFixed(1)}%`;
+                        }
                     }
+                },
+                title: {
+                    display: false, // Title is in the card header
+                    text: title
                 }
             }
         }
     });
 }
 
-// Export report to CSV
-function exportReport(reportType) {
-    let data, filename;
-    
-    switch (reportType) {
-        case 'user-progress':
-            data = extractTableData('user-progress-report');
-            filename = 'progreso_usuarios.csv';
-            break;
-        case 'course-completion':
-            data = extractTableData('course-completion-report');
-            filename = 'finalizacion_cursos.csv';
-            break;
-        case 'popular-content':
-            data = extractTableData('popular-content-report');
-            filename = 'contenido_popular.csv';
-            break;
-        default:
-            alert('Tipo de reporte no válido');
-            return;
+
+// Renders an error message on the canvas
+function renderChartError(ctx, message) {
+     const canvasId = ctx.canvas.id;
+     // Destroy existing chart instance if it exists
+    if (existingCharts[canvasId]) {
+        existingCharts[canvasId].destroy();
+        delete existingCharts[canvasId];
     }
-    
-    if (!data) {
-        alert('No hay datos para exportar');
-        return;
-    }
-    
-    // Convert to CSV
-    const csv = convertToCSV(data);
-    
-    // Create download link
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    
-    // Cleanup
-    setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, 0);
+    // Display error message
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = '#DC3545'; // Red color for error
+    ctx.textAlign = 'center';
+    ctx.font = '14px Arial';
+    ctx.fillText(message, ctx.canvas.width / 2, ctx.canvas.height / 2);
 }
 
-// Extract data from table
-function extractTableData(containerId) {
-    const table = document.querySelector(`#${containerId} table`);
-    if (!table) return null;
-    
-    const headers = [];
-    const rows = [];
-    
-    // Get headers
-    const headerCells = table.querySelectorAll('thead th');
-    headerCells.forEach(cell => {
-        headers.push(cell.textContent.trim());
-    });
-    
-    // Get rows
-    const rowElements = table.querySelectorAll('tbody tr');
-    rowElements.forEach(row => {
-        const rowData = [];
-        const cells = row.querySelectorAll('td');
-        cells.forEach(cell => {
-            // Get text content, ignoring any HTML
-            const progressBar = cell.querySelector('.progress-bar-container');
-            if (progressBar) {
-                // For progress bars, get the percentage text
-                rowData.push(cell.textContent.trim().replace(/\s+/g, ' '));
-            } else {
-                rowData.push(cell.textContent.trim());
-            }
-        });
-        rows.push(rowData);
-    });
-    
-    return { headers, rows };
-}
 
-// Convert data to CSV
-function convertToCSV(data) {
-    const { headers, rows } = data;
-    let csv = headers.join(',') + '\n';
-    
-    rows.forEach(row => {
-        // Escape commas and quotes in cell values
-        const escapedRow = row.map(cell => {
-            // If cell contains commas, quotes, or newlines, wrap in quotes
-            if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
-                // Double up quotes to escape them
-                return `"${cell.replace(/"/g, '""')}"`;
-            }
-            return cell;
-        });
-        
-        csv += escapedRow.join(',') + '\n';
-    });
-    
-    return csv;
-}
+// --- Removed Export/Print related functions for old reports ---
+// exportReport, extractTableData, convertToCSV, printReport
+// Also removed event listeners for old print/filter buttons in DOMContentLoaded
 
-// Format date for display
+
+// Format date for display (Keep if needed elsewhere, otherwise remove)
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
-    
+
     const date = new Date(dateString);
     return date.toLocaleDateString('es-MX', {
         day: '2-digit',
@@ -697,228 +441,5 @@ function formatDate(dateString) {
     });
 }
 
-// Add function to print reports
-function printReport(reportType) {
-    // Get the report container
-    const reportContainer = document.getElementById(`${reportType}-report`);
-    if (!reportContainer) {
-        alert('Reporte no encontrado');
-        return;
-    }
-    
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    
-    // Get the current date for the report header
-    const currentDate = new Date().toLocaleDateString('es-MX');
-    
-    // Get report title based on type
-    let reportTitle = '';
-    switch (reportType) {
-        case 'user-progress':
-            reportTitle = 'Reporte de Progreso de Usuarios';
-            break;
-        case 'course-completion':
-            reportTitle = 'Reporte de Finalización de Cursos';
-            break;
-        case 'popular-content':
-            reportTitle = 'Reporte de Contenido Popular';
-            break;
-    }
-    
-    // Get date range information
-    const dateRangeFilter = document.getElementById('date-range-filter');
-    let dateRangeText = '';
-    
-    switch (dateRangeFilter.value) {
-        case 'last7days':
-            dateRangeText = 'Últimos 7 días';
-            break;
-        case 'last30days':
-            dateRangeText = 'Últimos 30 días';
-            break;
-        case 'last90days':
-            dateRangeText = 'Últimos 90 días';
-            break;
-        case 'thisyear':
-            dateRangeText = 'Este año';
-            break;
-        case 'custom':
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            dateRangeText = `${startDate} a ${endDate}`;
-            break;
-    }
-    
-    // Create print content with styling
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${reportTitle}</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                    color: #333;
-                }
-                .report-header {
-                    text-align: center;
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid #ddd;
-                }
-                .report-title {
-                    font-size: 24px;
-                    margin-bottom: 5px;
-                }
-                .report-date {
-                    font-size: 14px;
-                    color: #666;
-                    margin-bottom: 5px;
-                }
-                .report-range {
-                    font-size: 14px;
-                    color: #666;
-                }
-                .report-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }
-                .report-table th, .report-table td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: left;
-                }
-                .report-table th {
-                    background-color: #f2f2f2;
-                    font-weight: bold;
-                }
-                .report-table tr:nth-child(even) {
-                    background-color: #f9f9f9;
-                }
-                .progress-bar-container {
-                    width: 100%;
-                    background-color: #e9ecef;
-                    border-radius: 4px;
-                    height: 20px;
-                    position: relative;
-                }
-                .progress-bar {
-                    background-color: #007bff;
-                    height: 100%;
-                    border-radius: 4px;
-                }
-                .progress-bar-container span {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    color: #000;
-                    font-size: 12px;
-                }
-                .status-badge {
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                }
-                .status-completed {
-                    background-color: #d4edda;
-                    color: #155724;
-                }
-                .status-in-progress {
-                    background-color: #fff3cd;
-                    color: #856404;
-                }
-                .status-not-started {
-                    background-color: #f8f9fa;
-                    color: #6c757d;
-                }
-                .footer {
-                    margin-top: 30px;
-                    text-align: center;
-                    font-size: 12px;
-                    color: #666;
-                }
-                @media print {
-                    .no-print {
-                        display: none;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="report-header">
-                <div class="report-title">${reportTitle}</div>
-                <div class="report-date">Generado el: ${currentDate}</div>
-                <div class="report-range">Período: ${dateRangeText}</div>
-            </div>
-            
-            ${reportContainer.innerHTML}
-            
-            <div class="footer">
-                <p>Plataforma de Aprendizaje Whirlpool &copy; ${new Date().getFullYear()}</p>
-            </div>
-            
-            <div class="no-print">
-                <button onclick="window.print();" style="margin: 20px auto; display: block; padding: 10px 20px;">Imprimir Reporte</button>
-            </div>
-            
-            <script>
-                // Auto print after load
-                window.onload = function() {
-                    // Remove chart canvases as they don't print well
-                    const canvases = document.querySelectorAll('canvas');
-                    canvases.forEach(canvas => {
-                        canvas.parentNode.removeChild(canvas);
-                    });
-                };
-            </script>
-        </body>
-        </html>
-    `);
-    
-    printWindow.document.close();
-}
 
-// Add event listeners for print buttons
-document.addEventListener('DOMContentLoaded', function() {
-    // Add print buttons to the existing code
-    document.getElementById('print-user-progress').addEventListener('click', function() {
-        printReport('user-progress');
-    });
-    
-    document.getElementById('print-course-completion').addEventListener('click', function() {
-        printReport('course-completion');
-    });
-    
-    document.getElementById('print-popular-content').addEventListener('click', function() {
-        printReport('popular-content');
-    });
-    
-    // Add filter functionality for user progress report
-    document.getElementById('filter-user-progress').addEventListener('input', function() {
-        filterUserProgressTable(this.value);
-    });
-});
-
-// Filter user progress table
-function filterUserProgressTable(searchTerm) {
-    const table = document.querySelector('#user-progress-report table');
-    if (!table) return;
-    
-    const rows = table.querySelectorAll('tbody tr');
-    searchTerm = searchTerm.toLowerCase();
-    
-    rows.forEach(row => {
-        const userName = row.cells[0].textContent.toLowerCase();
-        const courseTitle = row.cells[1].textContent.toLowerCase();
-        
-        if (userName.includes(searchTerm) || courseTitle.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
+// --- Removed filterUserProgressTable function ---
