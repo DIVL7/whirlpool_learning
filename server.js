@@ -27,6 +27,9 @@ app.use(express.static(path.join(__dirname), {
   }
 }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Session configuration
 app.use(session(sessionConfig));
 

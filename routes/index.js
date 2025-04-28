@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authRoutes = require('./auth');
 // const courseRoutes = require('./courses'); // Remove this - API routes handled separately
-const settingsRoutes = require('./settings');
+// const settingsRoutes = require('./settings'); // Settings routes removed
 const dashboardRoutes = require('./dashboard');
 const reportRoutes = require('./reports');
 const logRoutes = require('./log');
@@ -17,7 +17,7 @@ router.get('/health', (req, res) => {
 // Register routes
 router.use('/auth', authRoutes);
 // router.use('/courses', courseRoutes); // Remove this - API routes handled separately
-router.use('/settings', settingsRoutes);
+// router.use('/settings', settingsRoutes); // Settings routes removed
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
 router.use('/technician', technicianRoutes); // Add technician routes

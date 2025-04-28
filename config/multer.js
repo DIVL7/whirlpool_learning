@@ -99,10 +99,15 @@ const contentUpload = multer({
     }
 });
 
+
+// --- Avatar upload configuration removed ---
+
+
 module.exports = {
     courseUpload,
     coursesImageDir,
-    contentUpload, // Exportar la nueva configuración
-    contentPdfDir, // Exportar rutas específicas si son necesarias externamente
-    contentImageDir 
+    contentUpload, 
+    contentPdfDir, 
+    contentImageDir
+    // avatarUpload and avatarsDir removed
 };

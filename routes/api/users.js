@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt'); // Import bcrypt
+const bcrypt = require('bcrypt');
+const path = require('path'); // Needed for constructing URL path
 const { pool } = require('../../config/database');
-const { isAdmin } = require('../../middleware/auth');
+const { isAdmin } = require('../../middleware/auth'); 
+// avatarUpload import removed
 
-const saltRounds = 10; // Cost factor for hashing
+const saltRounds = 10;
 
 // Obtener todos los usuarios técnicos con paginación y ordenamiento
 router.get('/', isAdmin, async (req, res) => {
@@ -349,6 +351,9 @@ router.post('/unassign-courses', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error al desasignar cursos del usuario.' });
     }
 });
+
+
+// --- Avatar Upload Route Removed ---
 
 
 module.exports = router;
