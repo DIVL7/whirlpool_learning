@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAbandonmentRateChart();
     loadQuizErrorRateChart();
     loadQuizSuccessRateChart();
+    loadTechnicianActivityChart(); // Load the new chart
 
     // Set up event listeners for date filters
     const dateRangeSelect = document.getElementById('dateRangeSelect');
@@ -29,25 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Set up event listeners for action buttons
-    const exportBtn = document.getElementById('exportReportBtn');
+    // Set up event listener for update button
     const updateBtn = document.getElementById('generateReportBtn');
-
-    if (exportBtn) {
-        exportBtn.addEventListener('click', function() {
-            // Logic to determine which report is active and export it
-            // This depends heavily on how report sections are shown/hidden.
-            // Assuming the detailed reports are within sections with IDs like 'user-progress-report' etc.
-            // And maybe the charts have IDs like 'completionTrendChart'
-            // We need a reliable way to know which report/chart is currently visible or selected.
-            // Let's assume for now it exports based on a visible section or a selected tab if tabs exist.
-            // TODO: Update export logic for new charts if needed.
-            // Currently, there's no table data to export easily.
-            // Maybe export chart data or generate PDF?
-            alert('La funcionalidad de exportación necesita ser actualizada para los nuevos gráficos.');
-            // exportReport('abandonment-rate'); // Example if export is implemented
-        });
-    }
 
     if (updateBtn) {
         updateBtn.addEventListener('click', function() {
@@ -150,6 +134,7 @@ function updateReportsByDateRange(range) {
     loadAbandonmentRateChart(apiStartDate, apiEndDate);
     loadQuizErrorRateChart(apiStartDate, apiEndDate);
     loadQuizSuccessRateChart(apiStartDate, apiEndDate);
+    loadTechnicianActivityChart(apiStartDate, apiEndDate); // Update new chart
 }
 
 // Apply custom date filter
@@ -173,6 +158,7 @@ function applyCustomDateFilter() {
     loadAbandonmentRateChart(startDate, endDate);
     loadQuizErrorRateChart(startDate, endDate);
     loadQuizSuccessRateChart(startDate, endDate);
+    loadTechnicianActivityChart(startDate, endDate); // Update new chart
 }
 
 
@@ -265,6 +251,36 @@ async function loadQuizSuccessRateChart(startDate, endDate) {
         renderChartError(ctx, 'Error al cargar Tasa de Éxito');
     }
 }
+
+
+// Load Technician Activity Chart
+async function loadTechnicianActivityChart(startDate, endDate) {
+    const canvas = document.getElementById('technicianActivityChart');
+    if (!canvas) {
+        console.error("Element with ID 'technicianActivityChart' not found.");
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    try {
+        let queryParams = '';
+        if (startDate && endDate) {
+            queryParams = `?start_date=${startDate}&end_date=${endDate}`;
+        }
+        // TODO: Update API endpoint if different
+        const response = await fetch(`/api/reports/technician-activity${queryParams}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al cargar datos de actividad de técnicos');
+        }
+        const data = await response.json(); // Assuming data is like [{ technician: 'Name', activity: value }, ...]
+        renderTechnicianActivityChart(ctx, 'Actividad de Técnicos', data);
+
+    } catch (error) {
+        console.error('Error loading technician activity chart:', error);
+        renderChartError(ctx, 'Error al cargar Actividad de Técnicos');
+    }
+}
+
 
 // --- Chart Rendering Functions ---
 
@@ -392,6 +408,70 @@ function renderAbandonmentBarChart(ctx, title, rate) {
                     callbacks: {
                         label: function(context) {
                             return ` ${context.dataset.label}: ${context.parsed.x.toFixed(1)}%`;
+                        }
+                    }
+                },
+                title: {
+                    display: false, // Title is in the card header
+                    text: title
+                }
+            }
+        }
+    });
+}
+
+
+// Renders a bar chart for Technician Activity
+function renderTechnicianActivityChart(ctx, title, data) {
+    const canvasId = ctx.canvas.id;
+
+    // Destroy existing chart instance if it exists
+    if (existingCharts[canvasId]) {
+        existingCharts[canvasId].destroy();
+    }
+
+    // Prepare data for the chart
+    const labels = data.map(item => item.technician_name || 'Desconocido'); // Extract technician names
+    const activityData = data.map(item => item.activity_count || 0); // Extract activity metric (e.g., courses completed, logins)
+
+    existingCharts[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Actividad Registrada', // Adjust label as needed
+                data: activityData,
+                backgroundColor: '#17A2B8', // Example color (info blue)
+                borderColor: '#117A8B',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Nivel de Actividad' // Adjust axis title
+                    }
+                },
+                x: {
+                   title: {
+                       display: true,
+                       text: 'Técnico'
+                   }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false // Hide legend if label is sufficient
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.dataset.label}: ${context.parsed.y}`;
                         }
                     }
                 },

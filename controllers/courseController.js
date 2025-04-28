@@ -482,8 +482,8 @@ async function createCourse(req, res) {
             return res.status(400).json({ error: 'El título es obligatorio' });
         }
         
-        // Get the user ID from the session
-        const userId = req.session.user ? req.session.user.user_id : null;
+        // Get the user ID from the session safely
+        const userId = req.session && req.session.user ? req.session.user.user_id : null;
         
         // If no user is logged in, return an error
         if (!userId) {

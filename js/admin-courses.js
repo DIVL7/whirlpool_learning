@@ -482,8 +482,8 @@ async function saveCourse() {
     const formData = new FormData(form);
     
     try {
-        // Using standardized endpoints
-        const url = isEdit ? `/api/courses/${courseId}` : '/api/courses';
+        // Using standardized endpoints (now correctly mounted in server.js)
+        const url = isEdit ? `/api/courses/${courseId}` : '/api/courses'; // Reverted back to /api/courses
         const method = isEdit ? 'PUT' : 'POST';
         
         // Make sure the form has the required fields

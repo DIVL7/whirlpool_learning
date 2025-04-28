@@ -56,7 +56,6 @@
                 <div class="page-header">
                     <h1>Reportes y Análisis</h1>
                     <div class="report-actions">
-                        <button class="btn-secondary" id="exportReportBtn"><i class="fas fa-file-export"></i> Exportar Datos</button>
                         <button class="btn-primary" id="generateReportBtn"><i class="fas fa-sync-alt"></i> Actualizar Datos</button>
                     </div>
                 </div>
@@ -88,41 +87,51 @@
 
                 <!-- New Charts Section -->
                 <div class="charts-container">
-                    <!-- Top Row -->
+                    <!-- Row 1 -->
                     <div class="chart-row">
                         <!-- Tasa de Error -->
-                        <div class="chart-card half-width"> <!-- Assuming half-width class or flex/grid handles sizing -->
+                        <div class="chart-card half-width">
                             <div class="chart-header">
                                 <h3>Tasa de Error</h3>
-                                <!-- Add filters if needed -->
                             </div>
                             <div class="chart-body">
                                 <canvas id="quizErrorRateChart"></canvas>
                             </div>
                         </div>
 
+                        <!-- Tasa de Abandono -->
+                        <div class="chart-card half-width">
+                            <div class="chart-header">
+                                <h3>Tasa de Abandono</h3>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="abandonmentRateChart"></canvas>
+                            </div>
+                        </div>
+                    </div> <!-- End Row 1 -->
+
+                    <!-- Row 2 -->
+                    <div class="chart-row">
                         <!-- Tasa de Éxito -->
-                        <div class="chart-card half-width"> <!-- Assuming half-width class or flex/grid handles sizing -->
+                        <div class="chart-card half-width">
                             <div class="chart-header">
                                 <h3>Tasa de Éxito</h3>
-                                <!-- Add filters if needed -->
                             </div>
                             <div class="chart-body">
                                 <canvas id="quizSuccessRateChart"></canvas>
                             </div>
                         </div>
-                    </div> <!-- End Top Row -->
 
-                    <!-- Bottom Row -->
-                    <div class="chart-card full-width"> <!-- Assuming full-width class or flex/grid handles sizing -->
-                        <div class="chart-header">
-                            <h3>Tasa de Abandono</h3>
-                            <!-- Add filters if needed -->
+                        <!-- Actividad de Técnicos (New) -->
+                        <div class="chart-card half-width">
+                            <div class="chart-header">
+                                <h3>Actividad de Técnicos</h3>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="technicianActivityChart"></canvas> <!-- New canvas ID -->
+                            </div>
                         </div>
-                        <div class="chart-body">
-                            <canvas id="abandonmentRateChart"></canvas>
-                        </div>
-                    </div>
+                    </div> <!-- End Row 2 -->
                 </div> <!-- End Charts Container -->
             </div>
         </main>
