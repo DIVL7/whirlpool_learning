@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeDashboard();
 });
 
-// 1) Carga estadísticas reales del técnico
+// Carga estadísticas reales del técnico
 async function loadUserStats() {
     try {
         const resp = await fetch('/api/technician/stats', { credentials: 'same-origin' });
@@ -34,7 +34,7 @@ async function loadUserStats() {
     }
 }
 
-// 2) Aplica iconos y clases según la tendencia
+// Aplica iconos y clases según la tendencia
 function updateTrendClasses(elementId, trendValue) {
     const textEl = document.getElementById(elementId);
     if (!textEl) return;
@@ -50,7 +50,7 @@ function updateTrendClasses(elementId, trendValue) {
     }
 }
 
-// 3) Carga los cursos en progreso, lista varios o redirige si solo hay uno
+// Carga los cursos en progreso, lista varios o redirige si solo hay uno
 async function loadInProgressCourses() {
     try {
         const resp = await fetch('/api/technician/courses', { credentials: 'same-origin' });
@@ -66,11 +66,6 @@ async function loadInProgressCourses() {
 
         if (inProg.length === 0) {
             ul.innerHTML = '<li class="no-courses">No tienes cursos en progreso.</li>';
-            return;
-        }
-
-        if (inProg.length === 1) {
-            window.location.href = `course-content.html?id=${inProg[0].id}`;
             return;
         }
 
@@ -94,7 +89,6 @@ async function loadInProgressCourses() {
     }
 }
 
-// 4) Inicializa el dashboard
 async function initializeDashboard() {
     await loadUserStats();
     await loadInProgressCourses();
