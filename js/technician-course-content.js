@@ -284,37 +284,54 @@ function showModule(module, idx, total) {
         });
     });
 
-    // Interacción: marcar contenido como completado y mostrar su data
     moduleContentEl.querySelectorAll('.content-item').forEach(el => {
-        el.addEventListener('click', async () => {
+        el.addEventListener('click', () => {
             const contentId = el.dataset.id;
-            try {
-                console.log('Marcando contenido como completado:', contentId);
-                const success = await markCompleted(contentId);
+            const item = module.contents.find(c => c.content_id == contentId);
 
-                if (!success) {
-                    throw new Error('No se pudo marcar como completado');
+            if (item && item.content_data) {
+                // —————— Generar HTML según tipo ——————
+                let contentHTML = '';
+                switch (parseInt(item.content_type_id, 10)) {
+                    case 1: // Video
+                        contentHTML = `<video src="${item.content_data}" controls class="content-video"></video>`;
+                        break;
+                    case 2: // Texto
+                        contentHTML = `<div class="content-text">${item.content_data}</div>`;
+                        break;
+                    case 3: // PDF descargable
+                        contentHTML = `<a href="${item.content_data}" download class="content-pdf">Descargar PDF: ${item.title}</a>`;
+                        break;
+                    case 4: // Imagen
+                        contentHTML = `<img src="${item.content_data}" alt="${item.title}" class="content-image"/>`;
+                        break;
+                    case 5: // Interactivo
+                        contentHTML = item.content_data;
+                        break;
+                    default:
+                        contentHTML = `<p>${item.content_data}</p>`;
                 }
 
-                // Busca el item en module.contents
-                const item = module.contents.find(c => c.content_id == contentId);
-                if (item && item.content_data) {
-                    // Verifica si ya existe un content-viewer para este item
-                    const existingViewer = el.nextElementSibling;
-                    if (existingViewer && existingViewer.classList.contains('content-viewer')) {
-                        existingViewer.innerHTML = item.content_data;
-                    } else {
-                        el.insertAdjacentHTML('afterend', `<div class="content-viewer">${item.content_data}</div>`);
-                    }
+                // Inserta o actualiza el viewer
+                const existingViewer = el.nextElementSibling;
+                if (existingViewer && existingViewer.classList.contains('content-viewer')) {
+                    existingViewer.innerHTML = contentHTML;
+                } else {
+                    el.insertAdjacentHTML('afterend', `<div class="content-viewer">${contentHTML}</div>`);
                 }
-
-                el.classList.add('completed');
-            } catch (err) {
-                console.error('Error al completar contenido:', err);
-                alert('Error al marcar contenido como completado. Inténtalo nuevamente.');
             }
+
+            // —————— Marca como completado sin bloquear ——————
+            markCompleted(contentId)
+                .then(success => {
+                    if (success) el.classList.add('completed');
+                })
+                .catch(err => {
+                    console.warn('No se pudo marcar completado:', err);
+                });
         });
     });
+
 
     // Auto-abrir primer contenido
     const firstContentItem = moduleContentEl.querySelector('.content-item');
