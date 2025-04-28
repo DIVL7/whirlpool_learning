@@ -314,6 +314,31 @@
   padding: 1rem;
   background: var(--light-color);
   border-left: 4px solid var(--primary-color);
-  white-space: pre-line; /* respeta saltos de línea */
+  white-space: pre-line;
+  /* respeta saltos de línea */
   border-radius: 4px;
+}
+
+.content-video {
+  width: 100%;
+  max-height: 400px;
+  margin: 12px 0;
+}
+
+.content-text {
+  margin: 12px 0;
+  white-space: pre-line;
+}
+
+.content-pdf {
+  display: inline-block;
+  color: var(--primary-color);
+  text-decoration: underline;
+  margin: 12px 0;
+}
+
+.content-image {
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
 }
