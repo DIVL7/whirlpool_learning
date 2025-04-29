@@ -328,61 +328,47 @@ router.get('/quiz-success-rate', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Get Technician Activity Report
-router.get('/technician-activity', isAuthenticated, isAdmin, async (req, res) => {
+// Get Forum Questions per Category
+router.get('/forum-questions-per-category', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { start_date, end_date } = req.query;
         const params = [];
         let dateFilter = '';
 
-        // Apply date filter to the activity timestamp (e.g., course completion)
+        // Filter based on question creation date within the range
         if (start_date && end_date) {
-            // We need to filter based on when the activity occurred.
-            // Let's filter based on course completions within the period.
-            // Note: This might exclude technicians active in other ways (logins, quiz attempts)
-            // if they didn't complete a course in the period. A more complex query
-            // could check multiple activity types.
-            dateFilter = ' AND ucp.completed_at BETWEEN ? AND ?';
-            params.push(start_date, end_date);
-            // Add params again for the MAX(completed_at) subquery if filtering last activity by date
-            params.push(start_date, end_date);
+            // Ensure dates are in YYYY-MM-DD format for comparison
+            const startDateFormatted = new Date(start_date).toISOString().split('T')[0];
+            const endDateFormatted = new Date(end_date).toISOString().split('T')[0] + ' 23:59:59'; // Include end day
+            dateFilter = ' WHERE fq.created_at BETWEEN ? AND ?';
+            params.push(startDateFormatted, endDateFormatted);
         } else {
-             dateFilter = ''; // No date filter for activity period
-             // No date filter for MAX(completed_at) either
+            dateFilter = ''; // No date filter
         }
 
-
-        // Query to get technician activity details
-        // - Courses Completed: Count distinct completed courses
-        // - Certifications: Same as courses completed for this definition
-        // - Last Activity: Max completion date within the period (or overall if no period)
         const query = `
-            SELECT
-                u.user_id,
-                CONCAT(u.first_name, ' ', u.last_name) AS technician_name,
-                COUNT(DISTINCT CASE WHEN ucp.status = 'completed' ${dateFilter} THEN ucp.course_id END) AS courses_completed,
-                COUNT(DISTINCT CASE WHEN ucp.status = 'completed' ${dateFilter} THEN ucp.course_id END) AS certifications,
-                MAX(CASE WHEN ucp.status = 'completed' ${dateFilter} THEN ucp.completed_at END) AS last_activity_timestamp
-                -- Consider adding total time if calculable (e.g., sum of estimated course durations)
-            FROM users u
-            LEFT JOIN user_course_progress ucp ON u.user_id = ucp.user_id
-            WHERE u.role = 'technician'
-            GROUP BY u.user_id, technician_name
-            HAVING COUNT(DISTINCT CASE WHEN ucp.status = 'completed' ${dateFilter} THEN ucp.course_id END) > 0 -- Only show techs with activity in period
-                OR MAX(CASE WHEN ucp.status = 'completed' ${dateFilter} THEN ucp.completed_at END) IS NOT NULL -- Or if last activity falls in period
-            ORDER BY courses_completed DESC, last_activity_timestamp DESC;
+            SELECT 
+                fc.name AS category_name,
+                COUNT(fq.question_id) AS question_count
+            FROM forum_categories fc
+            LEFT JOIN forum_questions fq ON fc.category_id = fq.category_id ${dateFilter}
+            GROUP BY fc.category_id, fc.name
+            ORDER BY question_count DESC;
         `;
+        
+        const [rows] = await pool.query(query, params);
+        
+        // Format data for the chart
+        const chartData = rows.map(row => ({
+            category_name: row.category_name || 'Sin Categoría', // Handle potential null names
+            question_count: parseInt(row.question_count, 10) // Ensure it's an integer
+        }));
 
-        // Adjust params based on how many times the date filter is used
-        const queryParams = (start_date && end_date) ? [start_date, end_date, start_date, end_date, start_date, end_date] : [];
-
-
-        const [rows] = await pool.query(query, queryParams);
-        res.json(rows);
+        res.json(chartData);
 
     } catch (error) {
-        console.error('Error fetching technician activity report:', error);
-        res.status(500).json({ error: 'Error al obtener el reporte de actividad de técnicos' });
+        console.error('Error fetching forum questions per category:', error);
+        res.status(500).json({ error: 'Error al obtener las preguntas del foro por categoría' });
     }
 });
 

@@ -9,7 +9,7 @@
     /* Sidebar */
     .sidebar {
         width: 70px;
-        overflow: visible;
+        overflow: hidden; /* Changed from visible to hidden */
     }
     
     .sidebar-header h3,
@@ -38,6 +38,7 @@
     
     .main-content {
         margin-left: 70px;
+        flex: initial; /* Reset flex behavior for mobile */
     }
     
     /* Settings */

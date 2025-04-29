@@ -326,6 +326,8 @@ input:checked + .toggle-slider:before {
 
 /* Estilos específicos para campos de formulario en modales */
 .modal .form-group input[type="text"],
+.modal .form-group input[type="email"],
+.modal .form-group input[type="password"],
 .modal .form-group textarea {
     width: 100%;
     padding: 12px;
@@ -336,13 +338,17 @@ input:checked + .toggle-slider:before {
 }
 
 .modal .form-group input[type="text"]:focus,
+.modal .form-group input[type="email"]:focus,
+.modal .form-group input[type="password"]:focus,
 .modal .form-group textarea:focus {
     border-color: var(--primary-color);
     outline: none;
     box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
-.modal .form-group input[type="text"] {
+.modal .form-group input[type="text"],
+.modal .form-group input[type="email"],
+.modal .form-group input[type="password"] {
     height: 45px;
 }
 

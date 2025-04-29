@@ -10,6 +10,8 @@
     flex: 1;
     margin-left: var(--sidebar-width);
     background-color: #f8fafc;
+    /* position: relative; /* Removed */
+    z-index: 1;         /* Ensure content is below sidebar */
 }
 
 .dashboard-content {
@@ -26,6 +28,7 @@
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    z-index: 1000; /* Ensure sidebar is on top */
 }
 
 .sidebar-header {

@@ -229,12 +229,6 @@ function displayCourses(courses) {
             </td>
             <td>
                 <div class="course-info">
-                    <div class="course-thumbnail">
-                        ${imagePath 
-                            ? `<img src="${imagePath}" alt="${course.title}">`
-                            : `<div class="placeholder-thumbnail"><i class="fas fa-image"></i></div>`
-                        }
-                    </div>
                     <div class="course-details">
                         <h3>${course.title}</h3>
                         <p>${course.description ? (course.description.length > 100 ? course.description.substring(0, 100) + '...' : course.description) : 'Sin descripción'}</p>
