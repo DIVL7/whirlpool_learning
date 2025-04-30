@@ -14,11 +14,11 @@ router.get('/', isAdmin, courseController.getAllCourses);
 // GET /api/courses/list - Fetch a simple list of PUBLISHED courses (ID and Title) (for assignment modal)
 router.get('/list', isAdmin, async (req, res) => {
     try {
-        // Only select courses that are published
-        const [courses] = await pool.query('SELECT course_id, title FROM courses WHERE status = \'published\' ORDER BY title ASC');
+        // Temporarily fetch ALL courses for debugging status issues
+        const [courses] = await pool.query('SELECT course_id, title, status FROM courses ORDER BY title ASC'); // Added status, removed WHERE
         res.json(courses);
     } catch (error) {
-        console.error('Error fetching published course list:', error);
+        console.error('Error fetching all course list:', error); // Updated error message context
         res.status(500).json({ error: 'Error al obtener la lista de cursos' });
     }
 });

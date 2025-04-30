@@ -477,7 +477,7 @@ async function saveCourse() {
     
     try {
         // Using standardized endpoints (now correctly mounted in server.js)
-        const url = isEdit ? `/api/courses/${courseId}` : '/api/courses'; // Reverted back to /api/courses
+        const url = isEdit ? `/courses/${courseId}` : '/courses'; // Corrected endpoint to /courses
         const method = isEdit ? 'PUT' : 'POST';
         
         // Make sure the form has the required fields
@@ -785,13 +785,13 @@ async function deleteCourse(courseId, courseTitle) {
             // Mostrar indicador de carga
             if (confirmButton) {
                 confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
-                confirmButton.disabled = true;
-            }
-            
-            const response = await fetch(`/api/courses/${courseId}`, {
-                method: 'DELETE'
-            });
-            
+                 confirmButton.disabled = true;
+             }
+             
+             const response = await fetch(`/courses/${courseId}`, { // Corrected endpoint
+                 method: 'DELETE'
+             });
+             
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Error al eliminar el curso');
@@ -854,12 +854,12 @@ function openDeleteMultipleModal() {
                 confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
                 confirmButton.disabled = true;
             }
-            
-            // Eliminar cada curso seleccionado
-            const deletePromises = courseIds.map(courseId => 
-                fetch(`/api/courses/${courseId}`, {
-                    method: 'DELETE'
-                }).then(response => {
+             
+             // Eliminar cada curso seleccionado
+             const deletePromises = courseIds.map(courseId => 
+                 fetch(`/courses/${courseId}`, { // Corrected endpoint
+                     method: 'DELETE'
+                 }).then(response => {
                     if (!response.ok) {
                         return response.json().then(data => {
                             throw new Error(data.error || `Error al eliminar el curso ${courseId}`);

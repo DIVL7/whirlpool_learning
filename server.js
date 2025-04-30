@@ -69,13 +69,13 @@ app.get('/api/logout', (req, res) => {
 
 // Importar las rutas de API
 const userRoutes = require('./routes/api/users');
-// const courseApiRoutes = require('./routes/api/courses'); // This file seems incomplete or deprecated for POST/PUT/DELETE
+const courseApiRoutes = require('./routes/api/courses'); // Uncommented: This defines the variable
 const courseRoutes = require('./routes/courses'); // This file contains the actual POST/PUT/DELETE handlers
 
 // Registrar las rutas de API
 app.use('/api/users', userRoutes);
-// app.use('/api/courses', courseApiRoutes); // Use courseRoutes instead
-app.use('/api/courses', courseRoutes); // Mount the main course routes under /api/courses
+app.use('/api/courses', courseApiRoutes); // Mount the API course routes (includes /list, modules, etc.)
+app.use('/courses', courseRoutes); // Mount the main course routes (POST, PUT, DELETE)
 
 app.use('/technician', express.static(path.join(__dirname, 'technician')));
   

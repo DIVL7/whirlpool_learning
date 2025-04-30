@@ -67,3 +67,9 @@ table img {
 .action-bar button {
     height: 38px;
 }
+
+/* Override for course table title alignment */
+.data-table td .course-info {
+    display: block; /* Reset from flex */
+    gap: 0; /* Remove gap if applied */
+}
