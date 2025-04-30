@@ -20,9 +20,23 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Configurar tipos MIME correctos para archivos estáticos
 app.use(express.static(path.join(__dirname), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.css')) {
+  setHeaders: (res, filePath) => { // Renamed 'path' to 'filePath' for clarity
+    if (filePath.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.gz')) {
+      // Set correct headers for gzipped files
+      res.setHeader('Content-Encoding', 'gzip');
+      // Set the correct Content-Type based on the original file extension
+      if (filePath.endsWith('.js.gz')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (filePath.endsWith('.wasm.gz')) {
+        res.setHeader('Content-Type', 'application/wasm');
+      } else if (filePath.endsWith('.data.gz')) {
+        // Unity data files might not have a standard MIME type,
+        // application/octet-stream is a safe default
+        res.setHeader('Content-Type', 'application/octet-stream');
+      }
+      // Add more types if needed (e.g., .json.gz, .html.gz)
     }
   }
 }));

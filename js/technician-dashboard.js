@@ -3,7 +3,30 @@
 document.addEventListener('DOMContentLoaded', () => {
     initTechnicianPage();
     initializeDashboard();
+    setupGameObjectLink(); // Add call to the new function
 });
+
+// --- Add the new function below ---
+
+// Function to handle the random game object link
+function setupGameObjectLink() {
+    const gameObjectContainer = document.getElementById('game-object-container');
+    if (!gameObjectContainer) return; // Exit if the container doesn't exist
+
+    // Decide randomly whether to show the game object (e.g., 10% chance)
+    const shouldShow = Math.random() < 0.1; // Reduced probability from 0.5
+
+    if (shouldShow) {
+        gameObjectContainer.style.display = 'block'; // Show the container
+
+        gameObjectContainer.addEventListener('click', () => {
+            // Store the current URL before navigating away
+            sessionStorage.setItem('returnUrlFromGame', window.location.href);
+            // Redirect to the game
+            window.location.href = '/juego gzip/index.html'; // Path to the game's index file
+        });
+    }
+}
 
 // Carga estadísticas reales del técnico
 async function loadUserStats() {
