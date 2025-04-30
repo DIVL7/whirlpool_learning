@@ -802,7 +802,6 @@ exports.downloadCertificate = async (req, res) => {
         __dirname,
         '..',
         'images',
-        'courses',
         'whirlpool-logo.png'
     );
     console.log('Intentando abrir logo en:', logoPath);

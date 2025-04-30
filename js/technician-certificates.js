@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize common technician page elements (like user info)
+    initTechnicianPage();
+
     const container   = document.querySelector('.certificates-container');
     const searchInput = document.querySelector('.search-container input');
 

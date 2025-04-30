@@ -38,15 +38,12 @@
         <main class="main-content">
             <header class="top-nav">
                 <button id="sidebar-toggle" class="btn-secondary"><i class="fas fa-bars"></i></button>
-                <div class="search-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar en configuración...">
-                </div>
+                
                 <div class="user-info">
                     <div class="user-profile">
-                        <img src="../images/admin-avatar.jpg" alt="Avatar">
-                        <span>Usuario</span>
-                        <i class="fas fa-chevron-down"></i>
+                        <img src="../images/default-avatar.png" alt="Avatar" id="user-avatar">
+                        <span id="user-name">Usuario</span>
+                        
                     </div>
                 </div>
             </header>
@@ -58,40 +55,6 @@
                 </div>
 
                 <div class="settings-grid">
-                    <div class="settings-card card-base">
-                        <h3>Información Personal</h3>
-                        <form>
-                            <div class="form-group">
-                                <label for="nombre">Nombre:</label>
-                                <input type="text" id="nombre" name="nombre" value="Usuario Ejemplo">
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email:</label>
-                                <input type="email" id="email" name="email" value="usuario@ejemplo.com">
-                            </div>
-                            <button type="submit" class="btn-primary">Guardar Cambios</button>
-                        </form>
-                    </div>
-
-                    <div class="settings-card card-base">
-                        <h3>Seguridad</h3>
-                        <form>
-                            <div class="form-group">
-                                <label for="password-actual">Contraseña Actual:</label>
-                                <input type="password" id="password-actual" name="password-actual">
-                            </div>
-                            <div class="form-group">
-                                <label for="password-nuevo">Nueva Contraseña:</label>
-                                <input type="password" id="password-nuevo" name="password-nuevo">
-                            </div>
-                            <div class="form-group">
-                                <label for="password-confirmar">Confirmar Nueva Contraseña:</label>
-                                <input type="password" id="password-confirmar" name="password-confirmar">
-                            </div>
-                            <button type="submit" class="btn-primary">Cambiar Contraseña</button>
-                        </form>
-                    </div>
-
                     <div class="settings-card card-base">
                         <h3>Preferencias</h3>
                         <div class="form-group">
