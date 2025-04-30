@@ -8,14 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUserCourses();
 });
 
-function getThumbnailUrl(src) {
-    if (!src) return '';
-    // Si ya viene con http o ruta absoluta, lo respetamos
-    if (src.startsWith('http') || src.startsWith('/')) return src;
-    // Para las miniaturas de cursos, van en /uploads/courses/
-    return `/uploads/courses/${src}`;
-}
-
 // Función para inicializar los event listeners
 function initializeEventListeners() {
     // Búsqueda de cursos
@@ -86,8 +78,6 @@ async function loadUserCourses() {
             updateCourseStats(allCourses);
             displayCourses(allCourses, currentPage);
 
-            // Mostrar notificación de éxito
-            showNotification(`Se han cargado ${allCourses.length} cursos de la base de datos`, 'success');
         } else {
             console.error('Formato de respuesta incorrecto:', data);
             throw new Error('La API devolvió un formato incorrecto');
@@ -157,13 +147,13 @@ function displayCourses(courses, page) {
         return `
           <tr>
             <td class="course-title-cell">
-  ${c.thumbnail
-                ? `<img src="${getThumbnailUrl(c.thumbnail)}"
-              alt="Miniatura de ${c.title}"
-              class="course-thumbnail"/>`
+              ${c.thumbnail_url 
+                ? `<img src="${c.thumbnail_url}" 
+                       alt="Miniatura de ${c.title}" 
+                       class="course-thumbnail"/>` 
                 : ''}
-  <span>${c.title}</span>
-</td>
+              <span>${c.title}</span>
+            </td>
             <td>${c.description || ''}</td>
             <td><span class="status-badge ${statusCls}">${statusLabel}</span></td>
             <td>${c.progress}%</td>
