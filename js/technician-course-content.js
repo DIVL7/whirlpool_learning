@@ -14,6 +14,159 @@ const quizCloseBtn = document.getElementById('quiz-close-btn');
 let moduleList = [];
 let currentModule = null;
 
+// -- Helpers para previews dinámicos --
+// Extraer ID de Vimeo
+function extractVimeoId(url) {
+    const m = url.match(/vimeo\.com\/(\d+)/);
+    return m ? m[1] : null;
+}
+// Implementar función para extraer ID de YouTube
+function extractYouTubeId(url) {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length == 11) ? match[7] : false;
+}
+// Funcion para obtener Contenido URL
+function getContentUrl(subDir, filename) {
+    // Si ya es ruta absoluta, la respetamos
+    if (filename.startsWith('/')) return filename;
+    return `/uploads/content/${subDir}/${filename}`;
+}
+// Funcion de notificaciones 
+function showNotification(message, type = 'info') {
+    let container = document.querySelector('.notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+    }
+    const notif = document.createElement('div');
+    notif.className = `notification ${type}`;
+    notif.innerHTML = `
+          <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            <span>${message}</span>
+          </div>
+          <button class="notification-close">&times;</button>
+        `;
+    container.appendChild(notif);
+    notif.querySelector('.notification-close')
+        .addEventListener('click', () => notif.remove());
+    setTimeout(() => notif.remove(), 5000);
+}
+
+
+// Funcion para Refrescar el Progreso
+async function refreshProgress() {
+    // reload and update overall course progress
+    await loadCourse(courseId);
+    // reload modules and sidebar badges
+    await loadModules(courseId);
+    // re-open current module if one is open
+    if (currentModule) {
+        const idx = moduleList.findIndex(m => m.module_id === currentModule.module_id);
+        if (idx !== -1) {
+            showModule(moduleList[idx], idx, moduleList.length, false);
+        }
+    }
+}
+
+// Funcion para Refrescar solo la barra global de progreso
+async function refreshCourseProgress() {
+    try {
+        const res = await fetch(`/api/technician/courses/${courseId}`, { credentials: 'same-origin' });
+        if (!res.ok) return;
+        const { course } = await res.json();
+        const pct = Math.min(100, parseFloat(course.progress_percentage || 0));
+        document.getElementById('progress-percentage').textContent = `${pct}%`;
+        document.getElementById('progress-fill').style.width = `${pct}%`;
+    } catch (e) {
+        console.error('No se pudo actualizar progreso global', e);
+    }
+}
+
+// Devuelve el HTML de preview según el tipo de contenido.
+function renderPreview(item) {
+    const data = item.content_data;
+    const type = parseInt(item.content_type_id, 10);
+
+    if (!data || data.trim() === '') {
+        return `<div class="content-error">
+                <i class="fas fa-exclamation-triangle"></i> 
+                No hay contenido disponible para mostrar
+              </div>`;
+    }
+
+    switch (type) {
+        case 1: // Video
+            // YouTube
+            const ytId = extractYouTubeId(data);
+            if (ytId) {
+                return `<div class="video-responsive">
+                    <iframe 
+                      src="https://www.youtube.com/embed/${ytId}" 
+                      frameborder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowfullscreen
+                      class="content-embed-video">
+                    </iframe>
+                  </div>`;
+            }
+            // Vimeo
+            const vm = data.match(/vimeo\.com\/(\d+)/);
+            if (vm) {
+                return `<div class="video-responsive">
+                    <iframe 
+                      src="https://player.vimeo.com/video/${vm[1]}" 
+                      frameborder="0" 
+                      allow="autoplay; fullscreen; picture-in-picture" 
+                      allowfullscreen
+                      class="content-embed-video">
+                    </iframe>
+                  </div>`;
+            }
+            // Video local (mp4, webm…)
+            if (data.match(/\.(mp4|webm|ogg|mov)$/i)) {
+                const src = getContentUrl('videos', data);
+                return `<video controls src="${src}" class="content-video"></video>`;
+            }
+            // Enlace externo
+            if (data.startsWith('http')) {
+                return `<a href="${data}" target="_blank" class="content-preview-link">
+                    Ver video externo
+                  </a>`;
+            }
+            return `<div class="content-error">
+                  <i class="fas fa-exclamation-triangle"></i> 
+                  Formato de video no reconocido.
+                </div>`;
+
+        case 4: // Imagen
+            const imgSrc = getContentUrl('images', data);
+            return `<img 
+                  src="${imgSrc}" 
+                  alt="${item.title}" 
+                  class="content-preview-image" 
+                  onerror="this.onerror=null; this.src='../images/image-placeholder.png'; this.classList.add('image-error')"
+                />`;
+
+        case 3: // PDF
+            const pdfSrc = getContentUrl('pdfs', data);
+            return `<iframe src="${pdfSrc}" class="content-preview-pdf"></iframe>`;
+
+        case 2: // Texto / enlace
+            if (data.startsWith('http')) {
+                return `<a href="${data}" target="_blank" class="content-preview-link">Ver contenido enlazado</a>`;
+            }
+            return `<div class="content-text">${data}</div>`;
+
+        default:
+            // Cualquier otro
+            return `<div class="content-text">${data}</div>`;
+    }
+}
+
+// Cargar datos y mostrar contenido
 document.addEventListener('DOMContentLoaded', async () => {
     // Verifica sesión y despliega UI
     initTechnicianPage();
@@ -151,7 +304,8 @@ async function loadModules(courseId) {
 }
 
 // Muestra el detalle de un módulo, guarda avances y carga contenido
-function showModule(module, idx, total) {
+function showModule(module, idx, total, autoOpen = true) {
+    currentModule = module;
     console.log('Mostrando módulo:', module);
     welcomeScreenEl.style.display = 'none';
     moduleContentEl.style.display = 'block';
@@ -180,23 +334,23 @@ function showModule(module, idx, total) {
         `;
         });
         html += `</ul></div>`;
+        html += `<div id="content-viewer" class="content-viewer"></div>`;
     }
 
     // Quizzes
     if (module.quizzes && module.quizzes.length) {
         html += `<div class="content-section"><h3>Evaluaciones</h3><ul class="quiz-list">`;
         module.quizzes.forEach(q => {
-            const icon = q.status === 'completed'
+            const icon = q.passed
                 ? '<i class="fas fa-check-circle quiz-completed-icon"></i>'
-                : q.status === 'attempted'
-                    ? '<i class="fas fa-exclamation-circle quiz-attempted-icon"></i>'
-                    : '';
+                : '<i class="fas fa-exclamation-circle quiz-attempted-icon"></i>';
             html += `
-          <li class="quiz-item ${q.status}" data-id="${q.quiz_id}">
-            <i class="fas fa-question-circle"></i>
-            <span>${q.title}</span>
-            ${icon}
-          </li>
+            <li class="quiz-item ${q.passed ? 'completed' : 'attempted'}" data-id="${q.quiz_id}">
+                <i class="fas fa-question-circle"></i>
+                <span>${q.title}</span>
+                ${icon}
+                <small class="quiz-attempts">${q.attempts} intento${q.attempts !== 1 ? 's' : ''}</small>
+            </li>
         `;
         });
         html += `</ul></div>`;
@@ -214,128 +368,143 @@ function showModule(module, idx, total) {
 
     moduleContentEl.innerHTML = html
 
-    // --- Inicio: Listeners para los quizzes ---
-    moduleContentEl.querySelectorAll('.quiz-item').forEach(el => {
+    // —— Listeners para los contenidos —— 
+    moduleContentEl.querySelectorAll('.content-item').forEach((el, i) => {
         el.addEventListener('click', async () => {
-            const quizId = el.dataset.id;
-            try {
-                // Obtiene todas las preguntas y respuestas
-                const res = await fetch(
-                    `/api/technician/courses/${courseId}/modules/${module.module_id}/quizzes/${quizId}`,
-                    { credentials: 'same-origin' }
-                );
+            const contentId = el.dataset.id;
+            // 1) Busca el objeto content
+            const item = module.contents.find(c => c.content_id.toString() === contentId);
+            if (!item) return;
 
-                if (!res.ok) {
-                    throw new Error('Error al cargar el quiz');
-                }
+            // 2) Renderiza el contenido en el div fijo #content-viewer
+            const viewer = moduleContentEl.querySelector('#content-viewer');
+            viewer.innerHTML = renderPreview(item);
 
-                const quiz = await res.json();
-                console.log('Quiz cargado:', quiz);
+            // 3) Marca como completado en la BD
+            const success = await markCompleted(contentId);
+            if (success) {
+                // 4) Actualiza la UI de este ítem
+                el.classList.add('completed');
 
-                // Renderiza el quiz en el modal
-                renderQuizModal(quiz);
-
-                // Al pulsar "Enviar respuestas"
-                quizSubmitBtn.onclick = async () => {
-                    try {
-                        const userAnswers = collectAnswers(); // [{questionId, answerId}, …]
-                        console.log('Enviando respuestas:', userAnswers);
-
-                        const submitRes = await fetch(
-                            `/api/technician/courses/${courseId}/modules/${module.module_id}/quizzes/${quizId}/submit`,
-                            {
-                                method: 'POST',
-                                credentials: 'same-origin',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ answers: userAnswers })
-                            }
-                        );
-
-                        if (!submitRes.ok) {
-                            const errorText = await submitRes.text();
-                            throw new Error(`Error al enviar respuestas: ${errorText}`);
-                        }
-
-                        const result = await submitRes.json();
-                        console.log('Resultado del quiz:', result);
-
-                        closeQuizModal();
-
-                        // Actualiza el icono según aprobado/reprobado
-                        el.innerHTML = `
-                            <i class="fas fa-question-circle"></i>
-                            <span>${q.title}</span>
-                            ${result.passed
-                                ? '<i class="fas fa-check-circle quiz-completed-icon"></i>'
-                                : '<i class="fas fa-exclamation-circle quiz-attempted-icon"></i>'}
-                        `;
-                    } catch (err) {
-                        console.error('Error al procesar quiz:', err);
-                        alert('Error al procesar el quiz. Inténtalo nuevamente.');
-                    }
-                };
-
-                // Cerrar modal
-                quizCloseBtn.onclick = closeQuizModal;
-            } catch (err) {
-                console.error('Error al cargar quiz:', err);
-                alert('Error al cargar el quiz. Inténtalo nuevamente.');
+                // 5) Recalcula completados (contenidos + quizzes)
+                const mod = moduleList[idx];
+                const doneCount =
+                    mod.contents.filter(c => c.completed).length
+                    + (mod.quizzes
+                        ? mod.quizzes.filter(q => q.passed /*ó q.status==='completed'*/).length
+                        : 0);
+                const totalCount = mod.contents.length + (mod.quizzes ? mod.quizzes.length : 0);
+                const pctModule = Math.round((doneCount / totalCount) * 100);
+                // 6) Actualiza badge en sidebar
+                const sidebarBadge = containerEl.querySelector(`.module-item[data-idx="${idx}"] .module-progress`);
+                if (sidebarBadge) sidebarBadge.textContent = `${pctModule}%`;
+                // Y también barra global si quieres
+                await refreshCourseProgress();
             }
         });
     });
 
-    moduleContentEl.querySelectorAll('.content-item').forEach(el => {
-        el.addEventListener('click', () => {
-            const contentId = el.dataset.id;
-            const item = module.contents.find(c => c.content_id == contentId);
 
-            if (item && item.content_data) {
-                // —————— Generar HTML según tipo ——————
-                let contentHTML = '';
-                switch (parseInt(item.content_type_id, 10)) {
-                    case 1: // Video
-                        contentHTML = `<video src="${item.content_data}" controls class="content-video"></video>`;
-                        break;
-                    case 2: // Texto
-                        contentHTML = `<div class="content-text">${item.content_data}</div>`;
-                        break;
-                    case 3: // PDF descargable
-                        contentHTML = `<a href="${item.content_data}" download class="content-pdf">Descargar PDF: ${item.title}</a>`;
-                        break;
-                    case 4: // Imagen
-                        contentHTML = `<img src="${item.content_data}" alt="${item.title}" class="content-image"/>`;
-                        break;
-                    case 5: // Interactivo
-                        contentHTML = item.content_data;
-                        break;
-                    default:
-                        contentHTML = `<p>${item.content_data}</p>`;
-                }
+    // --- Listeners para los quizzes ---
+    moduleContentEl.querySelectorAll('.quiz-item').forEach(el => {
+        el.addEventListener('click', async () => {
+            const quizId = el.dataset.id;
 
-                // Inserta o actualiza el viewer
-                const existingViewer = el.nextElementSibling;
-                if (existingViewer && existingViewer.classList.contains('content-viewer')) {
-                    existingViewer.innerHTML = contentHTML;
-                } else {
-                    el.insertAdjacentHTML('afterend', `<div class="content-viewer">${contentHTML}</div>`);
-                }
+            // 1) Obtener los datos del quiz
+            const res = await fetch(
+                `/api/technician/courses/${courseId}/modules/${module.module_id}/quizzes/${quizId}`,
+                { credentials: 'same-origin' }
+            );
+            if (!res.ok) {
+                showNotification('No se pudo cargar el quiz. Inténtalo más tarde.', 'error');
+                return;
             }
+            const quiz = await res.json();
 
-            // —————— Marca como completado sin bloquear ——————
-            markCompleted(contentId)
-                .then(success => {
-                    if (success) el.classList.add('completed');
-                })
-                .catch(err => {
-                    console.warn('No se pudo marcar completado:', err);
-                });
+            // 2) Mostrar el modal con las preguntas
+            renderQuizModal(quiz);
+            quizModalEl.style.display = 'flex';
+            quizCloseBtn.onclick = closeQuizModal;
+
+            // 3) Al pulsar "Enviar respuestas"
+            quizSubmitBtn.onclick = async () => {
+                try {
+                    // 3a) Construir el array de respuestas
+                    const answers = quiz.questions.map(q => {
+                        const sel = document.querySelector(`input[name="q-${q.question_id}"]:checked`);
+                        return {
+                            questionId: q.question_id,
+                            answerId: sel ? parseInt(sel.value, 10) : null
+                        };
+                    });
+
+                    // 3b) Enviar las respuestas
+                    const submitRes = await fetch(
+                        `/api/technician/courses/${courseId}/modules/${module.module_id}/quizzes/${quizId}`,
+                        {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ answers })
+                        }
+                    );
+
+                    if (!submitRes.ok) {
+                        const { message } = await submitRes.json().catch(() => ({}));
+                        showNotification(
+                            message || 'No se pudo enviar el quiz. Inténtalo de nuevo.',
+                            'error'
+                        );
+                        return;
+                    }
+
+                    // 3c) Leer la respuesta (score + passed)
+                    const { score, passed } = await submitRes.json();
+
+                    // 4) Cerrar el modal
+                    closeQuizModal();
+
+                    // 5) Actualizar el icono según resultado
+                    el.innerHTML = `
+                    <i class="fas fa-question-circle"></i>
+                    <span>${quiz.title}</span>
+                    ${passed
+                            ? '<i class="fas fa-check-circle quiz-completed-icon"></i>'
+                            : '<i class="fas fa-exclamation-circle quiz-attempted-icon"></i>'}
+                  `;
+                    el.classList.remove('attempted', 'completed');
+                    el.classList.add(passed ? 'completed' : 'attempted');
+
+                    // 6) Mostrar notificación y refrescar progreso
+                    if (passed) {
+                        showNotification(`¡Bien hecho! Obtuviste ${score}%`, 'success');
+                    } else {
+                        showNotification(
+                            `Obtuviste ${score}%. Necesitas ≥${quiz.passing_score}% para aprobar.`,
+                            'warning'
+                        );
+                    }
+
+                    // 7) Refrescar sólo la barra global
+                    await refreshCourseProgress();
+
+                } catch (err) {
+                    console.error('Error al procesar el quiz:', err);
+                    showNotification('Error al procesar el quiz. Inténtalo nuevamente.', 'error');
+                }
+            };
+
+            // Listener para cerrar manualmente el modal
+            quizCloseBtn.onclick = closeQuizModal;
         });
     });
 
 
     // Auto-abrir primer contenido
-    const firstContentItem = moduleContentEl.querySelector('.content-item');
-    if (firstContentItem) { firstContentItem.click(); }
+    if (autoOpen) {
+        const firstContentItem = moduleContentEl.querySelector('.content-item');
+        if (firstContentItem) firstContentItem.click();
+    }
 
     // Botones Prev/Next
     const prevBtn = moduleContentEl.querySelector('.prev-module');
@@ -389,41 +558,52 @@ function getContentTypeIcon(typeId) {
     }
 }
 
-// ————— Funciones auxiliares para el modal de quizzes —————
+// Funciones auxiliares para el modal de quizzes 
 function renderQuizModal(quiz) {
-    quizContainerEl.innerHTML = ''; // Limpiar contenido anterior
+    // 1) Ocultar el botón de envío hasta que haya preguntas
+    quizSubmitBtn.style.display = 'none';
+    // 2) Vaciar contenido previo
+    quizContainerEl.innerHTML = '';
 
+    // 3) Construir el HTML del título (manteniendo el botón de cerrar en el DOM)
     let html = `<h3>${quiz.title}</h3>`;
 
-    if (!quiz.questions || !quiz.questions.length) {
-        html += '<p>Este quiz no tiene preguntas disponibles.</p>';
-        quizContainerEl.innerHTML = html;
-        quizModalEl.style.display = 'block';
-        return;
+    // 4) Si NO hay preguntas, mostrar mensaje
+    if (!quiz.questions || quiz.questions.length === 0) {
+        html += `<p>Este quiz no tiene preguntas disponibles.</p>`;
+    } else {
+        // 5) Si hay preguntas, renderizar cada bloque y luego habilitar el botón
+        quiz.questions.forEach(q => {
+            html += `
+          <div class="question-block" data-qid="${q.question_id}">
+            <p>${q.question_text}</p>`;
+            if (!q.answers || q.answers.length === 0) {
+                html += `<p class="error">Esta pregunta no tiene opciones de respuesta.</p>`;
+            } else {
+                q.answers.forEach(a => {
+                    html += `
+              <label class="answer-option">
+                <input type="radio"
+                       name="q-${q.question_id}"
+                       value="${a.answer_id}" />
+                ${a.answer_text}
+              </label>`;
+                });
+            }
+            html += `</div>`;
+        });
+        // 6) Una vez renderizadas las preguntas, mostramos el botón de envío
+        quizSubmitBtn.style.display = '';
     }
 
-    quiz.questions.forEach(q => {
-        html += `<div class="question-block" data-qid="${q.question_id}">
-        <p>${q.question_text}</p>`;
-
-        if (!q.answers || !q.answers.length) {
-            html += '<p class="error">Esta pregunta no tiene opciones de respuesta.</p>';
-        } else {
-            q.answers.forEach(a => {
-                html += `<label>
-              <input type="radio"
-                     name="q_${q.question_id}"
-                     value="${a.answer_id}" />
-              ${a.answer_text}
-            </label>`;
-            });
-        }
-
-        html += `</div>`;
-    });
-
+    // 7) Insertar todo dentro del contenedor
     quizContainerEl.innerHTML = html;
-    quizModalEl.style.display = 'block';
+
+    // 8) Mostrar el modal (flex para centrarlo)
+    quizModalEl.style.display = 'flex';
+
+    // 9) Conectar el botón de cerrar para ocultar el modal
+    quizCloseBtn.onclick = closeQuizModal;
 }
 
 // Recolecta las respuestas seleccionadas
@@ -442,6 +622,7 @@ function collectAnswers() {
     return answers;
 }
 
+// Funcion para cerrar el Modal
 function closeQuizModal() {
     quizModalEl.style.display = 'none';
 }
