@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUserCourses();
 });
 
+function getThumbnailUrl(src) {
+    if (!src) return '';
+    // Si ya viene con http o ruta absoluta, lo respetamos
+    if (src.startsWith('http') || src.startsWith('/')) return src;
+    // Para las miniaturas de cursos, van en /uploads/courses/
+    return `/uploads/courses/${src}`;
+}
+
 // Función para inicializar los event listeners
 function initializeEventListeners() {
     // Búsqueda de cursos
@@ -150,7 +158,9 @@ function displayCourses(courses, page) {
           <tr>
             <td class="course-title-cell">
   ${c.thumbnail
-                ? `<img src="${c.thumbnail}" alt="Miniatura de ${c.title}" class="course-thumbnail"/>`
+                ? `<img src="${getThumbnailUrl(c.thumbnail)}"
+              alt="Miniatura de ${c.title}"
+              class="course-thumbnail"/>`
                 : ''}
   <span>${c.title}</span>
 </td>
@@ -182,12 +192,22 @@ function displayCourses(courses, page) {
     // Certificado
     tbody.querySelectorAll('.btn-certificate').forEach(btn => {
         btn.addEventListener('click', () => {
-            // busca el curso por su id
             const course = allCourses.find(c => c.id == btn.dataset.id);
-            // rellena y muestra el modal
-            showCertificate(course);
+            const cert = {
+                username: document.getElementById('user-name').textContent,
+                title: course.title,
+                score: course.score || 0,
+                date: new Date().toLocaleDateString('es-ES', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                }),
+                id: course.id,
+                url: `/api/technician/certificates/${course.id}/download`
+            };
+            // showCertificate viene de technician-certificates.js
+            showCertificate(cert);
         });
     });
+
 
     updatePagination(courses.length, page);
 }
@@ -340,30 +360,32 @@ function getFilteredCourses() {
 
 // Función para mostrar el certificado
 function showCertificate(course) {
-    // Obtener datos del usuario
+    // Rellenar datos
     const userName = document.getElementById('user-name').textContent;
-
-    // Actualizar la información del certificado
     document.getElementById('certificate-name').textContent = userName;
     document.getElementById('certificate-course').textContent = course.title;
-    document.getElementById('certificate-score').textContent = `${course.score || 90}%`;
+    document.getElementById('certificate-score').textContent = `${course.score || 0}%`;
 
-    // Establecer la fecha de emisión
     const today = new Date();
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const opts = { day: 'numeric', month: 'long', year: 'numeric' };
     document.getElementById('certificate-date').textContent =
-        `Fecha: ${today.toLocaleDateString('es-ES', options)}`;
+        `Fecha: ${today.toLocaleDateString('es-ES', opts)}`;
 
-    // Configurar el botón de descarga
-    const downloadBtn = document.getElementById('download-certificate');
-    downloadBtn.onclick = () => {
-        // abre en pestaña nueva la ruta de tu API que entrega el PDF
+    // Mostrar modal
+    const modal = document.getElementById('certificate-modal');
+    modal.classList.add('show');
+
+    // Botones de cerrar
+    modal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.onclick = () => modal.classList.remove('show');
+    });
+
+    // Botón de descarga
+    document.getElementById('download-certificate').onclick = () => {
         window.open(`/api/technician/certificates/${course.id}/download`, '_blank');
     };
-
-    // Mostrar el modal
-    document.getElementById('certificate-modal').classList.add('show');
 }
+
 
 
 // Función para continuar un curso
