@@ -13,8 +13,7 @@ function setupGameObjectLink() {
     const gameObjectContainer = document.getElementById('game-object-container');
     if (!gameObjectContainer) return; // Exit if the container doesn't exist
 
-    // Decide randomly whether to show the game object (e.g., 10% chance)
-    const shouldShow = Math.random() < 0.1; // Reduced probability from 0.5
+    const shouldShow = Math.random() < 0.5; 
 
     if (shouldShow) {
         gameObjectContainer.style.display = 'block'; // Show the container
