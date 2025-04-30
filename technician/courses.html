@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Cursos - Plataforma Técnicos Whirlpool</title>
-    <!-- Rutas de estilos corregidas -->
     <link rel="stylesheet" href="../css/technician/technician-common.css">
     <link rel="stylesheet" href="../css/technician/courses.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -130,44 +129,31 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="certificate-container">
-                    <div class="certificate">
-                        <div class="certificate-header">
-                            <img src="../images/whirlpool-logo.png" alt="Whirlpool Logo" class="certificate-logo">
-                            <h2>Certificado de Finalización</h2>
-                        </div>
-                        <div class="certificate-body">
-                            <p>Este certificado reconoce que</p>
-                            <h3 id="certificate-name">Nombre del Técnico</h3>
-                            <p>ha completado exitosamente el curso</p>
-                            <h3 id="certificate-course">Nombre del Curso</h3>
-                            <p>con una calificación final de</p>
-                            <h3 id="certificate-score">95%</h3>
-                        </div>
-                        <div class="certificate-footer">
-                            <div class="certificate-date" id="certificate-date">Fecha: 15 de Abril, 2025</div>
-                            <div class="certificate-signature">
-                                <img src="../images/signature.png" alt="Firma">
-                                <p>Director de Capacitación</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="certificate-actions">
-                    <button class="btn-primary" id="download-certificate" data-course-id="">
-                        <i class="fas fa-file-pdf"></i> Descargar PDF
-                    </button>
-                    <button class="btn-secondary close-modal">Cerrar</button>
-                </div>
+                <p>Este certificado reconoce que</p>
+                <h3 id="certificate-name"></h3>
+                <p>ha completado exitosamente el curso</p>
+                <h3 id="certificate-course"></h3>
+                <p>con una calificación final de</p>
+                <h3 id="certificate-score"></h3>
+                <p id="certificate-date"></p>
+            </div>
+            <div class="certificate-actions">
+                <button class="btn-primary" id="download-certificate">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button class="btn-secondary close-modal">Cerrar</button>
             </div>
         </div>
     </div>
+
+
 
     <div class="notification-container" id="notification-container"></div>
 
     <script src="../js/utils.js"></script>
     <script src="../js/technician-common.js"></script>
     <script src="../js/technician-courses.js"></script>
+    <script src="../js/technician-certificates.js"></script>
 </body>
 
 </html>
