@@ -1,6 +1,6 @@
 const { pool } = require('../config/database');
 // Import both directories from multer config
-const { coursesImageDir, contentFilesDir } = require('../config/multer'); 
+const { coursesImageDir, contentPdfDir, contentImageDir, contentVideoDir } = require('../config/multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -23,7 +23,7 @@ async function getAllCourses(req, res) {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
-        
+
         // Fetch courses from database with pagination
         const [courses] = await pool.query(`
             SELECT 
@@ -53,15 +53,15 @@ async function getAllCourses(req, res) {
                 c.updated_at DESC
             LIMIT ? OFFSET ?
         `, [limit, offset]);
-        
+
         // Get total count for pagination
         const [countResult] = await pool.query(`
             SELECT COUNT(*) as total FROM courses
         `);
-        
+
         const totalCount = countResult[0].total;
         const totalPages = Math.ceil(totalCount / limit);
-        
+
         // Return courses with pagination metadata
         res.json({
             courses: courses,
@@ -85,11 +85,11 @@ async function getAllCategories(req, res) {
         // console.error('\x1b[36m%s\x1b[0m', '[CATEGORIES API] Getting all categories from database');
         const [categories] = await pool.query('SELECT * FROM course_categories ORDER BY name');
         // console.error('\x1b[32m%s\x1b[0m', '[CATEGORIES API] Categories retrieved from database:', categories.length);
-        
+
         if (categories.length === 0) {
             // console.error('\x1b[33m%s\x1b[0m', '[CATEGORIES API] WARNING: No categories found in database');
         }
-        
+
         res.json(categories);
     } catch (error) {
         // console.error('\x1b[31m%s\x1b[0m', '[CATEGORIES API] ERROR fetching categories:', error);
@@ -101,7 +101,7 @@ async function getAllCategories(req, res) {
 async function getCourseById(req, res) {
     try {
         const courseId = req.params.id;
-        
+
         // Get course details including category
         const [courses] = await pool.query(`
             SELECT 
@@ -130,13 +130,13 @@ async function getCourseById(req, res) {
             GROUP BY -- Group by course details
                 c.course_id, cc.name 
         `, [courseId]);
-        
+
         if (courses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         const course = courses[0];
-        
+
         // Format course for frontend
         const formattedCourse = {
             id: course.id,
@@ -151,7 +151,7 @@ async function getCourseById(req, res) {
             lesson_count: course.lesson_count, // Include lesson count
             student_count: course.student_count // Include student count
         };
-        
+
         res.json(formattedCourse);
     } catch (error) {
         console.error('Error fetching course:', error);
@@ -166,7 +166,7 @@ async function getAvailableCourses(req, res) {
         const [courses] = await pool.query(
             'SELECT * FROM courses WHERE status = "published" ORDER BY created_at DESC'
         );
-        
+
         // Format courses for frontend
         const formattedCourses = courses.map(course => ({
             id: course.course_id,
@@ -177,7 +177,7 @@ async function getAvailableCourses(req, res) {
             status: course.status,
             updated_at: course.updated_at
         }));
-        
+
         res.json(formattedCourses);
     } catch (error) {
         console.error('Error fetching available courses:', error);
@@ -189,23 +189,23 @@ async function getAvailableCourses(req, res) {
 async function getCourseDetails(req, res) {
     try {
         const courseId = req.params.id;
-        
+
         // Get course details
         const [courses] = await pool.query(
             'SELECT * FROM courses WHERE course_id = ? AND status = "published"',
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         // Get modules for this course
         const [modules] = await pool.query(
             'SELECT * FROM modules WHERE course_id = ? ORDER BY position',
             [courseId]
         );
-        
+
         // Format response
         const courseDetails = {
             ...courses[0],
@@ -216,7 +216,7 @@ async function getCourseDetails(req, res) {
                 position: module.position
             }))
         };
-        
+
         res.json(courseDetails);
     } catch (error) {
         console.error('Error fetching course details:', error);
@@ -231,36 +231,36 @@ async function enrollInCourse(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Debe iniciar sesión para inscribirse en un curso' });
         }
-        
+
         const courseId = req.params.id;
         const userId = req.session.user.user_id;
-        
+
         // Check if course exists and is published
         const [courses] = await pool.query(
             'SELECT * FROM courses WHERE course_id = ? AND status = "published"',
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         // Check if user is already enrolled
         const [enrollments] = await pool.query(
             'SELECT * FROM enrollments WHERE user_id = ? AND course_id = ?',
             [userId, courseId]
         );
-        
+
         if (enrollments.length > 0) {
             return res.status(409).json({ error: 'Ya está inscrito en este curso' });
         }
-        
+
         // Create enrollment
         await pool.query(
             'INSERT INTO enrollments (user_id, course_id, enrolled_at) VALUES (?, ?, NOW())',
             [userId, courseId]
         );
-        
+
         res.status(201).json({ message: 'Inscripción exitosa' });
     } catch (error) {
         console.error('Error enrolling in course:', error);
@@ -272,23 +272,23 @@ async function enrollInCourse(req, res) {
 async function getCourseModules(req, res) {
     try {
         const courseId = req.params.id;
-        
+
         // Verify the course exists
         const [courses] = await pool.query(
             'SELECT * FROM courses WHERE course_id = ?',
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         // Get modules for this course
         const [modules] = await pool.query(
             'SELECT * FROM modules WHERE course_id = ? ORDER BY position',
             [courseId]
         );
-        
+
         // Format modules for frontend
         const formattedModules = modules.map(module => ({
             id: module.module_id,
@@ -299,7 +299,7 @@ async function getCourseModules(req, res) {
             created_at: module.created_at,
             updated_at: module.updated_at
         }));
-        
+
         res.json(formattedModules);
     } catch (error) {
         console.error('Error fetching course modules:', error);
@@ -312,23 +312,23 @@ async function getModuleContents(req, res) {
     try {
         const courseId = req.params.id;
         const moduleId = req.params.moduleId;
-        
+
         // Verify the module exists and belongs to the course
         const [modules] = await pool.query(
             'SELECT * FROM modules WHERE module_id = ? AND course_id = ?',
             [moduleId, courseId]
         );
-        
+
         if (modules.length === 0) {
             return res.status(404).json({ error: 'Módulo no encontrado' });
         }
-        
+
         // Get contents for this module - CORREGIDO: usar la tabla 'contents' en lugar de 'module_contents'
         const [contents] = await pool.query(
             'SELECT * FROM contents WHERE module_id = ? ORDER BY position',
             [moduleId]
         );
-        
+
         // Format contents for frontend
         const formattedContents = contents.map(content => ({
             content_id: content.content_id,
@@ -340,7 +340,7 @@ async function getModuleContents(req, res) {
             created_at: content.created_at,
             updated_at: content.updated_at
         }));
-        
+
         res.json(formattedContents);
     } catch (error) {
         console.error('Error fetching module contents:', error);
@@ -353,22 +353,22 @@ async function createModule(req, res) {
     try {
         const courseId = req.params.id;
         const { title, description, position } = req.body;
-        
+
         // Validate required fields
         if (!title) {
             return res.status(400).json({ error: 'El título es obligatorio' });
         }
-        
+
         // Verify the course exists
         const [courses] = await pool.query(
             'SELECT * FROM courses WHERE course_id = ?',
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         // If position is not provided, get the highest position and add 1
         let modulePosition = position;
         if (!modulePosition) {
@@ -378,13 +378,13 @@ async function createModule(req, res) {
             );
             modulePosition = (maxPosition[0].max_position || 0) + 1;
         }
-        
+
         // Insert the module
         const [result] = await pool.query(
             'INSERT INTO modules (course_id, title, description, position, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
             [courseId, title, description, modulePosition]
         );
-        
+
         res.status(201).json({
             id: result.insertId,
             course_id: courseId,
@@ -404,28 +404,28 @@ async function updateModule(req, res) {
         const courseId = req.params.id;
         const moduleId = req.params.moduleId;
         const { title, description, position } = req.body;
-        
+
         // Validate required fields
         if (!title) {
             return res.status(400).json({ error: 'El título es obligatorio' });
         }
-        
+
         // Verify the module exists and belongs to the course
         const [modules] = await pool.query(
             'SELECT * FROM modules WHERE module_id = ? AND course_id = ?',
             [moduleId, courseId]
         );
-        
+
         if (modules.length === 0) {
             return res.status(404).json({ error: 'Módulo no encontrado' });
         }
-        
+
         // Update the module
         await pool.query(
             'UPDATE modules SET title = ?, description = ?, position = ?, updated_at = NOW() WHERE module_id = ?',
             [title, description, position, moduleId]
         );
-        
+
         res.json({
             id: moduleId,
             course_id: courseId,
@@ -444,27 +444,27 @@ async function deleteModule(req, res) {
     try {
         const courseId = req.params.id;
         const moduleId = req.params.moduleId;
-        
+
         // Verify the module exists and belongs to the course
         const [modules] = await pool.query(
             'SELECT * FROM modules WHERE module_id = ? AND course_id = ?',
             [moduleId, courseId]
         );
-        
+
         if (modules.length === 0) {
             return res.status(404).json({ error: 'Módulo no encontrado' });
         }
-        
+
         // Delete the module
         await pool.query('DELETE FROM modules WHERE module_id = ?', [moduleId]);
-        
+
         // Reorder remaining modules - make sure these are executed as separate queries
         await pool.query('SET @pos := 0');
         await pool.query(
             'UPDATE modules SET position = (@pos := @pos + 1) WHERE course_id = ? ORDER BY position',
             [courseId]
         );
-        
+
         res.json({ message: 'Módulo eliminado correctamente' });
     } catch (error) {
         console.error('Error deleting module:', error);
@@ -476,32 +476,32 @@ async function deleteModule(req, res) {
 async function createCourse(req, res) {
     try {
         const { title, description, category_id, status } = req.body;
-        
+
         // Validate required fields
         if (!title) {
             return res.status(400).json({ error: 'El título es obligatorio' });
         }
-        
+
         // Get the user ID from the session safely
         const userId = req.session && req.session.user ? req.session.user.user_id : null;
-        
+
         // If no user is logged in, return an error
         if (!userId) {
             return res.status(401).json({ error: 'Debe iniciar sesión para crear un curso' });
         }
-        
+
         // Handle file upload
         let thumbnailFilename = null;
         if (req.file) {
             thumbnailFilename = req.file.filename;
         }
-        
+
         // Insert the course into the database - now including created_by field
         const [result] = await pool.query(
             'INSERT INTO courses (title, description, thumbnail, category_id, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
             [title, description, thumbnailFilename, category_id || null, status || 'draft', userId]
         );
-        
+
         // Get the newly created course
         const courseId = result.insertId;
         const [courses] = await pool.query(
@@ -523,11 +523,11 @@ async function createCourse(req, res) {
                 c.course_id = ?`,
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(500).json({ error: 'Error al crear el curso' });
         }
-        
+
         // Format the course for the response
         const course = courses[0];
         const formattedCourse = {
@@ -541,7 +541,7 @@ async function createCourse(req, res) {
             created_at: course.created_at,
             updated_at: course.updated_at
         };
-        
+
         res.status(201).json(formattedCourse);
     } catch (error) {
         console.error('Error creating course:', error);
@@ -554,32 +554,32 @@ async function updateCourse(req, res) {
     try {
         const courseId = req.params.id;
         const { title, description, category_id, status } = req.body;
-        
+
         // Validate required fields
         if (!title) {
             return res.status(400).json({ error: 'El título es obligatorio' });
         }
-        
+
         // Get the user ID from the session
         const userId = req.session.user ? req.session.user.user_id : null;
-        
+
         // If no user is logged in, return an error
         if (!userId) {
             return res.status(401).json({ error: 'Debe iniciar sesión para actualizar un curso' });
         }
-        
+
         // Verify the course exists
         const [existingCourses] = await pool.query(
             'SELECT * FROM courses WHERE course_id = ?',
             [courseId]
         );
-        
+
         if (existingCourses.length === 0) {
             return res.status(404).json({ error: 'Curso no encontrado' });
         }
-        
+
         const existingCourse = existingCourses[0];
-        
+
         // Handle file upload
         let thumbnailFilename = existingCourse.thumbnail;
         if (req.file) {
@@ -592,13 +592,13 @@ async function updateCourse(req, res) {
             }
             thumbnailFilename = req.file.filename;
         }
-        
+
         // Update the course in the database - note we don't update created_by
         await pool.query(
             'UPDATE courses SET title = ?, description = ?, thumbnail = ?, category_id = ?, status = ?, updated_at = NOW() WHERE course_id = ?',
             [title, description, thumbnailFilename, category_id || null, status || 'draft', courseId]
         );
-        
+
         // Get the updated course
         const [courses] = await pool.query(
             `SELECT 
@@ -619,11 +619,11 @@ async function updateCourse(req, res) {
                 c.course_id = ?`,
             [courseId]
         );
-        
+
         if (courses.length === 0) {
             return res.status(500).json({ error: 'Error al actualizar el curso' });
         }
-        
+
         // Format the course for the response
         const course = courses[0];
         const formattedCourse = {
@@ -637,7 +637,7 @@ async function updateCourse(req, res) {
             created_at: course.created_at,
             updated_at: course.updated_at
         };
-        
+
         res.json(formattedCourse);
     } catch (error) {
         console.error('Error updating course:', error);
@@ -648,97 +648,97 @@ async function updateCourse(req, res) {
 // Delete a course, cascada manual sobre tablas hijas
 async function deleteCourse(req, res) {
     try {
-      const courseId = req.params.id;
+        const courseId = req.params.id;
 
-      // Verificar que el curso existe
-      const [courses] = await pool.query(
-        'SELECT * FROM courses WHERE course_id = ?',
-        [courseId]
-      );
-      if (courses.length === 0) {
-        return res.status(404).json({ error: 'Curso no encontrado' });
-      }
-      const course = courses[0];
+        // Verificar que el curso existe
+        const [courses] = await pool.query(
+            'SELECT * FROM courses WHERE course_id = ?',
+            [courseId]
+        );
+        if (courses.length === 0) {
+            return res.status(404).json({ error: 'Curso no encontrado' });
+        }
+        const course = courses[0];
 
-      // Borrar el archivo de miniatura si existe
-      if (course.thumbnail) {
-        const filePath = path.join(coursesImageDir, course.thumbnail);
-        // Use the helper function for safe deletion
-        deleteFile(filePath);
-      }
+        // Borrar el archivo de miniatura si existe
+        if (course.thumbnail) {
+            const filePath = path.join(coursesImageDir, course.thumbnail);
+            // Use the helper function for safe deletion
+            deleteFile(filePath);
+        }
 
-      // **Borrado manual en tablas hijas**
-      // Referencian directamente course_id:
-      await pool.query(
-        'DELETE FROM user_course_progress WHERE course_id = ?',
-        [courseId]
-      );
+        // **Borrado manual en tablas hijas**
+        // Referencian directamente course_id:
+        await pool.query(
+            'DELETE FROM user_course_progress WHERE course_id = ?',
+            [courseId]
+        );
 
-      //  Módulos de ese curso.
-      //  (User-content-progress → Contents → Modules)
-      // Need to delete content files first
-      const [contentsToDelete] = await pool.query(
-        `SELECT c.content_id, c.content_type_id, c.content_data
+        //  Módulos de ese curso.
+        //  (User-content-progress → Contents → Modules)
+        // Need to delete content files first
+        const [contentsToDelete] = await pool.query(
+            `SELECT c.content_id, c.content_type_id, c.content_data
          FROM contents c
          JOIN modules m ON c.module_id = m.module_id
          WHERE m.course_id = ? AND c.content_type_id IN (3, 4) AND c.content_data IS NOT NULL`, // Only file types
-        [courseId]
-      );
-      for (const content of contentsToDelete) {
-          const contentFilePath = path.join(__dirname, '..', content.content_data); // Path includes subdir
-          deleteFile(contentFilePath);
-      }
+            [courseId]
+        );
+        for (const content of contentsToDelete) {
+            const contentFilePath = path.join(__dirname, '..', content.content_data); // Path includes subdir
+            deleteFile(contentFilePath);
+        }
 
-      // Now delete related records
-      await pool.query(
-        `DELETE ucp
+        // Now delete related records
+        await pool.query(
+            `DELETE ucp
          FROM user_content_progress ucp
          JOIN contents c ON ucp.content_id = c.content_id
          JOIN modules m  ON c.module_id   = m.module_id
          WHERE m.course_id = ?`,
-        [courseId]
-      );
-      await pool.query(
-        `DELETE c
+            [courseId]
+        );
+        await pool.query(
+            `DELETE c
          FROM contents c
          JOIN modules m ON c.module_id = m.module_id
          WHERE m.course_id = ?`,
-        [courseId]
-      );
+            [courseId]
+        );
 
-      // Intentos de quiz y quizzes asociados:
-      await pool.query(
-        `DELETE qa
+        // Intentos de quiz y quizzes asociados:
+        await pool.query(
+            `DELETE qa
          FROM quiz_attempts qa
          JOIN quizzes q ON qa.quiz_id = q.quiz_id
          JOIN modules m ON q.module_id = m.module_id
          WHERE m.course_id = ?`,
-        [courseId]
-      );
-      await pool.query(
-        `DELETE q
+            [courseId]
+        );
+        await pool.query(
+            `DELETE q
          FROM quizzes q
          JOIN modules m ON q.module_id = m.module_id
          WHERE m.course_id = ?`,
-        [courseId]
-      );
+            [courseId]
+        );
 
-      // Borrar los módulos del curso
-      await pool.query(
-        'DELETE FROM modules WHERE course_id = ?',
-        [courseId]
-      );
+        // Borrar los módulos del curso
+        await pool.query(
+            'DELETE FROM modules WHERE course_id = ?',
+            [courseId]
+        );
 
-      // Borrar el curso
-      await pool.query(
-        'DELETE FROM courses WHERE course_id = ?',
-        [courseId]
-      );
+        // Borrar el curso
+        await pool.query(
+            'DELETE FROM courses WHERE course_id = ?',
+            [courseId]
+        );
 
-      res.json({ message: 'Curso eliminado correctamente' });
+        res.json({ message: 'Curso eliminado correctamente' });
     } catch (error) {
-      console.error('Error deleting course:', error);
-      res.status(500).json({ error: 'Error al eliminar el curso' });
+        console.error('Error deleting course:', error);
+        res.status(500).json({ error: 'Error al eliminar el curso' });
     }
 }
 
@@ -783,12 +783,12 @@ async function createContent(req, res) {
         if (req.file) { // PDF or Image uploaded
             if (contentType !== 3 && contentType !== 4) {
                 // Clean up uploaded file if type doesn't match
-                deleteFile(req.file.path); 
+                deleteFile(req.file.path);
                 return res.status(400).json({ error: 'Tipo de contenido no coincide con el archivo subido' });
             }
             // Determine subdirectory and store the relative path
             const subDir = req.file.mimetype === 'application/pdf' ? 'pdfs' : 'images';
-            contentDataValue = `/uploads/content/${subDir}/${req.file.filename}`; 
+            contentDataValue = `/uploads/content/${subDir}/${req.file.filename}`;
         } else { // Video or Text
             if (contentType !== 1 && contentType !== 2) {
                 return res.status(400).json({ error: 'Tipo de contenido requiere un archivo (PDF o Imagen)' });
@@ -872,12 +872,12 @@ async function updateContent(req, res) {
                 }
                 // If type changed from file to text/URL, delete old file (using its stored path)
                 if ((existingContent.content_type_id === 3 || existingContent.content_type_id === 4) && existingContent.content_data) {
-                     const oldFilePath = path.join(__dirname, '..', existingContent.content_data); // Path includes subdir
-                     deleteFile(oldFilePath);
+                    const oldFilePath = path.join(__dirname, '..', existingContent.content_data); // Path includes subdir
+                    deleteFile(oldFilePath);
                 }
             } else if (contentType === 3 || contentType === 4) {
                 // Keep existing file path if type is file and no new file uploaded
-                contentDataValue = existingContent.content_data; 
+                contentDataValue = existingContent.content_data;
             }
         }
 
@@ -898,7 +898,7 @@ async function updateContent(req, res) {
 
     } catch (error) {
         console.error('Error updating content:', error);
-         // Clean up uploaded file if database update fails
+        // Clean up uploaded file if database update fails
         if (req.file) {
             deleteFile(req.file.path);
         }
@@ -924,9 +924,9 @@ async function deleteContent(req, res) {
 
         // If content is PDF or Image, delete the associated file (using its stored path)
         if ((contentToDelete.content_type_id === 3 || contentToDelete.content_type_id === 4) && contentToDelete.content_data) {
-             // Construct the absolute path from the project root
-             const filePath = path.join(__dirname, '..', contentToDelete.content_data); // Path includes subdir
-             deleteFile(filePath);
+            // Construct the absolute path from the project root
+            const filePath = path.join(__dirname, '..', contentToDelete.content_data); // Path includes subdir
+            deleteFile(filePath);
         }
 
         // Delete content from database
